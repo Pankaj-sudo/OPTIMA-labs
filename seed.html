@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seed Catalogue — OPTIMA Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/optima.css">
+</head>
+<body>
+<div class="admin-shell">
+  <a class="logo" href="products.html"><b>OPTIMA <span>Labs</span></b></a>
+  <h1 style="margin:10px 0 6px;">Seed catalogue</h1>
+  <p style="color:var(--ink-soft); max-width:60ch;">Sign in as admin, then load the 20 starter products
+    (dosage variants consolidated). Existing products with the same slug are overwritten, so this is
+    safe to re-run. Upload real photos afterward in <a href="admin-products.html">Product Admin</a>.</p>
+  <div style="margin:22px 0; display:flex; gap:12px; flex-wrap:wrap;">
+    <button class="btn btn-primary" id="seedBtn" disabled>Seed catalogue</button>
+    <button class="btn btn-ghost" id="signBtn">Sign in with Google</button>
+  </div>
+  <pre id="log" style="background:var(--surface); border-radius:16px; padding:18px; font-size:13px; color:var(--ink-soft); max-height:50vh; overflow:auto; box-shadow:var(--shadow-soft);"></pre>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script>
+var log = function(m){ var el=document.getElementById('log'); el.textContent += m+'\n'; el.scrollTop = el.scrollHeight; };
+
+var PRODUCTS = [
+  { name:'5-Amino-1MQ', category:'Metabolic', description:'Metabolic support peptide.', dosageOptions:[{mg:'50mg',price:4050}] },
+  { name:'AOD-9604', category:'Metabolic', description:'Fat metabolism peptide.', dosageOptions:[{mg:'5mg',price:2925}] },
+  { name:'BPC-157', category:'Recovery & Repair', description:'Gut & tissue repair peptide.', dosageOptions:[{mg:'10mg',price:2407.5}] },
+  { name:'BPC-157 + TB-500', category:'Recovery & Repair', description:'Combined healing peptide blend.', dosageOptions:[{mg:'10mg',price:3240}] },
+  { name:'Cagrilintide', category:'Weight Management', description:'Appetite support peptide.', dosageOptions:[{mg:'5mg',price:3645}] },
+  { name:'CJC-1295 w/o DAC + Ipamorelin', category:'Recovery & Repair', description:'Growth hormone support peptide blend.', dosageOptions:[{mg:'10mg',price:5512.5}] },
+  { name:'DSIP', category:'Sleep & Calm', description:'Delta sleep–inducing peptide.', dosageOptions:[{mg:'5mg',price:1935}] },
+  { name:'Epitalon', category:'Longevity', description:'Longevity & telomere-support peptide.', dosageOptions:[{mg:'10mg',price:2070},{mg:'50mg',price:4387.5}] },
+  { name:'GHK-Cu', category:'Skin & Beauty', description:'Copper peptide for collagen synthesis & skin repair.', dosageOptions:[{mg:'50mg',price:1687.5},{mg:'100mg',price:1912.5}] },
+  { name:'KPV', category:'Recovery & Repair', description:'Anti-inflammatory peptide.', dosageOptions:[{mg:'5mg',price:2025},{mg:'10mg',price:2475}] },
+  { name:'LL-37', category:'Recovery & Repair', description:'Immune-support peptide.', dosageOptions:[{mg:'5mg',price:2700}] },
+  { name:'MOTS-C', category:'Metabolic', description:'Mitochondrial-derived metabolic peptide.', dosageOptions:[{mg:'10mg',price:2362.5},{mg:'40mg',price:5625}] },
+  { name:'NAD+', category:'Longevity', description:'Cellular support coenzyme.', dosageOptions:[{mg:'500mg',price:2700}] },
+  { name:'PT-141', category:'Intimacy', description:'Sexual wellness peptide.', dosageOptions:[{mg:'10mg',price:2407.5}] },
+  { name:'Retatrutide', category:'Weight Management', description:'Metabolic peptide for weight management.', dosageOptions:[{mg:'5mg',price:2587.5},{mg:'10mg',price:3352.5},{mg:'20mg',price:4612.5},{mg:'30mg',price:5625}] },
+  { name:'Semax', category:'Recovery & Repair', description:'Cognitive-support peptide.', dosageOptions:[{mg:'5mg',price:1687.5}] },
+  { name:'SNAP-8', category:'Skin & Beauty', description:'Anti-aging cosmetic peptide.', dosageOptions:[{mg:'10mg',price:2002.5}] },
+  { name:'Tesamorelin', category:'Recovery & Repair', description:'Growth hormone–releasing peptide.', dosageOptions:[{mg:'10mg',price:5287.5}] },
+  { name:'Tirzepatide', category:'Weight Management', description:'Metabolic peptide for weight management.', dosageOptions:[{mg:'10mg',price:2250},{mg:'15mg',price:2857.5},{mg:'20mg',price:3150},{mg:'30mg',price:3667.5},{mg:'40mg',price:4320},{mg:'50mg',price:5017.5},{mg:'60mg',price:5917.5}] },
+  { name:'Bacteriostatic Water', category:'Supplies', description:'Bacteriostatic water for reconstitution.', dosageOptions:[{mg:'10ml',price:180}] }
+];
+
+document.getElementById('signBtn').onclick = function(){ fbAuth.signInWithPopup(fbGoogle).catch(function(e){ log('Sign-in failed: '+e.message); }); };
+
+fbAuth.onAuthStateChanged(async function(user){
+  var btn = document.getElementById('seedBtn');
+  if(!user){ log('Not signed in.'); btn.disabled = true; return; }
+  var tok = await user.getIdTokenResult(true);
+  if(!(tok.claims && tok.claims.admin)){ log(user.email+' is not an admin.'); btn.disabled = true; return; }
+  log('Signed in as admin: '+user.email); btn.disabled = false;
+});
+
+document.getElementById('seedBtn').onclick = async function(){
+  var btn = this; btn.disabled = true; btn.textContent = 'Seeding…';
+  var now = firebase.firestore.FieldValue.serverTimestamp();
+  var ok = 0;
+  for(var i=0;i<PRODUCTS.length;i++){
+    var p = PRODUCTS[i];
+    var slug = slugify(p.name);
+    var doc = {
+      name:p.name, slug:slug, category:p.category, description:p.description,
+      dosageOptions:p.dosageOptions,
+      price: Math.min.apply(null, p.dosageOptions.map(function(d){ return d.price; })),
+      imageURL:'', verified:true, inStock:true, coaURL:null,
+      updated_at: now
+    };
+    try{
+      // deterministic doc id = slug, so re-running overwrites rather than duplicates
+      var ref = fbDb.collection('products').doc(slug);
+      var exists = (await ref.get()).exists;
+      if(!exists) doc.created_at = now;
+      await ref.set(doc, { merge:true });
+      ok++; log('✓ '+p.name+'  ('+p.dosageOptions.length+' strength'+(p.dosageOptions.length>1?'s':'')+')');
+    }catch(e){ log('✗ '+p.name+' — '+e.message); }
+  }
+  log('\nDone. '+ok+'/'+PRODUCTS.length+' products written.');
+  showToast(ok+' products seeded');
+  btn.textContent = 'Seed again';
+  btn.disabled = false;
+};
+
+var toastTimer;
+window.showToast = function(m){ var t=document.getElementById('toast'); t.innerHTML='<span class="dot"></span><span>'+m+'</span>'; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('show'); },2600); };
+</script>
+</body>
+</html>

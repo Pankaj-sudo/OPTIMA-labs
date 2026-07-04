@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Admin — OPTIMA Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/optima.css">
+</head>
+<body>
+
+<!-- Auth gate -->
+<div class="admin-gate" id="gate">
+  <div class="logo"><b>OPTIMA <span>Labs</span></b></div>
+  <p style="color:var(--ink-soft);">Verifying admin access…</p>
+</div>
+
+<div class="admin-shell" id="shell" style="display:none;">
+  <div class="admin-head">
+    <div>
+      <a class="logo" href="products.html" style="margin-bottom:6px;"><b>OPTIMA <span>Labs</span></b></a>
+      <h1>Products</h1>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span id="adminEmail" style="font-size:13.5px; color:var(--ink-soft);"></span>
+      <button class="btn btn-ghost btn-sm" onclick="signOutUser()">Sign out</button>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:start;">
+    <!-- Form -->
+    <div class="admin-card">
+      <h2 style="font-size:22px; margin-bottom:20px;" id="formTitle">Add product</h2>
+      <form id="productForm">
+        <input type="hidden" id="editId">
+        <div class="field">
+          <label for="fName">Name</label>
+          <input type="text" id="fName" required placeholder="e.g. Tirzepatide">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="fSlug">Slug (URL)</label>
+            <input type="text" id="fSlug" required placeholder="tirzepatide">
+          </div>
+          <div class="field">
+            <label for="fCategory">Category</label>
+            <select id="fCategory" required></select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fDesc">Description</label>
+          <textarea id="fDesc" placeholder="1–2 sentences" required></textarea>
+        </div>
+
+        <label style="display:block; font-size:13px; font-weight:700; margin-bottom:8px;">Dosage options &amp; price (₱)</label>
+        <div id="doseEditor"></div>
+        <button type="button" class="link-btn" id="addDose">+ Add another strength</button>
+
+        <div class="field" style="margin-top:18px;">
+          <label for="fImage">Product image</label>
+          <input type="file" id="fImage" accept="image/*">
+          <div id="imgPreview" style="margin-top:10px;"></div>
+        </div>
+        <div class="field">
+          <label for="fCoa">COA URL (optional)</label>
+          <input type="url" id="fCoa" placeholder="https://…">
+        </div>
+
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="fVerified" checked> Verified badge</label>
+          <label class="toggle"><input type="checkbox" id="fInStock" checked> In stock</label>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save product</button>
+          <button type="button" class="btn btn-ghost" id="resetBtn">Clear</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- List -->
+    <div class="admin-card">
+      <h2 style="font-size:22px; margin-bottom:8px;">Catalogue <span id="listCount" style="font-size:14px; color:var(--ink-soft);"></span></h2>
+      <div id="list"><p style="color:var(--ink-soft);">Loading…</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/cart.js"></script>
+<script>
+/* ---------- Auth ---------- */
+window.signOutUser = function(){ fbAuth.signOut(); };
+
+fbAuth.onAuthStateChanged(async function(user){
+  var gate = document.getElementById('gate'), shell = document.getElementById('shell');
+  if(!user){
+    gate.innerHTML = '<div class="logo"><b>OPTIMA <span>Labs</span></b></div>' +
+      '<p style="color:var(--ink-soft); max-width:320px;">Admin access requires Google sign-in.</p>' +
+      '<button class="btn btn-primary" id="signinBtn">Sign in with Google</button>';
+    document.getElementById('signinBtn').onclick = function(){ fbAuth.signInWithPopup(fbGoogle).catch(function(e){ showToast('Sign-in failed'); }); };
+    gate.style.display='flex'; shell.style.display='none'; return;
+  }
+  var tok = await user.getIdTokenResult(true);
+  if(!(tok.claims && tok.claims.admin)){
+    gate.innerHTML = '<div style="font-size:2.4rem;">🔒</div><h2 style="font-family:var(--serif);">Access denied</h2>' +
+      '<p style="color:var(--ink-soft);">'+user.email+' isn\'t an admin.</p>' +
+      '<button class="btn btn-ghost" onclick="signOutUser()">Sign out</button>';
+    gate.style.display='flex'; shell.style.display='none'; return;
+  }
+  gate.style.display='none'; shell.style.display='block';
+  document.getElementById('adminEmail').textContent = user.email;
+  initAdmin();
+});
+
+/* ---------- Admin ---------- */
+var uploadedURL = null;
+
+function initAdmin(){
+  // categories
+  var sel = document.getElementById('fCategory');
+  sel.innerHTML = window.CATEGORIES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+  // auto-slug
+  var nameEl = document.getElementById('fName'), slugEl = document.getElementById('fSlug');
+  nameEl.addEventListener('input', function(){ if(!slugEl.dataset.touched) slugEl.value = slugify(nameEl.value); });
+  slugEl.addEventListener('input', function(){ slugEl.dataset.touched = '1'; });
+
+  addDoseRow();
+  document.getElementById('addDose').onclick = function(){ addDoseRow(); };
+  document.getElementById('resetBtn').onclick = resetForm;
+  document.getElementById('productForm').addEventListener('submit', saveProduct);
+
+  document.getElementById('fImage').addEventListener('change', handleImage);
+  loadList();
+}
+
+function addDoseRow(mg, price){
+  var wrap = document.getElementById('doseEditor');
+  var row = document.createElement('div');
+  row.className = 'dose-editor-row';
+  row.innerHTML = '<input type="text" placeholder="e.g. 10mg" class="d-mg" value="'+(mg||'')+'">' +
+                  '<input type="number" step="0.01" placeholder="Price ₱" class="d-price" value="'+(price!=null?price:'')+'">' +
+                  '<button type="button" class="link-btn d-del">Remove</button>';
+  row.querySelector('.d-del').onclick = function(){ row.remove(); };
+  wrap.appendChild(row);
+}
+
+function readDoses(){
+  return Array.prototype.map.call(document.querySelectorAll('.dose-editor-row'), function(r){
+    return { mg: r.querySelector('.d-mg').value.trim(), price: parseFloat(r.querySelector('.d-price').value) };
+  }).filter(function(d){ return d.mg && !isNaN(d.price); });
+}
+
+async function handleImage(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var slug = document.getElementById('fSlug').value || slugify(document.getElementById('fName').value) || 'product';
+  var prev = document.getElementById('imgPreview');
+  prev.innerHTML = 'Uploading…';
+  try{
+    var ref = fbStorage.ref('product_images/' + slug + '_' + file.name);
+    var snap = await ref.put(file);
+    uploadedURL = await snap.ref.getDownloadURL();
+    prev.innerHTML = '<img src="'+uploadedURL+'" style="width:80px;height:80px;object-fit:cover;border-radius:12px;">';
+  }catch(err){ console.error(err); prev.innerHTML = '<span style="color:#b4513f;">Upload failed</span>'; }
+}
+
+async function saveProduct(e){
+  e.preventDefault();
+  var doses = readDoses();
+  if(!doses.length){ showToast('Add at least one dosage + price'); return; }
+  var saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+  var editId = document.getElementById('editId').value;
+  var data = {
+    name: document.getElementById('fName').value.trim(),
+    slug: document.getElementById('fSlug').value.trim(),
+    category: document.getElementById('fCategory').value,
+    description: document.getElementById('fDesc').value.trim(),
+    dosageOptions: doses,
+    price: Math.min.apply(null, doses.map(function(d){ return d.price; })),
+    verified: document.getElementById('fVerified').checked,
+    inStock: document.getElementById('fInStock').checked,
+    coaURL: document.getElementById('fCoa').value.trim() || null,
+    updated_at: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if(uploadedURL) data.imageURL = uploadedURL;
+
+  try{
+    if(editId){
+      await fbDb.collection('products').doc(editId).set(data, { merge:true });
+      showToast('Product updated');
+    }else{
+      data.imageURL = data.imageURL || '';
+      data.created_at = firebase.firestore.FieldValue.serverTimestamp();
+      await fbDb.collection('products').add(data);
+      showToast('Product added');
+    }
+    resetForm(); loadList();
+  }catch(err){ console.error(err); showToast('Save failed: '+err.message); }
+  finally{ saveBtn.disabled = false; saveBtn.textContent = 'Save product'; }
+}
+
+function resetForm(){
+  document.getElementById('productForm').reset();
+  document.getElementById('editId').value = '';
+  document.getElementById('doseEditor').innerHTML = '';
+  document.getElementById('imgPreview').innerHTML = '';
+  document.getElementById('fSlug').dataset.touched = '';
+  document.getElementById('formTitle').textContent = 'Add product';
+  uploadedURL = null;
+  addDoseRow();
+}
+
+async function loadList(){
+  var el = document.getElementById('list');
+  try{
+    var snap = await fbDb.collection('products').orderBy('name').get();
+    var docs = snap.docs;
+    document.getElementById('listCount').textContent = '(' + docs.length + ')';
+    if(!docs.length){ el.innerHTML = '<p style="color:var(--ink-soft);">No products yet. Add one, or run seed.html.</p>'; return; }
+    el.innerHTML = docs.map(function(d){
+      var p = d.data();
+      return '<div class="admin-list-item">' +
+        '<img src="'+(p.imageURL||'')+'" alt="">' +
+        '<div class="grow"><div style="font-weight:700;">'+p.name+'</div>' +
+        '<div style="font-size:12.5px;color:var(--ink-soft);">'+p.category+' · '+(p.dosageOptions||[]).length+' strengths · from '+fmtPHP(p.price)+
+        (p.verified?' · ✓':'')+(p.inStock?'':' · out of stock')+'</div></div>' +
+        '<button class="link-btn" onclick="editProduct(\''+d.id+'\')">Edit</button>' +
+        '<button class="link-btn" style="color:#b4513f;" onclick="deleteProduct(\''+d.id+'\',\''+(p.name.replace(/'/g,""))+'\')">Delete</button>' +
+      '</div>';
+    }).join('');
+  }catch(err){ console.error(err); el.innerHTML = '<p style="color:#b4513f;">Failed to load.</p>'; }
+}
+
+window.editProduct = async function(id){
+  var doc = await fbDb.collection('products').doc(id).get();
+  var p = doc.data();
+  document.getElementById('editId').value = id;
+  document.getElementById('fName').value = p.name || '';
+  document.getElementById('fSlug').value = p.slug || '';
+  document.getElementById('fSlug').dataset.touched = '1';
+  document.getElementById('fCategory').value = p.category || window.CATEGORIES[0];
+  document.getElementById('fDesc').value = p.description || '';
+  document.getElementById('fCoa').value = p.coaURL || '';
+  document.getElementById('fVerified').checked = !!p.verified;
+  document.getElementById('fInStock').checked = p.inStock !== false;
+  document.getElementById('doseEditor').innerHTML = '';
+  (p.dosageOptions||[]).forEach(function(d){ addDoseRow(d.mg, d.price); });
+  if(!(p.dosageOptions||[]).length) addDoseRow();
+  uploadedURL = p.imageURL || null;
+  document.getElementById('imgPreview').innerHTML = p.imageURL ? '<img src="'+p.imageURL+'" style="width:80px;height:80px;object-fit:cover;border-radius:12px;">' : '';
+  document.getElementById('formTitle').textContent = 'Edit product';
+  window.scrollTo({ top:0, behavior:'smooth' });
+};
+
+window.deleteProduct = async function(id, name){
+  if(!confirm('Delete "'+name+'"? This cannot be undone.')) return;
+  try{ await fbDb.collection('products').doc(id).delete(); showToast('Deleted'); loadList(); }
+  catch(err){ console.error(err); showToast('Delete failed'); }
+};
+</script>
+</body>
+</html>

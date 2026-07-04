@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Product images: public read (they appear on the storefront),
+    // admin-only write, capped at 5 MB and images only.
+    match /product_images/{file} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.token.admin == true
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Certificates of Analysis: public read, admin-only write.
+    match /coa/{file} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.token.admin == true
+                   && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Payment proofs (store parity): authed upload, admin read.
+    match /payment_proofs/{file} {
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow read:  if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}
