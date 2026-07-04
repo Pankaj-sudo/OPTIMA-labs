@@ -17,7 +17,7 @@
   var FEE_EXPRESS   = 300;
   /* ------------------------------------------------------------------- */
 
-  var overlay, tempOrderId = null, proofFile = null, proofUrl = null;
+  var overlay, tempOrderId = null, proofFile = null, proofUrl = null, proofPath = null;
   var deliveryType = 'standard', currentStep = 1, form = {};
 
   function fbReady() { return window.fbAuth && window.fbDb && window.fbStorage; }
@@ -236,7 +236,7 @@
 
   /* ---------- upload ---------- */
   function resetUpload() {
-    proofFile = null; proofUrl = null;
+    proofFile = null; proofUrl = null; proofPath = null;
     document.getElementById('coDrop').style.display = '';
     document.getElementById('coProg').classList.remove('on');
     document.getElementById('coProg').firstChild.style.width = '0';
@@ -253,28 +253,34 @@
     var bar = prog.firstChild; bar.style.width = '0';
 
     var ref = window.fbStorage.ref('payment_proofs/' + tempOrderId + '_' + file.name);
+    proofPath = ref.fullPath;
     var task = ref.put(file, { contentType: file.type });
     task.on('state_changed',
       function (snap) { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100).toFixed(0) + '%'; },
       function (err) {
         console.error(err);
-        window.showToast('Upload failed. Please try again.');
+        // Surface the real reason so it's actionable (e.g. storage/unauthorized = rules).
+        window.showToast('Upload failed: ' + (err && (err.code || err.message) || 'please try again') + '.');
         resetUpload();
       },
       function () {
-        task.snapshot.ref.getDownloadURL().then(function (url) {
-          proofUrl = url;
-          prog.classList.remove('on');
-          var pv = document.getElementById('coPreview'); pv.classList.add('on');
-          document.getElementById('coThumb').src = url;
-          document.getElementById('coConfirm').disabled = false;
-        });
+        // Upload (write) succeeded — unblock the order immediately using a local
+        // preview. The public download URL is best-effort: if reading it is
+        // blocked by rules, we still submit the order with the storage path so
+        // the admin can retrieve the file. This never leaves the user stuck.
+        prog.classList.remove('on');
+        var pv = document.getElementById('coPreview'); pv.classList.add('on');
+        try { document.getElementById('coThumb').src = URL.createObjectURL(file); } catch (e) {}
+        document.getElementById('coConfirm').disabled = false;
+        task.snapshot.ref.getDownloadURL()
+          .then(function (url) { proofUrl = url; document.getElementById('coThumb').src = url; })
+          .catch(function (e) { console.warn('getDownloadURL blocked; storing path instead', e); proofUrl = null; });
       });
   }
 
   /* ---------- confirm / write order ---------- */
   function confirmOrder() {
-    if (!proofUrl) return;
+    if (!proofPath) return;   // upload must have completed (URL is best-effort)
     var sum = renderSummary();
     var addr = {
       street: document.getElementById('coStreet').value.trim(),
@@ -295,6 +301,7 @@
       subtotal: sum.subtotal,
       total: sum.total,
       payment_proof_url: proofUrl,
+      payment_proof_path: proofPath,
       payment_status: 'pending',
       order_status: 'pending',
       notes: document.getElementById('coNotes').value.trim(),
@@ -311,8 +318,10 @@
       showConfirmation(order, sum);
       window.cartAPI.clear();
     }).catch(function (err) {
-      console.error(err);
-      window.showToast('Could not place the order. Please try again.');
+      console.error('Order write failed:', err);
+      // Surface the real reason: 'permission-denied' = Firestore rules not
+      // deployed; 'unavailable'/'not-found' = Firestore not enabled.
+      window.showToast('Could not place the order: ' + (err && (err.code || err.message) || 'try again') + '.');
       document.getElementById('coLoading').classList.remove('on');
       document.getElementById('coConfirm').style.display = '';
       document.getElementById('coBack').style.display = '';
