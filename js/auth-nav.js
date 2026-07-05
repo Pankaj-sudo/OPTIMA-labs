@@ -21,7 +21,12 @@
     });
   }
 
-  function render(user) {
+  function adminGear() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.2M12 18.8V21M4.6 7.2l1.6 1M17.8 15.8l1.6 1M3 12h2.2M18.8 12H21M4.6 16.8l1.6-1M17.8 8.2l1.6-1"/></svg>';
+  }
+
+  function render(user, isAdmin) {
     var el = document.getElementById('navAuth');
     if (!el) return;
 
@@ -35,11 +40,17 @@
       ? '<img src="' + user.photoURL + '" alt="" referrerpolicy="no-referrer">'
       : '<span class="nav-avatar-ini">' + (user.displayName || user.email || 'U').charAt(0).toUpperCase() + '</span>';
 
-    el.innerHTML =
+    // Admin dashboard shortcut — only rendered for users with the admin claim.
+    var adminLink = isAdmin
+      ? '<a class="nav-admin" href="admin.html" title="Admin dashboard">' + adminGear() + '<span>Admin</span></a>'
+      : '';
+
+    el.innerHTML = adminLink +
       '<button class="nav-avatar" id="navAvatarBtn" type="button" aria-label="Account">' + avatar + '</button>' +
       '<div class="nav-menu" id="navMenu">' +
         '<div class="nav-menu-name">' + (user.displayName || 'Signed in') + '</div>' +
         '<div class="nav-menu-email">' + (user.email || '') + '</div>' +
+        (isAdmin ? '<a class="nav-menu-admin" href="admin.html">Admin dashboard →</a>' : '') +
         '<button class="nav-menu-out" id="navSignOut" type="button">Sign out</button>' +
       '</div>';
 
@@ -54,11 +65,19 @@
     });
   }
 
+  // Resolve the admin custom claim, then render (falls back to non-admin on error).
+  function renderWithClaim(user) {
+    if (!user) { render(null, false); return; }
+    user.getIdTokenResult().then(function (tok) {
+      render(user, !!(tok.claims && tok.claims.admin));
+    }).catch(function () { render(user, false); });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var el = document.getElementById('navAuth');
     if (!el) return;
     if (!window.fbAuth) { el.style.display = 'none'; return; } // Firebase not available: hide gracefully
-    render(null);                                // show "Sign in" instantly, no async gap
-    window.fbAuth.onAuthStateChanged(render);    // upgrade to avatar once auth resolves
+    render(null, false);                                 // show "Sign in" instantly, no async gap
+    window.fbAuth.onAuthStateChanged(renderWithClaim);   // upgrade to avatar (+ Admin if claim) once auth resolves
   });
 })();
