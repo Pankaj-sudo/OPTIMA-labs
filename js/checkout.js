@@ -66,16 +66,16 @@
           '<div class="co-title">Delivery Details</div>' +
           '<div class="co-sub">Where should we deliver your order?</div>' +
           '<div class="co-grid">' +
-            fld('coName', 'Full Name', 'text', 'full', 'Juana Dela Cruz') +
-            fld('coEmail', 'Email', 'email', 'full', 'you@email.com') +
-            fld('coPhone', 'Phone Number', 'tel', 'full', '+63 9XX XXX XXXX', 'Use +63XXXXXXXXXX or 09XXXXXXXXX') +
-            fld('coStreet', 'Street Address', 'text', 'full', 'House no., street') +
-            fld('coBarangay', 'Barangay', 'text', '', 'Barangay') +
-            fld('coCity', 'City / Municipality', 'text', '', 'City') +
-            fld('coProvince', 'Province', 'text', '', 'Province') +
-            fld('coZip', 'ZIP Code', 'text', '', '0000') +
+            fld('coName', 'Full Name', 'text', 'full', 'Juana Dela Cruz', '', 'name') +
+            fld('coEmail', 'Email', 'email', 'full', 'you@email.com', '', 'email') +
+            fld('coPhone', 'Phone Number', 'tel', 'full', '+63 9XX XXX XXXX', 'Use +63XXXXXXXXXX or 09XXXXXXXXX', 'tel', 'tel') +
+            fld('coStreet', 'Street Address', 'text', 'full', 'House no., street', '', 'address-line1') +
+            fld('coBarangay', 'Barangay', 'text', '', 'Barangay', '', 'address-line2') +
+            fld('coCity', 'City / Municipality', 'text', '', 'City', '', 'address-level2') +
+            fld('coProvince', 'Province', 'text', '', 'Province', '', 'address-level1') +
+            fld('coZip', 'ZIP Code', 'text', '', '0000', '', 'postal-code', 'numeric') +
           '</div>' +
-          '<div class="co-delivery">' +
+          '<div class="co-delivery" role="radiogroup" aria-label="Delivery method">' +
             dcard('standard', '📦 Standard Shipping', '3–5 business days', 'Free on ₱2,500+ · else ₱150') +
             dcard('express', '⚡ Express Shipping', '1–2 business days', '₱300') +
           '</div>' +
@@ -158,15 +158,19 @@
     '</div>';
   }
 
-  function fld(id, label, type, extra, ph, hint) {
+  function fld(id, label, type, extra, ph, hint, ac, inputmode) {
     return '<div class="co-field ' + (extra || '') + '" data-for="' + id + '">' +
-      '<label for="' + id + '">' + label + ' <span class="req">*</span></label>' +
-      '<input id="' + id + '" type="' + type + '" placeholder="' + (ph || '') + '" autocomplete="off">' +
-      '<span class="co-err">' + (hint || 'This field is required') + '</span>' +
+      '<label for="' + id + '">' + label + ' <span class="req" aria-hidden="true">*</span></label>' +
+      '<input id="' + id + '" type="' + type + '" placeholder="' + (ph || '') + '"' +
+        (ac ? ' autocomplete="' + ac + '"' : '') +
+        (inputmode ? ' inputmode="' + inputmode + '"' : '') +
+        ' aria-required="true" aria-describedby="' + id + '-err">' +
+      '<span class="co-err" id="' + id + '-err" role="alert">' + (hint || 'This field is required') + '</span>' +
     '</div>';
   }
   function dcard(val, title, sub, meta) {
-    return '<div class="co-dcard' + (val === 'standard' ? ' sel' : '') + '" data-type="' + val + '">' +
+    return '<div class="co-dcard' + (val === 'standard' ? ' sel' : '') + '" data-type="' + val + '"' +
+        ' role="radio" tabindex="0" aria-checked="' + (val === 'standard' ? 'true' : 'false') + '">' +
       '<div class="co-dradio"></div>' +
       '<div class="co-dmain"><div class="co-dtitle">' + title + '</div><div class="co-dsub">' + sub + '</div></div>' +
       '<div class="co-dmeta">' + meta + '</div>' +
@@ -215,23 +219,25 @@
   }
 
   /* ---------- validation ---------- */
+  var REQUIRED = ['coName', 'coEmail', 'coPhone', 'coStreet', 'coBarangay', 'coCity', 'coProvince', 'coZip'];
   function invalid(id, on) {
     document.querySelector('[data-for="' + id + '"]').classList.toggle('invalid', on);
   }
-  function validateStep1() {
-    var ok = true;
-    var reqd = ['coName', 'coStreet', 'coBarangay', 'coCity', 'coProvince', 'coZip'];
-    reqd.forEach(function (id) {
-      var bad = !document.getElementById(id).value.trim();
-      invalid(id, bad); if (bad) ok = false;
+  function fieldValid(id) {
+    var v = (document.getElementById(id).value || '').trim();
+    if (id === 'coEmail') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    if (id === 'coPhone') return /^(\+63|0)[0-9]{10}$/.test(v.replace(/[\s-]/g, ''));
+    return !!v;
+  }
+  function validateStep1(focusFirst) {
+    var firstBad = null;
+    REQUIRED.forEach(function (id) {
+      var bad = !fieldValid(id);
+      invalid(id, bad);
+      if (bad && !firstBad) firstBad = id;
     });
-    var email = document.getElementById('coEmail').value.trim();
-    var emailBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    invalid('coEmail', emailBad); if (emailBad) ok = false;
-    var phone = document.getElementById('coPhone').value.replace(/[\s-]/g, '');
-    var phoneBad = !/^(\+63|0)[0-9]{10}$/.test(phone);
-    invalid('coPhone', phoneBad); if (phoneBad) ok = false;
-    return ok;
+    if (firstBad && focusFirst) document.getElementById(firstBad).focus(); // jump to first error
+    return !firstBad;
   }
 
   /* ---------- upload ---------- */
@@ -400,22 +406,39 @@
       }).catch(function () { window.showToast('Sign-in failed. Please try again.'); });
     });
 
+    function selectDelivery(card) {
+      deliveryType = card.dataset.type;
+      overlay.querySelectorAll('.co-dcard').forEach(function (c) {
+        c.classList.remove('sel'); c.setAttribute('aria-checked', 'false');
+      });
+      card.classList.add('sel'); card.setAttribute('aria-checked', 'true');
+      renderSummary();
+    }
     overlay.querySelectorAll('.co-dcard').forEach(function (card) {
-      card.addEventListener('click', function () {
-        deliveryType = card.dataset.type;
-        overlay.querySelectorAll('.co-dcard').forEach(function (c) { c.classList.remove('sel'); });
-        card.classList.add('sel');
-        renderSummary();
+      card.addEventListener('click', function () { selectDelivery(card); });
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectDelivery(card); }
       });
     });
 
     document.getElementById('coToPay').addEventListener('click', function () {
-      if (validateStep1()) { renderSummary(); setStep(2); }
+      if (validateStep1(true)) { renderSummary(); setStep(2); }
       else {
         var b = this; b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 420);
         window.showToast('Please complete the highlighted fields.');
       }
     });
+
+    // Inline validation: flag format errors on blur (only if the field has
+    // content, so we don't nag empty fields early); clear the error as the
+    // user corrects it. Full check still runs on submit.
+    REQUIRED.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('blur', function () { if (el.value.trim()) invalid(id, !fieldValid(id)); });
+      el.addEventListener('input', function () { invalid(id, false); });
+    });
+
     document.getElementById('coBack').addEventListener('click', function () { setStep(1); });
 
     var drop = document.getElementById('coDrop');

@@ -26,17 +26,17 @@
         '<div class="detail-info">' +
           '<div class="cat">' + product.category + '</div>' +
           '<h1>' + product.name + '</h1>' +
-          '<div class="detail-price" id="detailPrice">' + fmtPHP(selected.price) + '</div>' +
+          '<div class="detail-price" id="detailPrice" aria-live="polite">' + fmtPHP(selected.price) + '</div>' +
           '<p class="detail-desc">' + (product.description || '') + '</p>' +
-          '<div class="opt-label">Select strength</div>' +
-          '<div class="dose-options" id="doseOptions">' +
+          '<div class="opt-label" id="doseLabel">Select strength</div>' +
+          '<div class="dose-options" id="doseOptions" role="group" aria-labelledby="doseLabel">' +
             opts.map(function (o, i) {
-              return '<button class="dose-opt' + (i === 0 ? ' active' : '') + '" data-i="' + i + '">' +
+              return '<button class="dose-opt' + (i === 0 ? ' active' : '') + '" data-i="' + i + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' +
                 '<span>' + o.mg + '</span><span class="dp">' + fmtPHP(o.price) + '</span></button>';
             }).join('') +
           '</div>' +
           '<div class="qty-row">' +
-            '<div class="qty"><button id="qMinus" aria-label="Decrease">−</button><span id="qVal">1</span><button id="qPlus" aria-label="Increase">+</button></div>' +
+            '<div class="qty"><button id="qMinus" type="button" aria-label="Decrease quantity">−</button><span id="qVal" aria-live="polite">1</span><button id="qPlus" type="button" aria-label="Increase quantity">+</button></div>' +
             (product.inStock === false ? '<span style="color:var(--ink-soft);font-weight:600;">Currently out of stock</span>' : '') +
           '</div>' +
           '<div class="detail-actions">' +
@@ -60,8 +60,10 @@
     document.querySelectorAll('#doseOptions .dose-opt').forEach(function (b) {
       b.addEventListener('click', function () {
         selected = opts[+b.dataset.i];
-        document.querySelectorAll('#doseOptions .dose-opt').forEach(function (x) { x.classList.remove('active'); });
-        b.classList.add('active');
+        document.querySelectorAll('#doseOptions .dose-opt').forEach(function (x) {
+          x.classList.remove('active'); x.setAttribute('aria-pressed', 'false');
+        });
+        b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
         document.getElementById('detailPrice').textContent = fmtPHP(selected.price);
       });
     });

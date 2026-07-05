@@ -38,7 +38,7 @@
         '<div class="card-foot">' +
           '<span class="price">' + (multi ? '<span class="from">from</span>' : '') + fmtPHP(lowest) + '</span>' +
         '</div>' +
-        '<span class="btn btn-primary btn-sm card-cta btn-block">View & Add to Cart</span>' +
+        '<span class="btn btn-primary btn-sm card-cta btn-block">' + (p.inStock ? 'View Product' : 'Out of stock') + '</span>' +
       '</div>' +
     '</a>';
   }
@@ -55,10 +55,20 @@
       grid.innerHTML = '<div class="empty">' +
         '<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>' +
         '<h3>Nothing here just yet</h3>' +
-        '<p>No products match your search. Try another name or category.</p></div>';
+        '<p>No products match your search. Try another name or category.</p>' +
+        '<button class="btn btn-ghost btn-sm" id="resetFilters" style="margin-top:20px;">Show all products</button></div>';
+      var rb = document.getElementById('resetFilters');
+      if (rb) rb.addEventListener('click', resetFilters);
       return;
     }
     grid.innerHTML = list.map(cardHTML).join('');
+  }
+
+  function resetFilters() {
+    state.cat = 'All'; state.q = '';
+    if (searchEl) searchEl.value = '';
+    renderTabs();
+    apply();
   }
 
   function renderTabs() {

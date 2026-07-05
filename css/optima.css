@@ -59,12 +59,14 @@ img,svg{ max-width:100%; }
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   padding:13px 26px; border-radius:var(--radius-pill); text-decoration:none;
   font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; border:none;
-  transition:background .3s ease, transform .3s ease, box-shadow .3s ease, color .3s ease;
+  touch-action:manipulation; /* removes the 300ms tap delay on mobile */
+  transition:background .25s ease, transform .18s ease, box-shadow .25s ease, color .25s ease;
 }
 .btn-primary{ background:var(--clay); color:#fff; box-shadow:0 14px 30px -14px rgba(169,106,88,.55); }
 .btn-primary:hover{ background:var(--clay-deep); transform:translateY(-1px); }
 .btn-ghost{ background:transparent; color:var(--espresso); border:1px solid rgba(169,106,88,.45); }
 .btn-ghost:hover{ background:rgba(192,141,128,.1); }
+.btn:active{ transform:scale(.97); } /* tactile press feedback */
 .btn-sm{ padding:10px 18px; font-size:13.5px; }
 .btn-block{ width:100%; }
 .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
@@ -157,6 +159,24 @@ img,svg{ max-width:100%; }
 .tab:hover{ border-color:var(--clay); color:var(--clay-deep); }
 .tab.active{ background:var(--clay); border-color:var(--clay); color:#fff; }
 
+/* Visible keyboard focus for all interactive elements (a11y) */
+.tab:focus-visible,.card:focus-visible,.btn:focus-visible,.nav-cart:focus-visible,
+.nav-links a:focus-visible,.nav-signin:focus-visible,.nav-avatar:focus-visible,.dose-opt:focus-visible,
+.qty button:focus-visible,.drawer-close:focus-visible,.cart-item-controls button:focus-visible,
+.cart-remove:focus-visible,.nav-menu-out:focus-visible,.co-close:focus-visible{
+  outline:2px solid var(--clay); outline-offset:2px;
+}
+.search input:focus-visible{ outline:none; } /* already has a ring */
+
+/* Mobile: filter tabs become a clean horizontal-scroll strip instead of clipping */
+@media (max-width:600px){
+  .tabs{ flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; padding-bottom:6px; }
+  .tabs::-webkit-scrollbar{ height:3px; }
+  .tabs::-webkit-scrollbar-thumb{ background:rgba(183,154,107,.4); border-radius:3px; }
+  .tab{ flex:none; scroll-snap-align:start; min-height:44px; display:inline-flex; align-items:center; } /* 44px touch target */
+}
+.tab{ touch-action:manipulation; }
+
 .result-count{ margin-top:22px; font-size:13.5px; color:var(--ink-soft); }
 
 /* ---------- Product grid & cards ---------- */
@@ -169,9 +189,11 @@ img,svg{ max-width:100%; }
 .card{
   background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-soft);
   display:flex; flex-direction:column; overflow:hidden; text-decoration:none; color:inherit;
-  transition:transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s ease;
+  touch-action:manipulation;
+  transition:transform .3s cubic-bezier(.22,.61,.36,1), box-shadow .3s ease;
 }
 .card:hover{ transform:translateY(-6px); box-shadow:var(--shadow-lift); }
+.card:active{ transform:scale(.985); } /* press feedback on tap */
 .card.out{ opacity:.62; }
 .card-art{
   position:relative; aspect-ratio:4/3; display:flex; align-items:center; justify-content:center;
@@ -309,7 +331,10 @@ img,svg{ max-width:100%; }
 }
 .toast.show{ opacity:1; visibility:visible; transform:translate(-50%,0); }
 .toast .dot{ width:8px; height:8px; border-radius:50%; background:var(--champagne); }
-@media (prefers-reduced-motion:reduce){ .toast{ transition:opacity .2s ease; } .card,.card:hover{ transition:none; } }
+@media (prefers-reduced-motion:reduce){
+  .toast{ transition:opacity .2s ease; }
+  .card,.card:hover,.card:active,.btn,.btn:hover,.btn:active,.btn-primary:hover{ transition:none; transform:none; }
+}
 
 /* ---------- Footer ---------- */
 .site-footer{ background:var(--espresso); color:#EFE5DF; padding:56px 0 36px; margin-top:auto; }
@@ -487,6 +512,20 @@ img,svg{ max-width:100%; }
 @keyframes coShake{ 0%,100%{ transform:none; } 20%,60%{ transform:translateX(-7px); } 40%,80%{ transform:translateX(7px); } }
 .co-back{ display:inline-block; margin-top:16px; background:none; border:none; color:var(--ink-soft); font-size:13px; cursor:pointer; }
 .co-back:hover{ color:var(--clay-deep); }
+
+/* Press feedback + tap-delay removal for checkout & detail controls */
+.co-btn,.co-dcard,.co-google,.dose-opt,.qty button,.co-drop{ touch-action:manipulation; }
+.co-btn{ transition:background .25s ease, transform .18s ease; }
+.co-btn:active:not(:disabled),.co-google:active{ transform:scale(.98); }
+.co-dcard:active{ transform:scale(.99); }
+.dose-opt{ transition:border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .18s ease; }
+.dose-opt:active{ transform:scale(.97); }
+.qty button{ transition:background .18s ease, transform .12s ease; }
+.qty button:active{ transform:scale(.88); }
+.co-google:focus-visible,.co-dcard:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+@media (prefers-reduced-motion:reduce){
+  .co-btn,.co-btn:active,.co-dcard:active,.dose-opt,.dose-opt:active,.qty button:active,.co-google:active{ transition:none; transform:none; }
+}
 
 /* payment 2-col */
 .co-pay{ display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:22px; align-items:start; }

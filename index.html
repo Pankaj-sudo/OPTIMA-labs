@@ -35,6 +35,7 @@
     font-size:16.5px;
     line-height:1.65;
     -webkit-font-smoothing:antialiased;
+    overflow-x:clip; /* guard against any horizontal overflow (sticky header unaffected) */
   }
   h1,h2,h3{ font-family:var(--serif); font-weight:400; line-height:1.12; letter-spacing:-0.01em; text-wrap:balance; }
   p{ text-wrap:pretty; }
@@ -63,7 +64,8 @@
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
     padding:13px 26px; border-radius:999px; text-decoration:none;
     font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer;
-    transition:background .3s ease, transform .3s ease, box-shadow .3s ease;
+    touch-action:manipulation;
+    transition:background .25s ease, transform .18s ease, box-shadow .25s ease;
   }
   .btn-primary{
     background:var(--clay); color:#fff;
@@ -75,6 +77,8 @@
     border:1px solid rgba(169,106,88,.45);
   }
   .btn-ghost:hover{ background:rgba(192,141,128,.1); }
+  .btn:active{ transform:scale(.97); }
+  @media (prefers-reduced-motion:reduce){ .btn,.btn:hover,.btn:active{ transition:none; transform:none; } }
   .nav .btn{ padding:11px 22px; font-size:14px; }
   .nav-toggle{ display:none; }
 
@@ -100,6 +104,67 @@
   .nav-menu-out{ margin-top:12px; width:100%; padding:9px; border-radius:999px; border:1px solid rgba(169,106,88,.4); background:transparent; color:var(--clay-deep); font-weight:700; font-size:13px; cursor:pointer; }
   .nav-menu-out:hover{ background:rgba(192,141,128,.1); }
   @media (max-width:560px){ .nav-signin span{ display:none; } .nav-signin{ padding:9px; } }
+
+  /* ---------- Track My Order ---------- */
+  #track{ background:linear-gradient(180deg, var(--porcelain), var(--rosewater) 40%, var(--porcelain)); }
+  .track-head{ text-align:center; max-width:560px; margin:0 auto; }
+  .track-eyebrow{ font-size:12px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:var(--clay-deep); }
+  .track-head h2{ font-size:clamp(32px,4vw,48px); margin-top:12px; }
+  .track-form{ max-width:480px; margin:34px auto 0; display:flex; flex-direction:column; gap:14px; }
+  .track-form input{
+    width:100%; padding:14px 16px; border-radius:14px; border:1px solid rgba(183,154,107,.4);
+    background:#fff; font-family:var(--sans); font-size:15px; color:var(--espresso); transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .track-form input:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(192,141,128,.15); }
+  .track-form input::placeholder{ color:#a9998f; }
+  .track-btn{
+    width:100%; padding:15px; border:none; border-radius:999px; background:var(--clay); color:#fff;
+    font-family:var(--serif); font-size:16px; cursor:pointer; transition:background .25s ease;
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .track-btn:hover{ background:var(--clay-deep); }
+  .track-btn:disabled{ opacity:.7; cursor:progress; }
+  .track-spin{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; animation:tspin .7s linear infinite; display:none; }
+  .track-btn.loading .track-spin{ display:inline-block; }
+  @keyframes tspin{ to{ transform:rotate(360deg); } }
+
+  .track-result{ max-width:620px; margin:36px auto 0; }
+  .track-summary{
+    background:#fff; border-radius:18px; box-shadow:var(--shadow-soft); padding:20px 24px; margin-bottom:22px;
+    display:flex; flex-wrap:wrap; gap:8px 24px; align-items:baseline;
+  }
+  .track-summary .who{ font-family:var(--serif); font-size:20px; color:var(--espresso); }
+  .track-summary .meta{ font-size:14px; color:var(--ink-soft); }
+  .track-summary .meta b{ color:var(--clay-deep); }
+  .timeline{ background:#fff; border-radius:18px; box-shadow:var(--shadow-soft); padding:12px 26px; }
+  .tl-step{ display:flex; gap:18px; padding:16px 0; position:relative; }
+  .tl-dot{
+    width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+    border:2px solid rgba(183,154,107,.45); background:#fff; color:var(--ink-soft); font-size:15px; position:relative; z-index:1;
+  }
+  .tl-step.done .tl-dot{ background:var(--clay); border-color:var(--clay); color:#fff; }
+  .tl-step.active .tl-dot{ border-color:var(--clay); color:var(--clay); box-shadow:0 0 0 0 rgba(169,106,88,.5); animation:tlPulse 1.8s ease-out infinite; }
+  @keyframes tlPulse{ 0%{ box-shadow:0 0 0 0 rgba(169,106,88,.45); } 70%{ box-shadow:0 0 0 12px rgba(169,106,88,0); } 100%{ box-shadow:0 0 0 0 rgba(169,106,88,0); } }
+  .tl-step:not(:last-child)::before{
+    content:""; position:absolute; left:16px; top:44px; bottom:-16px; width:2px; background:rgba(183,154,107,.4);
+  }
+  .tl-step.done:not(:last-child)::before{ background:var(--clay); }
+  .tl-step:not(.done):not(:last-child)::before{ background:repeating-linear-gradient(180deg, rgba(183,154,107,.5) 0 4px, transparent 4px 9px); }
+  .tl-body{ padding-top:5px; }
+  .tl-name{ font-weight:700; font-size:15.5px; color:var(--espresso); }
+  .tl-step:not(.done):not(.active) .tl-name{ color:var(--ink-soft); }
+  .tl-time{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
+  .tl-track{ font-size:13px; color:var(--clay-deep); margin-top:4px; font-weight:600; }
+
+  .track-error{
+    max-width:480px; margin:34px auto 0; text-align:center; background:var(--rosewater);
+    border:1px solid rgba(169,106,88,.4); border-radius:16px; padding:30px 26px;
+  }
+  .track-error h3{ font-family:var(--serif); font-size:22px; color:var(--espresso); }
+  .track-error p{ font-size:14px; color:var(--ink-soft); margin-top:8px; }
+  .track-error a{ color:var(--clay-deep); font-weight:600; }
+  .track-error .btn-ghost{ margin-top:18px; }
+  .track-hidden{ display:none; }
 
   /* ---------- Hero ---------- */
   .hero{
@@ -294,9 +359,26 @@
 
   @media (max-width:719px){
     .nav-links{ display:none; }
-    #stage{ height:500px; max-width:400px; }
+    #stage{ height:440px; max-width:360px; }
     .hero-inner{ padding-top:40px; }
-    .hero h1{ font-size:clamp(34px,10vw,44px); }
+    .hero h1{ font-size:clamp(32px,9vw,44px); overflow-wrap:break-word; }
+    /* Bound the copy column to the line width so its text wraps instead of
+       overflowing the viewport (flex-basis 360 was keeping lines too wide). */
+    .hero-copy{ flex-basis:100%; min-width:0; max-width:100%; }
+    .hero-sub{ max-width:100%; }
+  }
+  /* Nav declutter on small screens: the hero has its own "Shop the system"
+     CTA right below, so the duplicate nav button is redundant and was the
+     source of the header overflow at ~375px. */
+  @media (max-width:640px){
+    .nav{ gap:14px; }
+    header .nav > .btn-primary{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+  /* focus-visible for hero/nav interactive elements (a11y) */
+  .btn:focus-visible,.nav-links a:focus-visible,.hero-badge:focus-visible,
+  .nav-signin:focus-visible,.track-form input:focus-visible,.track-btn:focus-visible{
+    outline:2px solid var(--clay); outline-offset:2px;
   }
 </style>
 </head>
@@ -315,6 +397,7 @@
     <nav class="nav-links" aria-label="Primary">
       <a href="products.html">The Collection</a>
       <a href="#ritual">The Ritual</a>
+      <a href="#track">Track Order</a>
       <a href="#quality">Quality</a>
     </nav>
     <div class="nav-auth" id="navAuth"></div>
@@ -700,6 +783,34 @@
 </section>
 
 <!-- ============ CLOSING ============ -->
+<!-- ============ TRACK MY ORDER ============ -->
+<section id="track">
+  <div class="wrap">
+    <div class="track-head">
+      <div class="track-eyebrow">Order Tracking</div>
+      <h2>Where's My Order?</h2>
+    </div>
+
+    <form class="track-form" id="trackForm" autocomplete="off">
+      <input type="text" id="trackId" placeholder="OL-XXXXXX" aria-label="Order ID" style="text-transform:uppercase;">
+      <input type="email" id="trackEmail" placeholder="Email used at checkout" aria-label="Email">
+      <button type="submit" class="track-btn" id="trackBtn"><span class="track-spin"></span><span id="trackBtnText">Track Order</span></button>
+    </form>
+
+    <div class="track-result track-hidden" id="trackResult">
+      <div class="track-summary" id="trackSummary"></div>
+      <div class="timeline" id="trackTimeline"></div>
+    </div>
+
+    <div class="track-error track-hidden" id="trackError">
+      <h3>🔍 Order Not Found</h3>
+      <p>Check your Order ID and the email address you used at checkout, then try again.</p>
+      <p>Need help? <a href="mailto:care@optimalabs.co">Email us</a> or message us on Facebook.</p>
+      <button class="btn btn-ghost" id="trackRetry" type="button">Try Again</button>
+    </div>
+  </div>
+</section>
+
 <section class="closing">
   <div class="wrap">
     <h2>Where science meets your ritual.</h2>
@@ -922,6 +1033,99 @@
     tl.to(vial, { y: '+=10', duration: 2.8, ease: 'sine.inOut', yoyo: true, repeat: -1 }, '+=0.3')
       .to(pen,  { y: '+=13', duration: 3.4, ease: 'sine.inOut', yoyo: true, repeat: -1 }, '<0.6');
   });
+})();
+</script>
+
+<!-- Track My Order -->
+<script>
+(function () {
+  var form = document.getElementById('trackForm');
+  if (!form) return;
+  var idEl = document.getElementById('trackId');
+  var emailEl = document.getElementById('trackEmail');
+  var btn = document.getElementById('trackBtn');
+  var btnText = document.getElementById('trackBtnText');
+  var result = document.getElementById('trackResult');
+  var errorEl = document.getElementById('trackError');
+  var summary = document.getElementById('trackSummary');
+  var timeline = document.getElementById('trackTimeline');
+
+  idEl.addEventListener('input', function () { idEl.value = idEl.value.toUpperCase(); });
+  document.getElementById('trackRetry').addEventListener('click', function () {
+    errorEl.classList.add('track-hidden'); result.classList.add('track-hidden');
+    idEl.focus();
+  });
+
+  // Prefill email once auth resolves (rules require the signed-in email to match).
+  if (window.fbAuth) window.fbAuth.onAuthStateChanged(function (u) {
+    if (u && u.email && !emailEl.value) emailEl.value = u.email;
+  });
+
+  function fmtTs(ts) {
+    if (!ts) return '';
+    var d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  function money(n) { return window.fmtPHP ? window.fmtPHP(n) : '₱' + Number(n || 0).toFixed(2); }
+  function loading(on) {
+    btn.disabled = on; btn.classList.toggle('loading', on);
+    btnText.textContent = on ? 'Tracking…' : 'Track Order';
+  }
+  function showError() { result.classList.add('track-hidden'); errorEl.classList.remove('track-hidden'); }
+
+  function render(o) {
+    errorEl.classList.add('track-hidden');
+    summary.innerHTML =
+      '<span class="who">Order for ' + (o.customer_name || 'you') + '</span>' +
+      '<span class="meta">Total <b>' + money(o.total) + '</b></span>' +
+      '<span class="meta">' + (o.delivery_type === 'express' ? 'Express' : 'Standard') + ' delivery</span>';
+
+    var os = (o.order_status || 'pending').toLowerCase();
+    var ps = (o.payment_status || 'pending').toLowerCase();
+    var steps = [
+      { name: 'Order Placed', done: true, time: fmtTs(o.created_at) },
+      { name: 'Payment Verified', done: ps === 'verified', time: ps === 'verified' ? fmtTs(o.updated_at) : '' },
+      { name: 'Processing', done: ['processing', 'shipped', 'delivered'].indexOf(os) > -1, time: '' },
+      { name: 'Shipped', done: ['shipped', 'delivered'].indexOf(os) > -1, time: '', track: o.tracking_number },
+      { name: 'Delivered', done: os === 'delivered', time: '' }
+    ];
+    var firstPending = steps.findIndex(function (s) { return !s.done; });
+    timeline.innerHTML = steps.map(function (s, i) {
+      var cls = s.done ? 'done' : (i === firstPending ? 'active' : '');
+      return '<div class="tl-step ' + cls + '">' +
+        '<div class="tl-dot">' + (s.done ? '✓' : (i + 1)) + '</div>' +
+        '<div class="tl-body"><div class="tl-name">' + s.name + '</div>' +
+        (s.time ? '<div class="tl-time">' + s.time + '</div>' : '') +
+        (s.track && s.done ? '<div class="tl-track">Tracking #: ' + s.track + ' — via J&T / LBC / Ninja Van</div>' : '') +
+        '</div></div>';
+    }).join('');
+    result.classList.remove('track-hidden');
+  }
+
+  async function lookup() {
+    var id = idEl.value.trim().toUpperCase();
+    var email = emailEl.value.trim().toLowerCase();
+    if (!id || !email) { showError(); return; }
+    if (!window.fbDb || !window.fbAuth) { showError(); return; }
+    loading(true);
+    try {
+      // Our rules require the requester to be signed in as the order's email.
+      if (!window.fbAuth.currentUser) {
+        await window.fbAuth.signInWithPopup(window.fbGoogle);
+      }
+      var snap = await window.fbDb.collection('orders')
+        .where('order_id', '==', id)
+        .where('customer_email', '==', email)
+        .limit(1).get();
+      if (snap.empty) { showError(); }
+      else { render(snap.docs[0].data()); }
+    } catch (e) {
+      console.error('track lookup failed', e);
+      showError();
+    } finally { loading(false); }
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); lookup(); });
 })();
 </script>
 
