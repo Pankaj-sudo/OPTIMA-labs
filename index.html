@@ -44,40 +44,58 @@
   .wrap{ width:min(1160px, calc(100% - 48px)); margin-inline:auto; }
 
   /* ---------- Nav ---------- */
+  /* Transparent over the hero video at the top; blur + hairline border.
+     Scrolling past ~48px transitions it to a warm ivory bar. */
   header{
-    position:sticky; top:0; z-index:40;
-    background:rgba(250,246,243,.86);
-    backdrop-filter:blur(14px);
-    border-bottom:1px solid rgba(183,154,107,.22);
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    /* Transparent glass over the hero video — a hint of warm smoke, not a white bar */
+    background:rgba(35,28,24,.22);
+    -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
+    border-bottom:1px solid rgba(255,255,255,.10);
+    transition:background .3s ease, box-shadow .3s ease, border-color .3s ease;
   }
-  .nav{ display:flex; align-items:center; gap:32px; padding:18px 0; }
-  .logo{ display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--espresso); }
+  .nav{ display:flex; align-items:center; gap:38px; padding:22px 0; transition:padding .45s ease; }
+  .logo{ display:flex; align-items:center; gap:10px; text-decoration:none; color:#FBF3EC; transition:color .45s ease; }
   .logo b{ font-family:var(--serif); font-weight:400; font-size:19px; letter-spacing:.04em; }
-  .logo b span{ color:var(--clay); }
-  .nav-links{ display:flex; gap:28px; margin-left:auto; }
+  .logo b span{ color:#EBBBA7; transition:color .45s ease; }
+  .nav-links{ display:flex; gap:36px; margin-left:auto; }
   .nav-links a{
-    color:var(--ink-soft); text-decoration:none; font-size:14.5px; font-weight:600;
+    color:rgba(245,233,224,.9); text-decoration:none; font-size:14.5px; font-weight:500; letter-spacing:.012em;
     transition:color .25s ease;
   }
-  .nav-links a:hover{ color:var(--clay-deep); }
+  .nav-links a:hover{ color:#fff; }
+
+  /* Scrolled state: warm ivory, soft shadow, reduced height, dark text */
+  header.scrolled{
+    background:#F8F4EF;
+    -webkit-backdrop-filter:blur(18px) saturate(1.05); backdrop-filter:blur(18px) saturate(1.05);
+    border-bottom-color:rgba(183,154,107,.2);
+    box-shadow:0 8px 30px -14px rgba(58,46,41,.34);
+  }
+  header.scrolled .nav{ padding:12px 0; }
+  header.scrolled .logo{ color:var(--espresso); }
+  header.scrolled .logo b span{ color:var(--clay); }
+  header.scrolled .nav-links a{ color:var(--ink-soft); }
+  header.scrolled .nav-links a:hover{ color:var(--clay-deep); }
   .btn{
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:13px 26px; border-radius:999px; text-decoration:none;
+    padding:15px 28px; border-radius:999px; text-decoration:none;
     font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer;
     touch-action:manipulation;
-    transition:background .25s ease, transform .18s ease, box-shadow .25s ease;
+    transition:background .3s ease, transform .3s ease, box-shadow .3s ease, filter .3s ease;
   }
   .btn-primary{
     background:var(--clay); color:#fff;
     box-shadow:0 14px 30px -14px rgba(169,106,88,.55);
   }
-  .btn-primary:hover{ background:var(--clay-deep); transform:translateY(-1px); }
+  .btn-primary:hover{ background:var(--clay-deep); transform:translateY(-2px); filter:brightness(1.05); box-shadow:0 20px 40px -14px rgba(169,106,88,.62); }
   .btn-ghost{
     background:transparent; color:var(--espresso);
     border:1px solid rgba(169,106,88,.45);
   }
-  .btn-ghost:hover{ background:rgba(192,141,128,.1); }
-  .btn:active{ transform:scale(.97); }
+  .btn-ghost:hover{ background:rgba(192,141,128,.1); transform:translateY(-2px); box-shadow:0 14px 30px -16px rgba(58,46,41,.4); }
+  .btn:active{ transform:translateY(0) scale(.98); }
+  .nav .btn{ padding:11px 22px; } /* keep the nav CTA compact */
   @media (prefers-reduced-motion:reduce){ .btn,.btn:hover,.btn:active{ transition:none; transform:none; } }
   .nav .btn{ padding:11px 22px; font-size:14px; }
   .nav-toggle{ display:none; }
@@ -189,22 +207,22 @@
   .hero-video{
     position:absolute; inset:0; width:100%; height:100%;
     object-fit:cover; z-index:0; pointer-events:none;
-    /* gentle grade toward the warm Rose & Porcelain tone; brightness tamed so
-       the video's occasional bright/white frames never wash out the text */
-    filter:saturate(1.03) contrast(1.02) brightness(.84);
+    /* Cinematic grade: warmer tones, deeper blacks, gently lowered highlights
+       while preserving natural skin tones. */
+    filter:brightness(.82) contrast(1.08) saturate(1.08) sepia(.06);
     opacity:0; transition:opacity 1.1s ease;
   }
   .hero-video.ready{ opacity:1; } /* fade the video in over the poster — no flash */
   .hero-overlay{
     position:absolute; inset:0; z-index:1; pointer-events:none;
     background:
-      /* readability scrim — heavier over the text (left) side, holds contrast
-         even on the video's brightest frames while still revealing the footage */
-      linear-gradient(100deg, rgba(24,15,10,.86) 0%, rgba(24,15,10,.66) 42%, rgba(24,15,10,.44) 70%, rgba(24,15,10,.26) 100%),
-      /* warm brand tint so it reads espresso, not flat black */
-      linear-gradient(180deg, rgba(58,38,30,.22), rgba(36,24,18,.34)),
-      /* seamless fade into the porcelain page below — no visible edge */
-      linear-gradient(180deg, transparent 60%, rgba(250,246,243,.35) 86%, var(--porcelain) 100%);
+      /* cinematic left→right gradient (text side darkest, footage revealed at right) */
+      linear-gradient(90deg, rgba(18,15,12,.72) 0%, rgba(18,15,12,.52) 35%, rgba(18,15,12,.22) 65%, rgba(18,15,12,0) 100%),
+      /* subtle vignette keeping focus on the model's face */
+      radial-gradient(130% 130% at 50% 42%, transparent 52%, rgba(10,7,5,.5) 100%),
+      /* gentle fade toward the page — kept light near the base so the frosted
+         panel below still reveals live video texture through its blur */
+      linear-gradient(180deg, transparent 74%, rgba(250,246,243,.14) 92%, rgba(250,246,243,.32) 100%);
   }
   .hero-inner{
     position:relative; z-index:2; display:flex;
@@ -224,35 +242,70 @@
     box-shadow:0 0 8px rgba(183,154,107,.85);
   }
   .hero h1{
-    margin-top:26px;
-    font-size:clamp(38px, 5vw, 64px);
+    margin-top:34px;                 /* more breathing room around the headline */
+    font-size:clamp(38px, 5vw, 64px); line-height:1.08;
     color:#FBF3EC; text-shadow:0 2px 34px rgba(0,0,0,.38);
   }
   .hero h1 em{ font-style:italic; color:#EBBBA7; } /* light rose emphasis */
   .hero-sub{
-    margin-top:22px; font-size:17.5px; color:rgba(245,233,224,.88); max-width:52ch;
+    margin-top:26px; font-size:17.5px; line-height:1.72; color:rgba(245,233,224,.88); max-width:52ch;
     text-shadow:0 1px 22px rgba(0,0,0,.34);
   }
-  .hero-ctas{ display:flex; flex-wrap:wrap; gap:14px; margin-top:34px; }
+  .hero-ctas{ display:flex; flex-wrap:wrap; gap:16px; margin-top:42px; }
   /* ghost CTA needs light treatment over the dark video */
   .hero .btn-ghost{ color:#FBF3EC; border-color:rgba(255,255,255,.42); }
   .hero .btn-ghost:hover{ background:rgba(255,255,255,.14); }
   .hero-trust{
-    display:flex; flex-wrap:wrap; gap:14px 30px; margin-top:38px;
+    display:flex; flex-wrap:wrap; gap:14px 30px; margin-top:44px;
     font-size:14px; font-weight:600; color:rgba(245,233,224,.86);
   }
   .hero-trust li{ list-style:none; display:flex; align-items:center; gap:9px; }
   .hero-trust i{ width:6px; height:6px; border-radius:50%; background:var(--rose); flex:none; box-shadow:0 0 6px rgba(192,141,128,.7); }
-  @media (prefers-reduced-motion:reduce){ .hero-video{ transition:none; } }
 
-  /* ---------- Trust strip ---------- */
-  .strip{ border-block:1px solid rgba(183,154,107,.28); background:rgba(255,255,255,.5); }
-  .strip-inner{
-    display:flex; flex-wrap:wrap; justify-content:space-between; gap:18px 40px;
-    padding:26px 0; font-size:14.5px; color:var(--ink-soft);
+  /* Staggered entrance: badge → headline → paragraph → buttons → trust */
+  @keyframes heroRise{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+  .hero-badge,.hero h1,.hero-sub,.hero-ctas,.hero-trust{
+    opacity:0; animation:heroRise .55s cubic-bezier(.22,.61,.36,1) both;
   }
-  .strip-inner div{ display:flex; align-items:center; gap:12px; }
-  .strip-inner strong{ color:var(--espresso); font-weight:700; }
+  .hero-badge{ animation-delay:.10s; }
+  .hero h1{     animation-delay:.24s; }
+  .hero-sub{    animation-delay:.40s; }
+  .hero-ctas{   animation-delay:.54s; }
+  .hero-trust{  animation-delay:.68s; }
+  @media (prefers-reduced-motion:reduce){
+    .hero-video{ transition:none; }
+    .hero-badge,.hero h1,.hero-sub,.hero-ctas,.hero-trust{ opacity:1; animation:none; }
+  }
+
+  /* ---------- Trust strip (floating frosted-glass panel) ---------- */
+  /* Lifts up over the base of the hero so the video keeps flowing underneath
+     and shows through the blur — one continuous experience, no hard seam. */
+  .strip{
+    position:relative; z-index:3;
+    width:min(1160px, calc(100% - 40px));
+    margin:-64px auto 0;
+    padding:56px clamp(28px,4vw,52px) 46px;
+    background:rgba(255,255,255,.10);
+    -webkit-backdrop-filter:blur(30px) saturate(1.25); backdrop-filter:blur(30px) saturate(1.25);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.12);
+  }
+  .strip .wrap{ width:100%; }
+  .strip-inner{
+    display:flex; flex-wrap:wrap; align-items:center;
+    gap:22px 0; font-size:15px; color:var(--ink-soft);
+  }
+  .strip-inner div{
+    flex:1 1 240px; display:flex; align-items:center; gap:14px;
+    padding:2px 30px;
+  }
+  .strip-inner div:first-child{ padding-left:0; }
+  .strip-inner div:last-child{ padding-right:0; }
+  /* soft warm dividers separating the three trust points */
+  .strip-inner div + div{ border-left:1px solid rgba(183,154,107,.24); }
+  .strip-inner svg{ width:24px; height:24px; flex:none; }
+  .strip-inner strong{ color:var(--espresso); font-weight:700; letter-spacing:-.005em; }
   .strip svg{ flex:none; }
 
   /* ---------- Sections ---------- */
@@ -374,11 +427,17 @@
     .hero h1{ font-size:clamp(32px,9vw,44px); overflow-wrap:break-word; }
     .hero-copy{ min-width:0; max-width:100%; }
     .hero-sub{ max-width:100%; }
-    /* Stronger scrim on narrow screens where copy spans full width */
+    /* Full-width copy on mobile → top-down scrim (readability) + vignette + fade */
     .hero-overlay{ background:
-      linear-gradient(180deg, rgba(24,15,10,.7) 0%, rgba(24,15,10,.55) 45%, rgba(24,15,10,.4) 70%, rgba(24,15,10,.2) 100%),
-      linear-gradient(180deg, rgba(58,38,30,.25), rgba(36,24,18,.4)),
-      linear-gradient(180deg, transparent 66%, rgba(250,246,243,.4) 88%, var(--porcelain) 100%); }
+      linear-gradient(180deg, rgba(18,15,12,.66) 0%, rgba(18,15,12,.5) 46%, rgba(18,15,12,.34) 72%, rgba(18,15,12,.14) 100%),
+      radial-gradient(140% 120% at 50% 40%, transparent 55%, rgba(10,7,5,.5) 100%),
+      linear-gradient(180deg, transparent 72%, rgba(250,246,243,.16) 90%, rgba(250,246,243,.34) 100%); }
+    /* Panel stacks on mobile: vertical dividers → horizontal, tighter overlap */
+    .strip{ margin-top:-40px; padding:34px 26px 30px; border-radius:20px; }
+    .strip-inner div{ flex:1 1 100%; padding:12px 0; }
+    .strip-inner div:first-child{ padding-top:0; }
+    .strip-inner div:last-child{ padding-bottom:0; }
+    .strip-inner div + div{ border-left:none; border-top:1px solid rgba(183,154,107,.22); }
   }
   /* Nav declutter on small screens: the hero has its own "Shop the system"
      CTA right below, so the duplicate nav button is redundant and was the
@@ -723,6 +782,17 @@
     var sorted = window.PRODUCTS_DATA.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
     grid.innerHTML = sorted.map(cardHTML).join('');
   });
+})();
+</script>
+
+<!-- Navbar scroll state: transparent over the hero → warm ivory once scrolled -->
+<script>
+(function () {
+  var header = document.querySelector('header');
+  if (!header) return;
+  var onScroll = function () { header.classList.toggle('scrolled', window.scrollY > 60); };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
 })();
 </script>
 
