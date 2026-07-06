@@ -6,9 +6,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Products: public read, admin-only write.
+    // Products: public may read only ACTIVE (published) products — the storefront
+    // queries where('status','==','active'). Admins read/write everything,
+    // including hidden and archived items. Only admins can create/edit/delete.
     match /products/{productId} {
-      allow read:  if true;
+      allow read:  if isAdmin() || resource.data.status == 'active';
       allow write: if isAdmin();
     }
 

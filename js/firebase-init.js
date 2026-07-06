@@ -13,8 +13,8 @@
   };
 
   /* ---- Constants ----
-     Note: admin.html/admin-products.html gate access on the Firebase custom
-     claim { admin: true }, not on this list — it's informational only.
+     Note: admin.html gates access on the Firebase custom claim
+     { admin: true }, not on this list — it's informational only.
      Grant/revoke the claim via functions/index.js → setAdminClaim. */
   window.ADMIN_EMAILS = ['jen.llames.fb@gmail.com', 'pankaj.ydv707@gmail.com'];
   window.CATEGORIES  = [

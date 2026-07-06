@@ -15,10 +15,64 @@
   var FREE_SHIP_MIN = 2500;                            // free standard shipping at/above this subtotal
   var FEE_STANDARD  = 150;
   var FEE_EXPRESS   = 300;
+  var PAYMENT_METHOD = 'GCash';                        // shown on the confirmation + order message
+  var VIBER_NUMBER   = '+639761831910';               // support Viber (change here only)
+  var WHATSAPP_NUMBER = '+639761831910';              // support WhatsApp (change here only)
   /* ------------------------------------------------------------------- */
 
+  var VB_DIGITS = VIBER_NUMBER.replace(/[^0-9]/g, '');
+  var WA_DIGITS = WHATSAPP_NUMBER.replace(/[^0-9]/g, '');
+  var VIBER_ICO = '<svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true"><path fill="#fff" d="M16.9 3c-3.8 0-7.9.6-9.6 2.1C5.3 6.9 4.8 10.3 4.8 14.5s.5 7.6 2.5 9.4c.8.7 1.9 1.2 3.1 1.6l.02 3.6c0 .5.6.8 1 .45l3.05-3.15c.55.05 1.1.07 1.65.07 3.8 0 7.9-.6 9.6-2.1 2-1.8 2.5-5.2 2.5-9.4s-.5-7.6-2.5-9.4C24-.6 20.7 3 16.9 3z"/><path fill="#6a4fe0" d="M21 18.3c-.32-.2-.66-.22-.95.02l-.62.72c-.2.2-.5.18-.5.18-2.62-.72-3.34-3.36-3.34-3.36s-.02-.3.18-.5l.72-.62c.24-.29.22-.63.02-.95a10 10 0 0 0-.9-1.18c-.16-.18-.44-.2-.64-.06-.5.32-.98.74-1.28 1.24-.18.3-.2.68-.08 1.02.28.78.86 1.94 1.92 3 1.06 1.06 2.22 1.64 3 1.92.34.12.72.1 1.02-.08.5-.3.92-.78 1.24-1.28.14-.2.12-.48-.06-.64-.36-.34-.76-.66-1.18-.9z"/></svg>';
+  var WA_ICO = '<svg viewBox="0 0 24 24" width="20" height="20" fill="#fff" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
   var overlay, tempOrderId = null, proofFile = null, proofUrl = null, proofPath = null;
-  var deliveryType = 'standard', currentStep = 1, form = {};
+  var deliveryType = 'standard', currentStep = 1, form = {}, orderMsg = '';
+
+  function amt(n) { return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+  // Build the formatted order message from the actual order + summary (no hardcoding).
+  function buildOrderMessage(order, sum) {
+    var a = order.delivery_address || {};
+    var addr = [a.street, a.barangay, a.city, a.province, a.zip].filter(Boolean).join(', ');
+    var L = [
+      'Hello OPTIMA Labs 👋', '',
+      'I have successfully placed an order through your website and would like to confirm my purchase.', '',
+      'Order Number:', '#' + order.order_id, '',
+      'Customer Name:', order.customer_name, '',
+      'Contact Number:', order.customer_phone, '',
+      'Email:', order.customer_email, '',
+      'Shipping Address:', addr, '',
+      'Products Ordered:', ''
+    ];
+    (sum.items || []).forEach(function (i) {
+      L.push(i.qty + ' × ' + i.name + (i.dosage ? ' · ' + i.dosage : ''));
+      L.push('Price: ' + amt(i.price));
+      L.push('');
+    });
+    L.push(
+      'Subtotal:', amt(sum.subtotal), '',
+      'Shipping Fee:', (sum.fee === 0 ? 'FREE' : amt(sum.fee)), '',
+      'Total:', amt(sum.total), '',
+      'Payment Method:', PAYMENT_METHOD, '',
+      'Additional Notes:', (order.notes || '—'), '',
+      'Thank you. I look forward to your order confirmation.'
+    );
+    return L.join('\n');
+  }
+
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).catch(fb);
+    return fb();
+    function fb() {
+      try { var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch (e) {}
+      return Promise.resolve();
+    }
+  }
+  function loadBtn(b, on) {
+    if (on) { b.dataset.html = b.innerHTML; b.classList.add('loading'); b.disabled = true; b.innerHTML = '<span>Opening…</span>'; }
+    else { if (b.dataset.html) b.innerHTML = b.dataset.html; b.classList.remove('loading'); b.disabled = false; }
+  }
 
   function fbReady() { return window.fbAuth && window.fbDb && window.fbStorage; }
   function money(n) { return window.fmtPHP(n); }
@@ -132,22 +186,48 @@
           '<button class="co-back" id="coBack">&larr; Back to delivery</button>' +
         '</div>' +
 
-        /* STEP 3 — confirmed */
+        /* STEP 3 — confirmed (premium order confirmation) */
         '<div class="co-panel" id="coStep3">' +
-          '<div class="co-confirm">' +
+          '<div class="co-confirm oc-confirm">' +
             '<svg class="co-check-svg" viewBox="0 0 96 96"><circle class="ring" cx="48" cy="48" r="42"/><path class="tick" d="M30 49 L43 62 L67 36"/></svg>' +
             '<div class="co-cfade">' +
-              '<h2>Order Confirmed!</h2>' +
+              '<h2>Order Successfully Placed!</h2>' +
               '<div class="thanks" id="coThanks"></div>' +
-              '<div class="co-idbox"><div class="idlbl">Order ID</div>' +
-                '<div class="idval"><span id="coOrderId"></span><button class="co-copy" id="coCopy">Copy</button></div>' +
+
+              '<div class="oc-meta">' +
+                '<div class="oc-mi"><span class="l">Order Number</span><span class="v"><span id="coOrderId"></span><button class="co-copy" id="coCopy" aria-label="Copy order number">Copy</button></span></div>' +
+                '<div class="oc-mi"><span class="l">Order Date</span><span class="v" id="coOrderDate"></span></div>' +
+                '<div class="oc-mi"><span class="l">Processing</span><span class="v" id="coProcTime"></span></div>' +
               '</div>' +
-              '<div class="co-items" id="coItems3"></div>' +
-              '<div class="co-total" style="max-width:320px;margin:12px auto 0;"><span class="lbl">Total paid</span><span class="amt" id="coTotal3"></span></div>' +
-              '<div class="co-info" id="coInfo"></div>' +
+
+              '<div class="oc-card">' +
+                '<div class="oc-ct">Order Summary</div>' +
+                '<div class="co-items" id="coItems3"></div>' +
+                '<hr class="co-hr">' +
+                '<div class="co-row"><span>Subtotal</span><span id="coSub3"></span></div>' +
+                '<div class="co-row"><span>Shipping</span><span id="coFee3"></span></div>' +
+                '<div class="co-total" style="margin-top:8px;"><span class="lbl">Total</span><span class="amt" id="coTotal3"></span></div>' +
+              '</div>' +
+
+              '<div class="oc-two">' +
+                '<div class="oc-card"><div class="oc-ct">Shipping</div><div class="oc-kv" id="coShip3"></div></div>' +
+                '<div class="oc-card"><div class="oc-ct">Payment</div><div class="oc-kv" id="coPay3"></div></div>' +
+              '</div>' +
+
+              '<div class="oc-faster">' +
+                '<h3>Need faster order confirmation?</h3>' +
+                '<p>You can instantly send your order details to us via Viber or WhatsApp. This helps us verify and process your order even faster.</p>' +
+                '<div class="oc-contact">' +
+                  '<button class="oc-cbtn oc-viber" id="coViber" type="button">' + VIBER_ICO + '<span>Send Order to Viber</span></button>' +
+                  '<button class="oc-cbtn oc-wa" id="coWhatsapp" type="button">' + WA_ICO + '<span>Send Order to WhatsApp</span></button>' +
+                '</div>' +
+                '<button class="oc-copyorder" id="coCopyOrder" type="button">📋 Copy Order Details</button>' +
+              '</div>' +
+
               '<div class="co-disc">OPTIMA Labs products are supplied for personal wellness use under professional guidance. Statements have not been evaluated by the FDA. All sales are final.</div>' +
               '<div class="co-actions">' +
                 '<button class="co-btn" style="margin-top:0;" id="coShop">Continue Shopping</button>' +
+                '<button class="btn btn-ghost" id="coOrders" style="display:none;">View My Orders</button>' +
                 '<button class="btn btn-ghost" id="coDone">Close</button>' +
               '</div>' +
             '</div>' +
@@ -335,15 +415,41 @@
   }
 
   function showConfirmation(order, sum) {
-    document.getElementById('coThanks').textContent = 'Thank you, ' + (order.customer_name.split(' ')[0] || 'friend') + '!';
-    document.getElementById('coOrderId').textContent = order.order_id;
-    document.getElementById('coItems3').innerHTML = document.getElementById('coItems').innerHTML;
-    document.getElementById('coTotal3').textContent = money(sum.total);
+    var first = (order.customer_name || '').split(' ')[0] || 'friend';
+    var a = order.delivery_address || {};
+    var addr = [a.street, a.barangay, a.city, a.province, a.zip].filter(Boolean).join(', ');
     var eta = order.delivery_type === 'express' ? '1–2 business days' : '3–5 business days';
-    document.getElementById('coInfo').innerHTML =
-      '📧 Confirmation sent to ' + order.customer_email + '<br>' +
-      '⏱ Payment verification: within 2–4 hours<br>' +
-      '📦 Estimated delivery: ' + eta;
+
+    document.getElementById('coThanks').textContent =
+      'Thank you, ' + first + '! Your order has been received and is being prepared.';
+    document.getElementById('coOrderId').textContent = order.order_id;
+    document.getElementById('coOrderDate').textContent =
+      new Date().toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('coProcTime').textContent = '2–4 hours';
+
+    document.getElementById('coItems3').innerHTML = document.getElementById('coItems').innerHTML;
+    document.getElementById('coSub3').textContent = money(sum.subtotal);
+    document.getElementById('coFee3').innerHTML = sum.fee === 0 ? '<span class="free">FREE 🎉</span>' : money(sum.fee);
+    document.getElementById('coTotal3').textContent = money(sum.total);
+
+    document.getElementById('coShip3').innerHTML =
+      '<div><b>' + order.customer_name + '</b></div>' +
+      '<div>' + order.customer_phone + '</div>' +
+      '<div>' + addr + '</div>' +
+      '<div class="oc-muted">' + (order.delivery_type === 'express' ? '⚡ Express' : '📦 Standard') + ' · ' + eta + '</div>';
+    document.getElementById('coPay3').innerHTML =
+      '<div><b>' + PAYMENT_METHOD + '</b></div>' +
+      '<div class="oc-muted">Screenshot uploaded ✓</div>' +
+      '<div class="oc-muted">Status: Pending verification</div>' +
+      '<div class="oc-muted">📧 ' + order.customer_email + '</div>';
+
+    // Build the shareable order message from the real order data.
+    orderMsg = buildOrderMessage(order, sum);
+
+    // Show "View My Orders" only when signed in (links to order tracking).
+    var ordersBtn = document.getElementById('coOrders');
+    if (ordersBtn) ordersBtn.style.display = (window.fbAuth && window.fbAuth.currentUser) ? '' : 'none';
+
     setStep(3);
   }
 
@@ -466,6 +572,28 @@
     });
     document.getElementById('coShop').addEventListener('click', function () { window.location.href = 'products.html'; });
     document.getElementById('coDone').addEventListener('click', close);
+    document.getElementById('coOrders').addEventListener('click', function () { window.location.href = 'index.html#track'; });
+
+    // Viber: personal chats can't be pre-filled, so copy the order details,
+    // tell the user, then open the Viber conversation.
+    document.getElementById('coViber').addEventListener('click', function () {
+      var b = this; loadBtn(b, true);
+      copyText(orderMsg);
+      window.showToast('Your order details have been copied. Paste the message into Viber and press Send.');
+      setTimeout(function () { window.location.href = 'viber://chat?number=%2B' + VB_DIGITS; loadBtn(b, false); }, 350);
+    });
+
+    // WhatsApp: officially supports a pre-filled message via wa.me.
+    document.getElementById('coWhatsapp').addEventListener('click', function () {
+      var b = this; loadBtn(b, true);
+      var url = 'https://wa.me/' + WA_DIGITS + '?text=' + encodeURIComponent(orderMsg);
+      setTimeout(function () { window.open(url, '_blank', 'noopener'); loadBtn(b, false); }, 300);
+    });
+
+    // Copy the full formatted order message.
+    document.getElementById('coCopyOrder').addEventListener('click', function () {
+      copyText(orderMsg); window.showToast('Order details copied successfully.');
+    });
   }
 
   /* ---------- init ---------- */

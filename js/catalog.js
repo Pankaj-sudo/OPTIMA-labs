@@ -19,14 +19,16 @@
   }
 
   function cardHTML(p) {
-    var lowest = Math.min.apply(null, (p.dosageOptions || [{ price: p.price }]).map(function (o) { return o.price; }));
     var multi = (p.dosageOptions || []).length > 1;
     var badges = '';
-    if (p.verified)  badges += '<span class="badge badge-verified">✓ Verified</span>';
-    if (!p.inStock)  badges += '<span class="badge badge-oos">Out of stock</span>';
+    if (p.saleActive)                       badges += '<span class="badge badge-sale">Sale</span>';
+    if (p.stockStatus === 'out_of_stock')   badges += '<span class="badge badge-oos">Out of stock</span>';
+    else if (p.stockStatus === 'low_stock') badges += '<span class="badge badge-low">Low stock</span>';
+    if (p.verified)                         badges += '<span class="badge badge-verified">✓ Verified</span>';
     var art = p.imageURL
       ? '<img src="' + p.imageURL + '" alt="' + p.name + '" loading="lazy">'
       : window.vialArt(p);
+    var compare = p.compareAtPrice ? '<s class="price-was">' + fmtPHP(p.compareAtPrice) + '</s>' : '';
 
     return '<a class="card' + (p.inStock ? '' : ' out') + '" href="product.html?slug=' + encodeURIComponent(p.slug) + '">' +
       '<div class="card-art">' + (badges ? '<div class="card-badges">' + badges + '</div>' : '') + art + '</div>' +
@@ -36,7 +38,7 @@
         '<div class="card-desc">' + (p.description || '') + '</div>' +
         '<div class="card-dose-row">' + doseTags(p.dosageOptions) + '</div>' +
         '<div class="card-foot">' +
-          '<span class="price">' + (multi ? '<span class="from">from</span>' : '') + fmtPHP(lowest) + '</span>' +
+          '<span class="price' + (p.saleActive ? ' on-sale' : '') + '">' + (multi ? '<span class="from">from</span>' : '') + fmtPHP(p.displayPrice) + compare + '</span>' +
         '</div>' +
         '<span class="btn btn-primary btn-sm card-cta btn-block">' + (p.inStock ? 'View Product' : 'Out of stock') + '</span>' +
       '</div>' +
@@ -87,14 +89,17 @@
   }
 
   function load() {
-    ALL = window.PRODUCTS_DATA.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
     // Deep-link a category via ?cat=
     var cat = new URLSearchParams(location.search).get('cat');
     if (cat && window.CATEGORIES.indexOf(cat) > -1) {
       state.cat = cat;
       renderTabs();
     }
-    apply();
+    // Live from Firestore (single source of truth) — re-renders on any admin change.
+    window.ShopData.subscribe(function (list) {
+      ALL = list;
+      apply();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function () {

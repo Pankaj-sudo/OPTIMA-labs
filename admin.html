@@ -161,6 +161,58 @@
     .main{ margin-left:0; }
     .hamburger{ display:block; }
   }
+
+  /* ===== Products management ===== */
+  .p-thumb{ width:42px; height:42px; border-radius:8px; object-fit:cover; background:var(--surface-3); display:block; }
+  .p-thumb.ph{ display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:16px; }
+  .p-name{ font-weight:700; color:var(--white); }
+  .p-sku{ font-size:11px; color:var(--muted); font-family:ui-monospace,monospace; margin-top:2px; }
+  .st-badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:10.5px; font-weight:800; letter-spacing:.03em; white-space:nowrap; }
+  .st-in_stock{ background:rgba(90,162,119,.18); color:#7FCB9C; }
+  .st-low_stock{ background:rgba(199,154,58,.2); color:#E1BC6A; }
+  .st-out_of_stock{ background:rgba(194,91,77,.2); color:#E08B7F; }
+  .st-active{ background:rgba(90,162,119,.16); color:#7FCB9C; }
+  .st-hidden{ background:rgba(124,110,98,.26); color:#BCA99A; }
+  .st-archived{ background:rgba(194,91,77,.16); color:#E08B7F; }
+  .price-strike{ color:var(--muted); text-decoration:line-through; font-size:11.5px; margin-left:5px; }
+  .price-sale{ color:var(--rose); font-weight:700; }
+  .qty-step{ display:inline-flex; align-items:center; gap:6px; }
+  .qty-step button{ width:24px; height:24px; border-radius:6px; border:1px solid var(--border-2); background:var(--surface-2); color:var(--gold); font-size:15px; line-height:1; }
+  .qty-step button:hover{ background:var(--gold-soft); }
+  .qty-step .qv{ min-width:30px; text-align:center; font-weight:700; color:var(--white); }
+  .row-act{ display:flex; gap:6px; white-space:nowrap; }
+  .row-act button{ padding:6px 10px; font-size:12px; }
+  .icon-btn{ background:var(--surface-2); border:1px solid var(--border); color:var(--ink); border-radius:7px; padding:6px 9px; font-size:12px; }
+  .icon-btn:hover{ border-color:var(--gold); color:var(--gold); }
+  .icon-btn.danger:hover{ border-color:var(--red); color:#E08B7F; }
+  .cbx{ width:16px; height:16px; accent-color:var(--gold); cursor:pointer; }
+  .bulkbar{ display:none; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface-2); border:1px solid var(--border-2); border-radius:10px; padding:10px 14px; margin-bottom:14px; }
+  .bulkbar.show{ display:flex; }
+  .bulkbar .sel-n{ font-weight:700; color:var(--gold); }
+  .bulkbar .sep{ flex:1; }
+  /* modal wide + grid */
+  .modal.lg{ max-width:920px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+  .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 14px; }
+  /* dosage rows */
+  .dose-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; margin-bottom:8px; }
+  .dose-row input{ margin:0; background:var(--surface); border:1px solid var(--border); border-radius:9px; color:var(--ink); padding:10px 12px; font-size:13.5px; }
+  .dose-row input:focus{ outline:none; border-color:var(--gold); }
+  .dose-row .del{ background:var(--surface-2); border:1px solid var(--border); color:var(--muted); border-radius:7px; width:34px; height:38px; font-size:16px; }
+  .dose-row .del:hover{ color:#E08B7F; border-color:var(--red); }
+  /* image manager */
+  .dropzone{ border:1.5px dashed var(--border-2); border-radius:10px; padding:20px; text-align:center; color:var(--muted); font-size:13px; transition:.2s; cursor:pointer; }
+  .dropzone.drag{ border-color:var(--gold); background:var(--gold-soft); color:var(--gold); }
+  .img-grid{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .img-tile{ position:relative; width:88px; height:88px; border-radius:9px; overflow:hidden; border:2px solid var(--border); background:var(--surface-3); }
+  .img-tile img{ width:100%; height:100%; object-fit:cover; }
+  .img-tile.featured{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(201,154,107,.35); }
+  .img-tile .feat-tag{ position:absolute; top:0; left:0; background:var(--gold); color:#231a12; font-size:9px; font-weight:800; padding:2px 6px; border-bottom-right-radius:7px; letter-spacing:.04em; }
+  .img-tools{ position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:center; gap:3px; padding:3px; background:rgba(16,12,10,.82); opacity:0; transition:.15s; }
+  .img-tile:hover .img-tools{ opacity:1; }
+  .img-tools button{ background:none; border:none; color:#fff; font-size:12px; padding:2px 4px; line-height:1; }
+  .img-tools button:hover{ color:var(--gold); }
+  .inv-warn{ font-size:12px; color:#E1BC6A; margin-top:4px; }
 </style>
 </head>
 <body>
@@ -248,15 +300,56 @@
 
     <!-- PRODUCTS -->
     <section class="page" id="page-products">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
         <div class="muted" id="prodCount">Loading…</div>
         <button class="btn-gold" onclick="OL.editProduct()">+ Add Product</button>
       </div>
+
+      <div class="filters">
+        <input class="search" id="pfSearch" placeholder="Search name, SKU, brand…">
+        <select id="pfCat"><option value="All">All categories</option></select>
+        <select id="pfStock">
+          <option value="all">All stock</option>
+          <option value="in_stock">In stock</option>
+          <option value="low_stock">Low stock</option>
+          <option value="out_of_stock">Out of stock</option>
+        </select>
+        <select id="pfStatus">
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="hidden">Hidden</option>
+          <option value="archived">Archived</option>
+        </select>
+        <select id="pfSort">
+          <option value="name">Name A–Z</option>
+          <option value="name_desc">Name Z–A</option>
+          <option value="price_asc">Price low→high</option>
+          <option value="price_desc">Price high→low</option>
+          <option value="stock_asc">Stock low→high</option>
+          <option value="updated">Recently updated</option>
+        </select>
+        <button class="link-btn" onclick="OL.pClearFilters()">Clear</button>
+      </div>
+
+      <div class="bulkbar" id="pBulk">
+        <span class="sel-n" id="pSelN">0 selected</span>
+        <button class="btn-ghost" onclick="OL.pBulk('publish')">Publish</button>
+        <button class="btn-ghost" onclick="OL.pBulk('hide')">Hide</button>
+        <button class="btn-ghost" onclick="OL.pBulk('archive')">Archive</button>
+        <button class="btn-ghost" onclick="OL.pBulk('stock')">Set stock…</button>
+        <span class="sep"></span>
+        <button class="btn-red" onclick="OL.pBulk('delete')">Delete</button>
+      </div>
+
       <div class="card" style="padding:8px 22px 22px;">
         <div class="tbl-wrap"><table>
-          <thead><tr><th></th><th>Name</th><th>Category</th><th>Price (from)</th><th>New</th><th>Verified</th><th>Active</th><th></th></tr></thead>
+          <thead><tr>
+            <th style="width:34px;"><input type="checkbox" class="cbx" id="pSelAll" onchange="OL.pSelectAll(this.checked)"></th>
+            <th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th></th>
+          </tr></thead>
           <tbody id="productsBody"></tbody>
         </table></div>
+        <div class="pager" id="pPager"></div>
       </div>
     </section>
 
@@ -393,25 +486,65 @@
 
 <!-- PRODUCT MODAL -->
 <div class="overlay" id="productModal">
-  <div class="modal sm">
-    <div class="modal-head"><div class="oid" id="pmTitle" style="font-size:22px;">Add Product</div><button class="modal-close" onclick="OL.closeProduct()">✕</button></div>
+  <div class="modal lg">
+    <div class="modal-head">
+      <div><div class="oid" id="pmTitle" style="font-size:22px;">Add Product</div><div class="sub" id="pmSub"></div></div>
+      <button class="modal-close" onclick="OL.closeProduct()">✕</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="pmId">
-      <div class="field"><label>Name</label><input id="pmName"></div>
-      <div class="field"><label>Category</label><select id="pmCat"></select></div>
-      <div class="field"><label>Description</label><textarea id="pmDesc"></textarea></div>
-      <div class="field"><label>Price — “from” (₱)</label><input id="pmPrice" type="number" step="0.01"></div>
-      <div class="field"><label>Product image</label><input type="file" id="pmImage" accept="image/*"><div id="pmImgPrev" style="margin-top:8px;"></div></div>
-      <div style="display:flex;gap:22px;margin:10px 0 18px;flex-wrap:wrap;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><span class="sw"><input type="checkbox" id="pmNew"><span></span></span> New Arrival</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><span class="sw"><input type="checkbox" id="pmVerified" checked><span></span></span> Verified</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><span class="sw"><input type="checkbox" id="pmActive" checked><span></span></span> Active (in stock)</label>
+
+      <div class="sec-t">Basics</div>
+      <div class="grid2">
+        <div class="field"><label>Product Name</label><input id="pmName"></div>
+        <div class="field"><label>Category</label><select id="pmCat"></select></div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <button class="btn-gold" onclick="OL.saveProduct()">Save Product</button>
+      <div class="grid3">
+        <div class="field"><label>Brand</label><input id="pmBrand" placeholder="OPTIMA Labs"></div>
+        <div class="field"><label>SKU</label><input id="pmSku"></div>
+        <div class="field"><label>Weight</label><input id="pmWeight" placeholder="e.g. 10 mg / 2 mL"></div>
+      </div>
+      <div class="field"><label>Short Description (shown on cards)</label><input id="pmShort"></div>
+      <div class="field"><label>Description</label><textarea id="pmDesc"></textarea></div>
+      <div class="field"><label>Tags (comma-separated)</label><input id="pmTags" placeholder="metabolic, weight"></div>
+
+      <div class="sec-t">Pricing</div>
+      <div class="grid3">
+        <div class="field"><label>Compare-at Price (₱)</label><input id="pmCompare" type="number" step="0.01" placeholder="optional"></div>
+        <div class="field"><label>Sale Price (₱)</label><input id="pmSale" type="number" step="0.01" placeholder="optional"></div>
+        <div class="field"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;padding-top:8px;"><span class="sw"><input type="checkbox" id="pmSaleActive"><span></span></span> Sale active</label></div>
+      </div>
+      <label style="font-size:12px;color:var(--muted);font-weight:700;">Strengths / variants (mg · ₱) — the lowest becomes the “from” price</label>
+      <div id="pmDoseRows" style="margin-top:8px;"></div>
+      <button class="btn-ghost" style="padding:7px 14px;" onclick="OL.pmAddDose()">+ Add strength</button>
+
+      <div class="sec-t">Inventory</div>
+      <div class="grid3">
+        <div class="field"><label style="display:flex;align-items:center;gap:8px;"><span class="sw"><input type="checkbox" id="pmTrack" checked onchange="OL.pmSyncStock()"><span></span></span> Track inventory</label></div>
+        <div class="field"><label>Stock Quantity</label><input id="pmQty" type="number" min="0" step="1" oninput="OL.pmSyncStock()"></div>
+        <div class="field"><label>Low-stock threshold</label><input id="pmLow" type="number" min="0" step="1" value="5" oninput="OL.pmSyncStock()"></div>
+      </div>
+      <div class="field" id="pmStockManualWrap" style="display:none;"><label>Stock Status</label>
+        <select id="pmStockStatus"><option value="in_stock">In Stock</option><option value="low_stock">Low Stock</option><option value="out_of_stock">Out of Stock</option></select>
+      </div>
+      <div class="inv-warn" id="pmStockPreview"></div>
+
+      <div class="sec-t">Images</div>
+      <div class="dropzone" id="pmDrop">Drag &amp; drop images here, or click to browse<input type="file" id="pmImage" accept="image/*" multiple hidden></div>
+      <div class="img-grid" id="pmImgGrid"></div>
+      <div class="muted" style="font-size:11.5px;margin-top:6px;">First / starred image is the featured image. Use ◀ ▶ to reorder, ★ to feature, ✕ to remove.</div>
+
+      <div class="sec-t">Visibility</div>
+      <div class="grid3">
+        <div class="field"><label>Status</label><select id="pmStatus"><option value="active">Active (published)</option><option value="hidden">Hidden</option><option value="archived">Archived</option></select></div>
+        <div class="field"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;padding-top:8px;"><span class="sw"><input type="checkbox" id="pmVerified" checked><span></span></span> Verified</label></div>
+        <div class="field"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;padding-top:8px;"><span class="sw"><input type="checkbox" id="pmNew"><span></span></span> New Arrival</label></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn-gold" id="pmSaveBtn" onclick="OL.saveProduct()">Save Product</button>
         <button class="btn-ghost" onclick="OL.closeProduct()">Cancel</button>
       </div>
-      <p class="muted" style="font-size:11.5px;margin-top:12px;">Full dosage-option editing lives in <a href="admin-products.html">admin-products.html</a>. This form manages the card fields + toggles.</p>
     </div>
   </div>
 </div>
@@ -640,69 +773,259 @@ window.OL = (function () {
     catch(e){ toast('Failed: '+e.code); }
   }
 
-  /* ---------- products ---------- */
+  /* ================= PRODUCTS (management dashboard) ================= */
+  var pf = { q:'', cat:'All', stock:'all', status:'all', sort:'name', page:1, per:12 };
+  var psel = {};                 // selected product ids
+  var pmImgs = [], pmDose = [];  // editor working state
+  function svTs(){ return firebase.firestore.FieldValue.serverTimestamp(); }
+  function pdoc(id){ return window.fbDb.collection('products').doc(id); }
+  function lowest(p){ return p.dosageOptions&&p.dosageOptions.length?Math.min.apply(null,p.dosageOptions.map(function(o){return o.price||0;})):(p.price||0); }
+  function effPrice(p){ return (p.saleActive && p.salePrice>0) ? p.salePrice : lowest(p); }
+  function pStock(p){
+    var qty=(typeof p.stockQty==='number')?p.stockQty:null, low=(typeof p.lowStockThreshold==='number')?p.lowStockThreshold:5;
+    if(p.trackInventory!==false && qty!=null) return { qty:qty, low:low, status: qty<=0?'out_of_stock':(qty<=low?'low_stock':'in_stock') };
+    return { qty:qty, low:low, status: p.stockStatus || (p.inStock===false?'out_of_stock':'in_stock') };
+  }
+  var STLBL={ in_stock:'In stock', low_stock:'Low stock', out_of_stock:'Out of stock' };
+
   function loadProducts(){
-    window.fbDb.collection('products').orderBy('name').onSnapshot(function(snap){
+    window.fbDb.collection('products').onSnapshot(function(snap){
       PRODUCTS=snap.docs.map(function(d){ return Object.assign({_id:d.id},d.data()); });
+      // drop selections for products that vanished
+      Object.keys(psel).forEach(function(id){ if(!PRODUCTS.some(function(p){return p._id===id;})) delete psel[id]; });
       renderProducts(); if($('page-arrivals').classList.contains('active')) renderArrivals();
     },function(err){ $('prodCount').textContent='Failed to load products: '+err.code; });
   }
-  function lowest(p){ return p.dosageOptions&&p.dosageOptions.length?Math.min.apply(null,p.dosageOptions.map(function(o){return o.price;})):(p.price||0); }
+
+  function pFiltered(){
+    var q=pf.q.toLowerCase();
+    var list=PRODUCTS.filter(function(p){
+      if(pf.cat!=='All' && p.category!==pf.cat) return false;
+      if(pf.status!=='all' && (p.status||'active')!==pf.status) return false;
+      if(pf.stock!=='all' && pStock(p).status!==pf.stock) return false;
+      if(q){ if(((p.name||'')+' '+(p.sku||'')+' '+(p.brand||'')).toLowerCase().indexOf(q)<0) return false; }
+      return true;
+    });
+    list.sort(function(a,b){
+      switch(pf.sort){
+        case 'name_desc': return b.name.localeCompare(a.name);
+        case 'price_asc': return effPrice(a)-effPrice(b);
+        case 'price_desc': return effPrice(b)-effPrice(a);
+        case 'stock_asc': return (pStock(a).qty==null?1e9:pStock(a).qty)-(pStock(b).qty==null?1e9:pStock(b).qty);
+        case 'updated': return (tsMs(b.updated_at))-(tsMs(a.updated_at));
+        default: return a.name.localeCompare(b.name);
+      }
+    });
+    return list;
+  }
+  function tsMs(t){ var d=tsDate(t); return d?d.getTime():0; }
+
   function renderProducts(){
-    $('prodCount').textContent=PRODUCTS.length+' products';
-    $('productsBody').innerHTML=PRODUCTS.map(function(p){
-      return '<tr><td>'+(p.imageURL?'<img src="'+p.imageURL+'" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">':'<div style="width:40px;height:40px;border-radius:8px;background:var(--surface-3);"></div>')+'</td>'+
-        '<td>'+p.name+'</td><td class="muted">'+p.category+'</td>'+
-        '<td onclick="OL.inlinePrice(this,\''+p._id+'\')" style="cursor:text;">'+money(lowest(p))+'</td>'+
-        '<td>'+sw(p._id,'is_new_arrival',!!p.is_new_arrival)+'</td>'+
-        '<td>'+sw(p._id,'verified',p.verified!==false)+'</td>'+
-        '<td>'+sw(p._id,'inStock',p.inStock!==false)+'</td>'+
-        '<td style="white-space:nowrap;"><button class="btn-ghost" style="padding:6px 10px;" onclick="OL.editProduct(\''+p._id+'\')">Edit</button> '+
-        '<button class="btn-ghost" style="padding:6px 10px;" onclick="OL.delProduct(\''+p._id+'\',\''+(p.name.replace(/\x27/g,''))+'\')">Delete</button></td></tr>';
-    }).join('')||'<tr><td colspan="8" class="empty">No products. Add one, or seed via seed.html.</td></tr>';
+    var list=pFiltered();
+    $('prodCount').textContent=list.length+(list.length===1?' product':' products')+(list.length!==PRODUCTS.length?(' · '+PRODUCTS.length+' total'):'');
+    var pages=Math.ceil(list.length/pf.per)||1; if(pf.page>pages) pf.page=pages;
+    var start=(pf.page-1)*pf.per, view=list.slice(start,start+pf.per);
+    $('productsBody').innerHTML=view.map(rowHTML).join('')||'<tr><td colspan="8" class="empty">No products match these filters.</td></tr>';
+    // pager
+    var ph=''; if(pages>1){ for(var i=1;i<=pages;i++) ph+='<button class="'+(i===pf.page?'active':'')+'" onclick="OL.pGo('+i+')">'+i+'</button>'; }
+    $('pPager').innerHTML=ph;
+    // select-all state
+    var allSel=view.length && view.every(function(p){return psel[p._id];});
+    $('pSelAll').checked=!!allSel;
+    syncBulk();
   }
-  function sw(id,field,on){ return '<label class="sw"><input type="checkbox" '+(on?'checked':'')+' onchange="OL.toggle(\''+id+'\',\''+field+'\',this.checked)"><span></span></label>'; }
-  async function toggle(id,field,val){ try{ await window.fbDb.collection('products').doc(id).update({[field]:val}); toast('Updated'); }catch(e){ toast('Failed: '+e.code); } }
-  function inlinePrice(td,id){
-    if(td.querySelector('input')) return;
-    var cur=lowest(PRODUCTS.find(function(p){return p._id===id;}));
-    td.innerHTML='<input type="number" step="0.01" value="'+cur+'" style="width:90px;background:var(--surface);border:1px solid var(--gold);border-radius:6px;color:var(--ink);padding:5px;">';
-    var inp=td.querySelector('input'); inp.focus();
-    function save(){ var v=parseFloat(inp.value); if(!isNaN(v)){ window.fbDb.collection('products').doc(id).update({price:v}).then(function(){toast('Price updated');}); } td.textContent=money(isNaN(v)?cur:v); }
-    inp.addEventListener('blur',save); inp.addEventListener('keydown',function(e){ if(e.key==='Enter') inp.blur(); });
+  function rowHTML(p){
+    var s=pStock(p), st=p.status||'active', eff=effPrice(p), base=lowest(p);
+    var strike = (p.saleActive&&p.salePrice>0&&base>p.salePrice)?base:((p.compareAtPrice&&p.compareAtPrice>eff)?p.compareAtPrice:null);
+    var img=p.featuredImage||p.imageURL||(p.images&&p.images[0])||'';
+    var thumb=img?'<img class="p-thumb" src="'+img+'" loading="lazy">':'<div class="p-thumb ph">◫</div>';
+    var stepper = (p.trackInventory!==false && s.qty!=null)
+      ? '<span class="qty-step"><button title="-1" onclick="OL.pStockAdj(\''+p._id+'\',-1)">−</button><span class="qv">'+s.qty+'</span><button title="+1" onclick="OL.pStockAdj(\''+p._id+'\',1)">+</button></span> '
+      : '';
+    var archAct = st==='archived'
+      ? '<button class="icon-btn" title="Restore" onclick="OL.setStatus(\''+p._id+'\',\'active\')">Restore</button>'
+      : '<button class="icon-btn" title="Archive" onclick="OL.setStatus(\''+p._id+'\',\'archived\')">Archive</button>';
+    return '<tr>'+
+      '<td><input type="checkbox" class="cbx" '+(psel[p._id]?'checked':'')+' onchange="OL.pSel(\''+p._id+'\',this.checked)"></td>'+
+      '<td>'+thumb+'</td>'+
+      '<td><div class="p-name">'+p.name+'</div>'+(p.sku?'<div class="p-sku">'+p.sku+'</div>':'')+'</td>'+
+      '<td class="muted">'+p.category+'</td>'+
+      '<td><span class="'+(p.saleActive?'price-sale':'')+'">'+money(eff)+'</span>'+(strike?'<span class="price-strike">'+money(strike)+'</span>':'')+'</td>'+
+      '<td>'+stepper+'<span class="st-badge st-'+s.status+'">'+(STLBL[s.status]||s.status)+'</span></td>'+
+      '<td><span class="st-badge st-'+st+'">'+st+'</span></td>'+
+      '<td><div class="row-act"><button class="icon-btn" onclick="OL.editProduct(\''+p._id+'\')">Edit</button>'+
+        '<button class="icon-btn" title="Duplicate" onclick="OL.duplicateProduct(\''+p._id+'\')">Copy</button>'+
+        archAct+
+        '<button class="icon-btn danger" title="Delete" onclick="OL.delProduct(\''+p._id+'\')">✕</button></div></td>'+
+    '</tr>';
   }
+
+  // filters / pagination
+  function pGo(n){ pf.page=n; renderProducts(); }
+  function pClearFilters(){ pf.q='';pf.cat='All';pf.stock='all';pf.status='all';pf.sort='name';pf.page=1;
+    $('pfSearch').value='';$('pfCat').value='All';$('pfStock').value='all';$('pfStatus').value='all';$('pfSort').value='name'; renderProducts(); }
+
+  // selection + bulk
+  function pSel(id,on){ if(on)psel[id]=true; else delete psel[id]; syncBulk(); var v=$('pSelAll'); }
+  function pSelectAll(on){ var view=pFiltered().slice((pf.page-1)*pf.per,(pf.page-1)*pf.per+pf.per); view.forEach(function(p){ if(on)psel[p._id]=true; else delete psel[p._id]; }); renderProducts(); }
+  function syncBulk(){ var n=Object.keys(psel).length; $('pSelN').textContent=n+' selected'; $('pBulk').classList.toggle('show',n>0); }
+  async function pBulk(action){
+    var ids=Object.keys(psel); if(!ids.length) return;
+    if(action==='delete' && !confirm('Delete '+ids.length+' product(s)? This removes them and their images permanently.')) return;
+    var qty=null,low;
+    if(action==='stock'){ var v=prompt('Set stock quantity for '+ids.length+' product(s):','0'); if(v===null)return; qty=Math.max(0,parseInt(v,10)||0); }
+    try{
+      for(var i=0;i<ids.length;i++){ var id=ids[i], p=PRODUCTS.find(function(x){return x._id===id;});
+        if(action==='publish') await pdoc(id).update({status:'active',updated_at:svTs()});
+        else if(action==='hide') await pdoc(id).update({status:'hidden',updated_at:svTs()});
+        else if(action==='archive') await pdoc(id).update({status:'archived',updated_at:svTs()});
+        else if(action==='stock'){ low=(p&&p.lowStockThreshold)||5; var stt=qty<=0?'out_of_stock':(qty<=low?'low_stock':'in_stock'); await pdoc(id).update({stockQty:qty,stockStatus:stt,inStock:qty>0,trackInventory:true,updated_at:svTs()}); }
+        else if(action==='delete') await deleteFull(id);
+      }
+      psel={}; syncBulk(); toast('Applied to '+ids.length+' product(s)');
+    }catch(e){ toast('Bulk failed: '+(e.code||e.message)); }
+  }
+
+  // quick inventory + status
+  async function pStockAdj(id,d){
+    var p=PRODUCTS.find(function(x){return x._id===id;}); if(!p) return;
+    var q=Math.max(0,(typeof p.stockQty==='number'?p.stockQty:0)+d), low=p.lowStockThreshold||5;
+    var st=q<=0?'out_of_stock':(q<=low?'low_stock':'in_stock');
+    try{ await pdoc(id).update({stockQty:q,stockStatus:st,inStock:q>0,trackInventory:true,updated_at:svTs()}); }catch(e){ toast('Failed: '+(e.code||e.message)); }
+  }
+  async function setStatus(id,status){ try{ await pdoc(id).update({status:status,updated_at:svTs()}); toast('Status → '+status); }catch(e){ toast('Failed: '+(e.code||e.message)); } }
+  async function toggle(id,field,val){ try{ await pdoc(id).update({[field]:val,updated_at:svTs()}); toast('Updated'); }catch(e){ toast('Failed: '+e.code); } }
+
+  // duplicate / delete (with image cleanup)
+  async function duplicateProduct(id){
+    var p=PRODUCTS.find(function(x){return x._id===id;}); if(!p) return;
+    var copy=Object.assign({},p); delete copy._id;
+    copy.name=p.name+' (Copy)'; copy.slug=window.slugify(copy.name);
+    var newId=copy.slug; if(PRODUCTS.some(function(x){return x._id===newId;})) newId=newId+'-'+Date.now().toString(36);
+    copy.slug=newId; copy.status='hidden'; copy.is_new_arrival=false;
+    copy.created_at=svTs(); copy.updated_at=svTs();
+    try{ await pdoc(newId).set(copy); toast('Duplicated → "'+copy.name+'" (hidden)'); }catch(e){ toast('Failed: '+(e.code||e.message)); }
+  }
+  async function deleteFull(id){
+    var p=PRODUCTS.find(function(x){return x._id===id;});
+    if(p){ var imgs=(p.images&&p.images.length?p.images:[p.featuredImage||p.imageURL]).filter(Boolean);
+      for(var i=0;i<imgs.length;i++){ try{ await window.fbStorage.refFromURL(imgs[i]).delete(); }catch(e){} } }
+    await pdoc(id).delete();
+  }
+  function delProduct(id){
+    var p=PRODUCTS.find(function(x){return x._id===id;}); var name=p?p.name:'this product';
+    if(!confirm('Delete "'+name+'"? This permanently removes the product and its images.')) return;
+    deleteFull(id).then(function(){ delete psel[id]; toast('Deleted'); }).catch(function(e){ toast('Failed: '+(e.code||e.message)); });
+  }
+
+  /* ---------- product editor ---------- */
   function editProduct(id){
     var p=id?PRODUCTS.find(function(x){return x._id===id;}):null;
-    $('pmId').value=id||''; $('pmTitle').textContent=p?'Edit Product':'Add Product';
+    $('pmId').value=id||''; $('pmTitle').textContent=p?'Edit Product':'Add Product'; $('pmSub').textContent=p?('slug: '+(p.slug||id)):'';
     $('pmCat').innerHTML=window.CATEGORIES.map(function(c){return '<option>'+c+'</option>';}).join('');
     $('pmName').value=p?p.name:''; $('pmCat').value=p?p.category:window.CATEGORIES[0];
-    $('pmDesc').value=p?(p.description||''):''; $('pmPrice').value=p?lowest(p):'';
-    $('pmNew').checked=p?!!p.is_new_arrival:false; $('pmVerified').checked=p?p.verified!==false:true; $('pmActive').checked=p?p.inStock!==false:true;
-    $('pmImgPrev').innerHTML=p&&p.imageURL?'<img src="'+p.imageURL+'" style="width:70px;height:70px;border-radius:8px;object-fit:cover;">':'';
-    window._pmImageURL=p?p.imageURL:'';
+    $('pmBrand').value=p?(p.brand||''):'OPTIMA Labs'; $('pmSku').value=p?(p.sku||''):''; $('pmWeight').value=p?(p.weight||''):'';
+    $('pmShort').value=p?(p.shortDescription||''):''; $('pmDesc').value=p?(p.description||''):'';
+    $('pmTags').value=p?((p.tags||[]).join(', ')):'';
+    $('pmCompare').value=p&&p.compareAtPrice?p.compareAtPrice:''; $('pmSale').value=p&&p.salePrice?p.salePrice:''; $('pmSaleActive').checked=p?!!p.saleActive:false;
+    $('pmTrack').checked=p?p.trackInventory!==false:true;
+    $('pmQty').value=p&&typeof p.stockQty==='number'?p.stockQty:(p?'':25);
+    $('pmLow').value=p&&typeof p.lowStockThreshold==='number'?p.lowStockThreshold:5;
+    $('pmStockStatus').value=p?(p.stockStatus||'in_stock'):'in_stock';
+    $('pmStatus').value=p?(p.status||'active'):'active';
+    $('pmVerified').checked=p?p.verified!==false:true; $('pmNew').checked=p?!!p.is_new_arrival:false;
+    pmDose = (p&&p.dosageOptions&&p.dosageOptions.length)?p.dosageOptions.map(function(d){return {mg:d.mg,price:d.price};}):[{mg:'',price:''}];
+    renderDoseRows();
+    pmImgs = p ? (p.images&&p.images.length?p.images.slice():((p.featuredImage||p.imageURL)?[p.featuredImage||p.imageURL]:[])) : [];
+    renderPmImgs(); pmSyncStock();
     $('productModal').classList.add('open');
   }
-  $('pmImage').addEventListener('change',async function(){
-    var f=this.files[0]; if(!f) return; $('pmImgPrev').textContent='Uploading…';
-    try{ var slug=window.slugify($('pmName').value||'product'); var ref=window.fbStorage.ref('product_images/'+slug+'_'+f.name);
-      var snap=await ref.put(f); window._pmImageURL=await snap.ref.getDownloadURL();
-      $('pmImgPrev').innerHTML='<img src="'+window._pmImageURL+'" style="width:70px;height:70px;border-radius:8px;object-fit:cover;">';
-    }catch(e){ $('pmImgPrev').textContent='Upload failed: '+e.code; }
-  });
+  function closeProduct(){ $('productModal').classList.remove('open'); }
+  function pmSyncStock(){
+    var track=$('pmTrack').checked;
+    $('pmStockManualWrap').style.display=track?'none':'block';
+    if(track){ var q=parseInt($('pmQty').value,10), low=parseInt($('pmLow').value,10)||5;
+      var st=isNaN(q)?'—':(q<=0?'Out of stock':(q<=low?'Low stock':'In stock'));
+      $('pmStockPreview').textContent='Storefront shows: '+st; }
+    else $('pmStockPreview').textContent='Using manual stock status.';
+  }
+  // dosage rows
+  function renderDoseRows(){
+    $('pmDoseRows').innerHTML=pmDose.map(function(d,i){
+      return '<div class="dose-row"><input placeholder="e.g. 10mg" value="'+(d.mg||'')+'" oninput="OL.pmDoseSet('+i+',\'mg\',this.value)"><input type="number" step="0.01" placeholder="price ₱" value="'+(d.price!=null?d.price:'')+'" oninput="OL.pmDoseSet('+i+',\'price\',this.value)"><button class="del" title="Remove" onclick="OL.pmDelDose('+i+')">✕</button></div>';
+    }).join('');
+  }
+  function pmAddDose(){ pmDose.push({mg:'',price:''}); renderDoseRows(); }
+  function pmDelDose(i){ pmDose.splice(i,1); if(!pmDose.length)pmDose=[{mg:'',price:''}]; renderDoseRows(); }
+  function pmDoseSet(i,k,v){ if(pmDose[i]) pmDose[i][k]=v; }
+  // images
+  function renderPmImgs(){
+    $('pmImgGrid').innerHTML=pmImgs.map(function(u,i){
+      return '<div class="img-tile'+(i===0?' featured':'')+'">'+(i===0?'<span class="feat-tag">FEATURED</span>':'')+
+        '<img src="'+u+'"><div class="img-tools">'+
+        '<button title="Move left" onclick="OL.pmImgMove('+i+',-1)">◀</button>'+
+        '<button title="Set featured" onclick="OL.pmImgFeat('+i+')">★</button>'+
+        '<button title="Move right" onclick="OL.pmImgMove('+i+',1)">▶</button>'+
+        '<button title="Remove" onclick="OL.pmImgDel('+i+')">✕</button></div></div>';
+    }).join('');
+  }
+  function pmImgMove(i,d){ var j=i+d; if(j<0||j>=pmImgs.length)return; var t=pmImgs[i];pmImgs[i]=pmImgs[j];pmImgs[j]=t; renderPmImgs(); }
+  function pmImgFeat(i){ var u=pmImgs.splice(i,1)[0]; pmImgs.unshift(u); renderPmImgs(); }
+  function pmImgDel(i){ pmImgs.splice(i,1); renderPmImgs(); }
+  async function pmUpload(files){
+    var slug=window.slugify($('pmName').value||'product');
+    for(var k=0;k<files.length;k++){ var f=files[k]; if(!/^image\//.test(f.type)) continue;
+      try{ var ref=window.fbStorage.ref('product_images/'+slug+'_'+Date.now()+'_'+f.name.replace(/[^\w.\-]/g,'_'));
+        var snap=await ref.put(f); pmImgs.push(await snap.ref.getDownloadURL()); renderPmImgs();
+      }catch(e){ toast('Upload failed: '+(e.code||e.message)); }
+    }
+  }
   async function saveProduct(){
     var id=$('pmId').value, name=$('pmName').value.trim();
     if(!name){ toast('Name required'); return; }
-    var data={ name:name, slug:window.slugify(name), category:$('pmCat').value, description:$('pmDesc').value.trim(),
-      price:parseFloat($('pmPrice').value)||0, is_new_arrival:$('pmNew').checked, verified:$('pmVerified').checked, inStock:$('pmActive').checked,
-      imageURL:window._pmImageURL||'', updated_at:firebase.firestore.FieldValue.serverTimestamp() };
+    var dose=pmDose.map(function(d){ return {mg:(d.mg||'').trim()||'—', price:parseFloat(d.price)||0}; }).filter(function(d){ return d.price>0; });
+    if(!dose.length) dose=[{mg:'—',price:0}];
+    var base=Math.min.apply(null,dose.map(function(d){return d.price;}));
+    var track=$('pmTrack').checked;
+    var qty=parseInt($('pmQty').value,10); if(isNaN(qty)) qty=track?0:null;
+    var low=parseInt($('pmLow').value,10)||5;
+    var stockStatus=track?(qty<=0?'out_of_stock':(qty<=low?'low_stock':'in_stock')):$('pmStockStatus').value;
+    var sale=parseFloat($('pmSale').value)||null;
+    var data={
+      name:name, category:$('pmCat').value,
+      brand:$('pmBrand').value.trim(), sku:$('pmSku').value.trim(), weight:$('pmWeight').value.trim(),
+      shortDescription:$('pmShort').value.trim(), description:$('pmDesc').value.trim(),
+      tags:$('pmTags').value.split(',').map(function(s){return s.trim();}).filter(Boolean),
+      dosageOptions:dose, price:base,
+      compareAtPrice:parseFloat($('pmCompare').value)||null,
+      salePrice:sale, saleActive:$('pmSaleActive').checked && !!sale,
+      trackInventory:track, stockQty:(qty!=null?qty:0), lowStockThreshold:low, stockStatus:stockStatus,
+      inStock:stockStatus!=='out_of_stock',
+      images:pmImgs.slice(), featuredImage:pmImgs[0]||'', imageURL:pmImgs[0]||'',
+      verified:$('pmVerified').checked, is_new_arrival:$('pmNew').checked, status:$('pmStatus').value,
+      updated_at:svTs()
+    };
     try{
-      if(id) await window.fbDb.collection('products').doc(id).set(data,{merge:true});
-      else { data.created_at=firebase.firestore.FieldValue.serverTimestamp(); data.dosageOptions=[{mg:'—',price:data.price}]; await window.fbDb.collection('products').add(data); }
+      if(id){ await pdoc(id).set(data,{merge:true}); }
+      else { data.slug=window.slugify(name); var newId=data.slug;
+        if(PRODUCTS.some(function(x){return x._id===newId;})) newId=newId+'-'+Date.now().toString(36);
+        data.slug=newId; data.created_at=svTs(); await pdoc(newId).set(data); }
       toast('Product saved'); closeProduct();
-    }catch(e){ toast('Save failed: '+e.code); }
+    }catch(e){ toast('Save failed: '+(e.code||e.message)); }
   }
-  function closeProduct(){ $('productModal').classList.remove('open'); }
-  async function delProduct(id,name){ if(!confirm('Delete "'+name+'"? This cannot be undone.')) return; try{ await window.fbDb.collection('products').doc(id).delete(); toast('Deleted'); }catch(e){ toast('Failed: '+e.code); } }
+
+  // filters + dropzone wiring (elements exist at parse time)
+  $('pfSearch').addEventListener('input',function(){ pf.q=this.value.trim(); pf.page=1; renderProducts(); });
+  $('pfCat').addEventListener('change',function(){ pf.cat=this.value; pf.page=1; renderProducts(); });
+  $('pfStock').addEventListener('change',function(){ pf.stock=this.value; pf.page=1; renderProducts(); });
+  $('pfStatus').addEventListener('change',function(){ pf.status=this.value; pf.page=1; renderProducts(); });
+  $('pfSort').addEventListener('change',function(){ pf.sort=this.value; renderProducts(); });
+  $('pfCat').innerHTML='<option value="All">All categories</option>'+window.CATEGORIES.map(function(c){return '<option>'+c+'</option>';}).join('');
+  $('pmDrop').addEventListener('click',function(){ $('pmImage').click(); });
+  $('pmImage').addEventListener('change',function(){ pmUpload(this.files); this.value=''; });
+  ['dragover','dragenter'].forEach(function(ev){ $('pmDrop').addEventListener(ev,function(e){ e.preventDefault(); this.classList.add('drag'); }); });
+  ['dragleave','dragend'].forEach(function(ev){ $('pmDrop').addEventListener(ev,function(e){ e.preventDefault(); this.classList.remove('drag'); }); });
+  $('pmDrop').addEventListener('drop',function(e){ e.preventDefault(); this.classList.remove('drag'); if(e.dataTransfer&&e.dataTransfer.files) pmUpload(e.dataTransfer.files); });
 
   /* ---------- new arrivals ---------- */
   function renderArrivals(){
@@ -780,8 +1103,10 @@ window.OL = (function () {
 
   document.addEventListener('DOMContentLoaded',initAuth);
   return { signOut:signOut, go:go, openOrder:openOrder, closeOrder:closeOrder, setPage:setPage, clearFilters:clearFilters, exportCSV:exportCSV, copy:copy,
-    updateStatus:updateStatus, saveTracking:saveTracking, saveAdminNotes:saveAdminNotes, toggle:toggle, inlinePrice:inlinePrice,
+    updateStatus:updateStatus, saveTracking:saveTracking, saveAdminNotes:saveAdminNotes, toggle:toggle,
     editProduct:editProduct, saveProduct:saveProduct, closeProduct:closeProduct, delProduct:delProduct,
+    pGo:pGo, pClearFilters:pClearFilters, pSel:pSel, pSelectAll:pSelectAll, pBulk:pBulk, pStockAdj:pStockAdj, setStatus:setStatus, duplicateProduct:duplicateProduct,
+    pmAddDose:pmAddDose, pmDelDose:pmDelDose, pmDoseSet:pmDoseSet, pmImgMove:pmImgMove, pmImgFeat:pmImgFeat, pmImgDel:pmImgDel, pmSyncStock:pmSyncStock,
     openMarkNew:openMarkNew, closeMarkNew:closeMarkNew, markNew:markNew, saveConfig:saveConfig, changePassword:changePassword };
 })();
 </script>

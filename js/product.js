@@ -4,7 +4,7 @@
    price-per-option, COA link, add-to-cart, and related products.
    ================================================================ */
 (function () {
-  var product = null, selected = null, qty = 1;
+  var product = null, selected = null, qty = 1, ALL = [];
 
   function fallbackArt(p, opts) {
     return window.vialArt(p, opts);
@@ -26,7 +26,14 @@
         '<div class="detail-info">' +
           '<div class="cat">' + product.category + '</div>' +
           '<h1>' + product.name + '</h1>' +
-          '<div class="detail-price" id="detailPrice" aria-live="polite">' + fmtPHP(selected.price) + '</div>' +
+          '<div class="detail-price' + (product.saleActive ? ' on-sale' : '') + '" id="detailPrice" aria-live="polite">' +
+            fmtPHP(product.saleActive ? product.salePrice : selected.price) +
+            (product.compareAtPrice ? ' <s class="price-was">' + fmtPHP(product.compareAtPrice) + '</s>' : '') +
+          '</div>' +
+          '<div class="stock-line stock-' + product.stockStatus + '">' +
+            (product.stockStatus === 'out_of_stock' ? 'Out of stock'
+              : product.stockStatus === 'low_stock' ? 'Low stock — order soon' : 'In stock') +
+          '</div>' +
           '<p class="detail-desc">' + (product.description || '') + '</p>' +
           '<div class="opt-label" id="doseLabel">Select strength</div>' +
           '<div class="dose-options" id="doseOptions" role="group" aria-labelledby="doseLabel">' +
@@ -90,7 +97,7 @@
   async function loadRelated() {
     var wrap = document.getElementById('relatedGrid');
     if (!wrap) return;
-    var rel = window.PRODUCTS_DATA
+    var rel = ALL
       .filter(function (p) { return p.category === product.category && p.slug !== product.slug; })
       .slice(0, 3);
     if (!rel.length) { wrap.closest('.related').style.display = 'none'; return; }
@@ -105,14 +112,24 @@
     }).join('');
   }
 
+  var lastJSON = '';
   function load() {
     var slug = new URLSearchParams(location.search).get('slug');
     var root = document.getElementById('detail');
-    if (!slug) { root.innerHTML = '<div class="empty"><h3>Product not found</h3><p><a href="products.html">Back to the collection</a></p></div>'; return; }
-    product = window.PRODUCTS_DATA.find(function (p) { return p.slug === slug; });
-    if (!product) { root.innerHTML = '<div class="empty"><h3>Product not found</h3><p><a href="products.html">Back to the collection</a></p></div>'; return; }
-    render();
-    loadRelated();
+    var notFound = '<div class="empty"><h3>Product not found</h3><p><a href="products.html">Back to the collection</a></p></div>';
+    if (!slug) { root.innerHTML = notFound; return; }
+    // Live from Firestore — price / stock / details update in real time.
+    window.ShopData.subscribe(function (list) {
+      ALL = list;
+      var p = list.find(function (x) { return x.slug === slug; });
+      if (!p) { root.innerHTML = notFound; return; }
+      var j = JSON.stringify(p);
+      if (j === lastJSON) return;   // unchanged → don't disrupt the open page
+      lastJSON = j;
+      product = p;
+      render();
+      loadRelated();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', load);

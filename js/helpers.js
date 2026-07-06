@@ -1,8 +1,7 @@
 /* ================================================================
    OPTIMA LABS — Shared helpers (no Firebase dependency)
-   Used by the static catalogue/detail pages. admin-products.html and
-   seed.html still get these same globals from firebase-init.js once
-   the real Firebase project is connected.
+   Used by the static catalogue/detail pages as a fallback; the live
+   storefront streams products from Firestore via js/shop-data.js.
    ================================================================ */
 window.CATEGORIES = [
   'Weight Management', 'Recovery & Repair', 'Metabolic', 'Skin & Beauty',
