@@ -972,6 +972,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="js/firebase-init.js"></script>
+<script src="js/shop-data.js"></script>
 <script src="js/auth-nav.js"></script>
 <style>
   /* Interactive vial artwork (homepage-scoped; matches css/optima.css) */
@@ -1008,14 +1009,14 @@
   };
   function cardHTML(p, i) {
     var opts = p.dosageOptions || [{ mg: '—', price: p.price }];
-    var lowest = Math.min.apply(null, opts.map(function (o) { return o.price; }));
     var doseLabel = opts.length > 1 ? opts.length + ' strengths available' : opts[0].mg;
+    var compare = p.compareAtPrice ? ' <s class="price-was">' + fmtPHP(p.compareAtPrice) + '</s>' : '';
     return '<article class="product">' +
-      '<div class="product-art">' + window.vialArt(p) + '</div>' +
+      '<div class="product-art">' + (p.imageURL ? '<img class="vial-thumb" src="' + p.imageURL + '" alt="' + p.name + '" loading="lazy">' : window.vialArt(p)) + '</div>' +
       '<h3>' + p.name + '</h3>' +
       '<div class="use">' + (USE_LABEL[p.category] || p.category) + '</div>' +
       '<p>' + p.description + '</p>' +
-      '<div class="meta"><span class="price">' + (opts.length > 1 ? 'from ' : '') + fmtPHP(lowest) + '</span>' +
+      '<div class="meta"><span class="price' + (p.saleActive ? ' on-sale' : '') + '">' + (opts.length > 1 ? 'from ' : '') + fmtPHP(p.displayPrice != null ? p.displayPrice : opts[0].price) + compare + '</span>' +
       '<span class="dose">' + doseLabel + ' · vial + cartridge</span></div>' +
       '<a class="btn btn-ghost" href="product.html?slug=' + encodeURIComponent(p.slug) + '">View & add to ritual</a>' +
     '</article>';
@@ -1023,9 +1024,11 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     var grid = document.getElementById('collectionGrid');
-    if (!grid || !window.PRODUCTS_DATA) return;
-    var sorted = window.PRODUCTS_DATA.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
-    grid.innerHTML = sorted.map(cardHTML).join('');
+    if (!grid || !window.ShopData) return;
+    // Live from Firestore (single source of truth) — updates on any admin change.
+    window.ShopData.subscribe(function (list) {
+      grid.innerHTML = list.map(cardHTML).join('');
+    });
   });
 })();
 </script>
