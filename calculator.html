@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peptide Calculator — OPTIMA Labs</title>
+<meta name="description" content="Calculate precise peptide dosing with confidence. Determine exact syringe units from peptide strength, desired dose and reconstitution volume.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/optima.css">
+<style>
+body{ display:flex; flex-direction:column; min-height:100vh; }
+/* ---------- Peptide Dose Calculator ---------- */
+  .calc{ background:radial-gradient(120% 78% at 82% -4%, rgba(241,226,219,.6), var(--porcelain) 58%); }
+  .calc-panel{
+    margin-top:48px; padding:clamp(24px,3.4vw,46px);
+    background:rgba(255,255,255,.55);
+    -webkit-backdrop-filter:blur(24px) saturate(1.2); backdrop-filter:blur(24px) saturate(1.2);
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:28px; box-shadow:var(--shadow-lift);
+  }
+  .calc-cols{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(22px,2.6vw,40px); }
+  .calc-group + .calc-group{ padding-left:clamp(22px,2.6vw,40px); border-left:1px solid rgba(183,154,107,.22); }
+  .calc-group h3{
+    display:flex; align-items:center; gap:11px;
+    font-family:var(--sans); font-weight:700; font-size:17px; letter-spacing:-.005em;
+  }
+  .calc-num{
+    width:26px; height:26px; border-radius:50%; flex:none;
+    background:var(--espresso); color:#fff; font-size:13px; font-weight:700;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .calc-group .hint{ font-size:13px; color:var(--ink-soft); margin:5px 0 16px; padding-left:37px; }
+  .calc-pills{ display:flex; flex-wrap:wrap; gap:9px; }
+  .pill{
+    appearance:none; cursor:pointer; font:inherit; font-size:14px; font-weight:600;
+    padding:9px 15px; min-height:40px; border-radius:999px; touch-action:manipulation;
+    border:1px solid rgba(183,154,107,.45); background:var(--surface); color:var(--espresso);
+    transition:transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .pill:hover{ border-color:var(--clay); transform:translateY(-1px); box-shadow:0 6px 16px -10px rgba(58,46,41,.4); }
+  .pill.active{ background:var(--espresso); color:#fff; border-color:var(--espresso); box-shadow:0 10px 22px -12px rgba(58,46,41,.7); }
+  .pill:active{ transform:scale(.96); }
+  .pill:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+  .calc-or{
+    display:flex; align-items:center; gap:12px; margin:16px 0;
+    font-size:11.5px; font-weight:700; letter-spacing:.16em; color:var(--ink-soft);
+  }
+  .calc-or::before,.calc-or::after{ content:""; flex:1; height:1px; background:rgba(183,154,107,.3); }
+  .calc-field{ position:relative; }
+  .calc-field input{
+    width:100%; padding:19px 46px 9px 16px; border-radius:14px;
+    border:1px solid rgba(183,154,107,.42); background:var(--surface);
+    font:inherit; font-size:15px; color:var(--espresso);
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .calc-field label{
+    position:absolute; left:16px; top:15px; color:var(--ink-soft); font-size:15px;
+    pointer-events:none; transform-origin:left center; transition:transform .18s ease, color .18s ease;
+  }
+  .calc-field input:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(169,106,88,.15); }
+  .calc-field input:focus + label,
+  .calc-field input:not(:placeholder-shown) + label{ transform:translateY(-10px) scale(.76); color:var(--clay-deep); }
+  .calc-field .unit{ position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--ink-soft); font-size:13px; font-weight:600; pointer-events:none; }
+  .calc-field .err{ display:none; margin-top:6px; font-size:12px; color:#b8503f; font-weight:600; }
+  .calc-field.invalid input{ border-color:#c2564d; box-shadow:0 0 0 3px rgba(194,86,77,.14); }
+  .calc-field.invalid .err{ display:block; }
+
+  /* Results */
+  .calc-results{ margin-top:30px; }
+  .calc-results h3{ font-family:var(--serif); font-size:clamp(24px,2.4vw,30px); margin-bottom:22px; }
+  .calc-summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:16px; }
+  .sum-card{
+    background:var(--surface); border:1px solid rgba(183,154,107,.22); border-radius:18px;
+    padding:18px 20px; box-shadow:var(--shadow-soft); display:flex; flex-direction:column; gap:12px;
+  }
+  .sum-card .sc-top{ display:flex; align-items:center; gap:9px; color:var(--ink-soft); font-size:12px; font-weight:700; letter-spacing:.02em; }
+  .sum-card .sc-top svg{ width:18px; height:18px; flex:none; color:var(--clay); }
+  .sum-val{ font-family:var(--serif); font-size:29px; line-height:1; color:var(--espresso); }
+  .sum-val small{ font-family:var(--sans); font-size:13.5px; color:var(--ink-soft); margin-left:5px; font-weight:600; }
+  .sum-hi{ background:linear-gradient(160deg, var(--clay), var(--clay-deep)); border-color:transparent; }
+  .sum-hi .sc-top, .sum-hi .sc-top svg, .sum-hi .sum-val{ color:#fff; }
+  .sum-hi .sum-val small{ color:rgba(255,255,255,.82); }
+  .sum-hi .sc-note{ font-size:11.5px; color:rgba(255,255,255,.8); font-weight:600; }
+
+  /* Syringe */
+  .syringe-wrap{
+    margin-top:22px; padding:24px clamp(14px,3vw,32px);
+    background:var(--surface); border:1px solid rgba(183,154,107,.22); border-radius:22px;
+    box-shadow:var(--shadow-soft); overflow-x:auto;
+  }
+  .syringe-wrap svg{ width:100%; min-width:660px; height:auto; display:block; }
+  .syr-fill{ transition:transform .6s cubic-bezier(.22,.61,.36,1); transform-origin:150px 105px; }
+  .syr-plunger, .syr-marker{ transition:transform .6s cubic-bezier(.22,.61,.36,1); }
+  .syr-tick-num{ font-family:var(--sans); font-size:15px; font-weight:600; fill:var(--ink-soft); }
+  .syr-units-lbl{ font-family:var(--sans); font-size:13px; font-weight:700; letter-spacing:.16em; fill:var(--ink-soft); }
+  .syr-marker text{ font-family:var(--sans); font-size:17px; font-weight:700; fill:#fff; }
+  .calc-note{
+    display:flex; align-items:center; gap:10px; margin-top:20px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .calc-note svg{ flex:none; color:var(--champagne); }
+  @media (prefers-reduced-motion:reduce){
+    .pill,.pill:hover,.pill:active,.syr-fill,.syr-plunger,.syr-marker{ transition:none; transform:none; }
+    .syr-fill{ transition:none; }
+  }
+  @media (max-width:860px){
+    .calc-cols{ grid-template-columns:1fr; gap:28px; }
+    .calc-group + .calc-group{ padding-left:0; border-left:none; padding-top:28px; border-top:1px solid rgba(183,154,107,.22); }
+    .calc-group .hint{ padding-left:37px; }
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="logo" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="10" cy="14" r="6" fill="#C08D80"/><circle cx="18" cy="8.5" r="3.6" fill="#B79A6B"/><circle cx="18.5" cy="18.5" r="3" fill="#A96A58"/></svg>
+      <b>OPTIMA <span>Labs</span></b>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="products.html">The Collection</a>
+      <a href="calculator.html" class="active">Calculator</a>
+      <a href="the-ritual.html">The Ritual</a>
+      <a href="verification.html">Lab Verification</a>
+      <a href="track-order.html">Track Order</a>
+    </nav>
+    <div class="nav-auth" id="navAuth"></div>
+    <button class="nav-cart" aria-label="Open cart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="count"></span>
+    </button>
+  </div>
+</header>
+<main>
+  <section class="lab-hero">
+    <div class="wrap lab-hero-inner">
+      <div class="lab-eyebrow">Dosing Tools</div>
+      <h1>Peptide Calculator</h1>
+      <p>Calculate precise peptide dosing with confidence. Our calculator helps you accurately determine
+         syringe units based on peptide strength, desired dose and reconstitution volume.</p>
+      <a class="btn btn-primary" href="#calculator">Start Calculating</a>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <div class="wrap">
+      <div class="lp-head reveal"><hr class="rule"><div class="lp-eyebrow">How it works</div><h2>Three inputs, one exact answer</h2>
+        <p>Tell us your dose, your vial strength and your diluent volume — we return the precise number of units to draw on a U-100 insulin syringe.</p></div>
+      <div class="lp-steps">
+        <div class="lp-step reveal"><div class="n">1</div><div><h3>Enter your dose</h3><p>Choose the amount of peptide you want per injection, in milligrams.</p></div></div>
+        <div class="lp-step reveal"><div class="n">2</div><div><h3>Enter vial strength &amp; diluent</h3><p>Add the total peptide in the vial and the volume of bacteriostatic water you reconstituted with.</p></div></div>
+        <div class="lp-step reveal"><div class="n">3</div><div><h3>Read your syringe units</h3><p>We calculate the concentration and show exactly how far to draw on a U-100 syringe.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section tint">
+    <div class="wrap">
+      <div class="lp-head reveal"><hr class="rule"><div class="lp-eyebrow">Why it matters</div><h2>Accuracy is everything</h2>
+        <p>Peptides are dosed in tiny volumes. A small miscalculation can mean a large difference in your actual dose.</p></div>
+      <div class="lp-cards">
+        <div class="lp-card reveal"><div class="lp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></div><h3>Consistent results</h3><p>Precise, repeatable dosing keeps your protocol steady from vial to vial.</p></div>
+        <div class="lp-card reveal"><div class="lp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 3v6c0 5-3.4 8.9-8 10-4.6-1.1-8-5-8-10V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Safety first</h3><p>Knowing your exact concentration helps you avoid accidental under- or over-dosing.</p></div>
+        <div class="lp-card reveal"><div class="lp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div><h3>No guesswork</h3><p>Skip the mental math — the calculator handles concentration and unit conversion for you.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <div class="wrap">
+      <div class="lp-head reveal"><hr class="rule"><div class="lp-eyebrow">Benefits</div><h2>Built for calm precision</h2></div>
+      <div class="lp-cards">
+        <div class="lp-card reveal"><div class="lp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 2l4 4M17 5l2 2M14 8l2 2-7 7H7v-2z"/><path d="M8 16l-4 4"/></svg></div><h3>Reads in syringe units</h3><p>Answers in the U-100 units marked on your insulin syringe — nothing to convert.</p></div>
+        <div class="lp-card reveal"><div class="lp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>Instant &amp; interactive</h3><p>Adjust any value and the result — and the animated syringe — update in real time.</p></div>
+        <div class="lp-card reveal"><div class="lp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div><h3>Works for any peptide</h3><p>Enter custom strengths, doses and diluent volumes for any reconstitution.</p></div>
+      </div>
+      <div class="lp-disc reveal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1" stroke-linecap="round"/></svg>
+        <span>This calculator is provided for research and educational purposes only and is not medical advice. Always follow your research protocol and consult a qualified professional before use.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section tint">
+    <div class="wrap">
+      <div class="lp-head reveal"><hr class="rule"><div class="lp-eyebrow">Questions</div><h2>Frequently asked</h2></div>
+      <div class="lp-faq">
+        <details class="lp-q reveal"><summary>What is a U-100 syringe?</summary><div class="a">A U-100 insulin syringe measures 100 units per millilitre. Our calculator converts your dose into these units so you can draw precisely.</div></details>
+        <details class="lp-q reveal"><summary>What is reconstitution volume?</summary><div class="a">It is the amount of bacteriostatic water you add to the lyophilised peptide powder. More water means a lower concentration and more units per dose.</div></details>
+        <details class="lp-q reveal"><summary>Does the calculator store my data?</summary><div class="a">No. Everything is calculated locally in your browser — nothing is saved or sent anywhere.</div></details>
+        <details class="lp-q reveal"><summary>Can I use it for any peptide?</summary><div class="a">Yes. Enter any custom strength, dose and diluent volume, and the calculator returns the exact units to draw.</div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Embedded existing calculator component (unchanged) -->
+<section class="calc" id="calculator">
+  <div class="wrap">
+    <div class="sec-head">
+      <hr class="rule">
+      <h2>Peptide Dose Calculator</h2>
+      <p>Reconstitute with confidence. Choose your dose, vial strength and diluent —
+         we'll show your concentration and the exact unit to draw on a U-100 syringe.</p>
+    </div>
+
+    <div class="calc-panel">
+      <div class="calc-cols">
+        <!-- 1 · Dose -->
+        <div class="calc-group" role="group" aria-label="Dose of peptide">
+          <h3><span class="calc-num">1</span>Dose of Peptide</h3>
+          <p class="hint">The amount you want per injection.</p>
+          <div class="calc-pills" id="pillsDose"></div>
+          <div class="calc-or">OR</div>
+          <div class="calc-field" id="fieldDose">
+            <input type="text" inputmode="decimal" id="inDose" placeholder=" " autocomplete="off" aria-label="Custom dose in milligrams">
+            <label for="inDose">Enter custom dose</label>
+            <span class="unit">mg</span>
+            <div class="err">Enter a number greater than 0</div>
+          </div>
+        </div>
+
+        <!-- 2 · Strength -->
+        <div class="calc-group" role="group" aria-label="Strength of peptide">
+          <h3><span class="calc-num">2</span>Strength of Peptide</h3>
+          <p class="hint">Total peptide in the vial.</p>
+          <div class="calc-pills" id="pillsStrength"></div>
+          <div class="calc-or">OR</div>
+          <div class="calc-field" id="fieldStrength">
+            <input type="text" inputmode="decimal" id="inStrength" placeholder=" " autocomplete="off" aria-label="Custom strength in milligrams">
+            <label for="inStrength">Enter custom strength</label>
+            <span class="unit">mg</span>
+            <div class="err">Enter a number greater than 0</div>
+          </div>
+        </div>
+
+        <!-- 3 · Diluent -->
+        <div class="calc-group" role="group" aria-label="Water or diluent volume">
+          <h3><span class="calc-num">3</span>Water / Diluent</h3>
+          <p class="hint">Volume used to reconstitute.</p>
+          <div class="calc-pills" id="pillsDiluent"></div>
+          <div class="calc-or">OR</div>
+          <div class="calc-field" id="fieldDiluent">
+            <input type="text" inputmode="decimal" id="inDiluent" placeholder=" " autocomplete="off" aria-label="Custom diluent in millilitres">
+            <label for="inDiluent">Enter custom water</label>
+            <span class="unit">mL</span>
+            <div class="err">Enter a number greater than 0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="calc-results" aria-live="polite">
+        <h3>Results</h3>
+        <div class="calc-summary">
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2.5" width="8" height="4" rx="1"/><path d="M6.5 6.5h9v11a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2z"/><path d="M6.5 12h9"/></svg>Peptide Dose</div>
+            <div class="sum-val" id="sumDose">5<small>mg</small></div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h4M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h7.4a2 2 0 0 0 1.8-3L12 8V3"/></svg>Peptide Strength</div>
+            <div class="sum-val" id="sumStrength">25<small>mg</small></div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3s5 5.5 5 9a5 5 0 0 1-10 0c0-3.5 5-9 5-9z"/></svg>Diluent (Water)</div>
+            <div class="sum-val" id="sumDil">2.0<small>mL</small></div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7.5"/><circle cx="11" cy="11" r="2.2"/><path d="M11 1.5v3M11 17.5v3M1.5 11h3M17.5 11h3"/></svg>Concentration</div>
+            <div class="sum-val" id="sumConc">12.5<small>mg/mL</small></div>
+          </div>
+          <div class="sum-card sum-hi">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l6-6M8 8l6 6M12.5 3.5l6 6-3 3-6-6zM9 13l-1.5 4.5L3 19"/></svg>Draw Syringe To</div>
+            <div class="sum-val" id="sumUnits">40<small>units</small></div>
+            <div class="sc-note">on a U-100 insulin syringe</div>
+          </div>
+        </div>
+
+        <!-- Syringe -->
+        <div class="syringe-wrap">
+          <svg viewBox="0 0 1180 250" role="img" aria-label="Insulin syringe illustration showing the draw level">
+            <defs>
+              <linearGradient id="syrLiquid" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#C08D80"/><stop offset="1" stop-color="#A96A58"/>
+              </linearGradient>
+              <linearGradient id="syrRod" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#EDE4DD"/><stop offset="1" stop-color="#CBBBB0"/>
+              </linearGradient>
+              <linearGradient id="syrGlass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity=".65"/><stop offset="1" stop-color="#F1E2DB" stop-opacity=".28"/>
+              </linearGradient>
+            </defs>
+
+            <!-- needle -->
+            <line x1="26" y1="107" x2="120" y2="107" stroke="#B0A79F" stroke-width="3" stroke-linecap="round"/>
+            <path d="M120 100h34l-8 7 8 7h-34z" fill="#CBBBB0"/>
+
+            <!-- plunger rod (through flange to thumb) -->
+            <rect x="150" y="101" width="900" height="12" rx="6" fill="url(#syrRod)"/>
+            <!-- barrel glass tint (extends past the 100 mark to a neck + flange) -->
+            <rect x="150" y="74" width="790" height="66" rx="12" fill="url(#syrGlass)"/>
+            <!-- liquid fill (animated) -->
+            <rect class="syr-fill" id="syrFill" x="150" y="76" width="750" height="62" rx="10" fill="url(#syrLiquid)" opacity=".62"/>
+
+            <!-- graduations + numbers -->
+            <g id="syrTicks"></g>
+
+            <!-- barrel outline on top -->
+            <rect x="150" y="74" width="790" height="66" rx="12" fill="none" stroke="#B79A6B" stroke-opacity=".55" stroke-width="2"/>
+
+            <!-- rubber seal at the fill boundary (animated) -->
+            <g class="syr-plunger" id="syrPlunger"><rect x="143" y="74" width="14" height="66" rx="3" fill="#3A2E29"/></g>
+
+            <!-- finger flange + thumb rest -->
+            <rect x="936" y="56" width="14" height="102" rx="5" fill="#D8C9BC"/>
+            <rect x="1040" y="70" width="18" height="74" rx="6" fill="#3A2E29"/>
+
+            <!-- UNITS label -->
+            <text class="syr-units-lbl" x="900" y="166" text-anchor="end">UNITS</text>
+
+            <!-- moving marker -->
+            <g class="syr-marker" id="syrMarker">
+              <rect x="124" y="6" width="52" height="30" rx="15" fill="#8F5545"/>
+              <text x="150" y="27" text-anchor="middle" id="syrMarkerText">40</text>
+              <path d="M140 40h20l-10 14z" fill="#8F5545"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="calc-note" id="calcNote">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.2v.2" stroke-linecap="round"/></svg>
+          <span id="calcNoteText">For research purposes only. Always follow your research protocol.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="10" cy="14" r="6" fill="#C08D80"/><circle cx="18" cy="8.5" r="3.6" fill="#B79A6B"/><circle cx="18.5" cy="18.5" r="3" fill="#DDB4A7"/></svg>
+      <b style="color:#fff;">OPTIMA <span style="color:#DDB4A7;">Labs</span></b>
+    </a>
+    <p>Pharmaceutical-grade peptides, delivered as one elegant system — from a &gt;99% pure vial to the reusable OptiPen.</p>
+    <p class="footer-legal">© 2026 OPTIMA Labs. Supplied for personal wellness use under professional guidance. Statements have not been evaluated by the FDA. Not intended to diagnose, treat, cure, or prevent any disease.</p>
+  </div>
+</footer>
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="cartDrawer" aria-label="Shopping cart">
+  <div class="drawer-head"><h3>Your Cart</h3><button class="drawer-close" id="drawerClose" aria-label="Close">✕</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot" style="display:none;">
+    <div class="drawer-total"><span>Subtotal</span><b id="drawerTotal">₱0.00</b></div>
+    <button class="btn btn-primary btn-block" id="checkoutBtn" type="button">Proceed to Checkout</button>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/auth-nav.js"></script>
+<script src="js/calculator.js"></script>
+<script src="js/reveal.js"></script>
+<script src="js/viber-button.js" defer></script>
+</body>
+</html>

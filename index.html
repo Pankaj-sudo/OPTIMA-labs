@@ -571,10 +571,10 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="products.html">The Collection</a>
-      <a href="#calculator">Calculator</a>
-      <a href="#ritual">The Ritual</a>
+      <a href="calculator.html">Calculator</a>
+      <a href="the-ritual.html">The Ritual</a>
       <a href="verification.html">Lab Verification</a>
-      <a href="#track">Track Order</a>
+      <a href="track-order.html">Track Order</a>
     </nav>
     <div class="nav-auth" id="navAuth"></div>
     <a class="btn btn-primary" href="products.html">Shop the system</a>
@@ -608,7 +608,7 @@
       </p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="products.html">Shop the system</a>
-        <a class="btn btn-ghost" href="#ritual">See the ritual</a>
+        <a class="btn btn-ghost" href="the-ritual.html">See the ritual</a>
       </div>
       <ul class="hero-trust">
         <li><i></i>&gt;99% Purity</li>
@@ -944,15 +944,15 @@
       </div>
       <div class="foot-col">
         <h4>Learn</h4>
-        <a href="#ritual">The Ritual</a>
-        <a href="#quality">Quality &amp; COAs</a>
-        <a href="#">FAQ</a>
+        <a href="the-ritual.html">The Ritual</a>
+        <a href="calculator.html">Peptide Calculator</a>
+        <a href="verification.html">Lab Verification</a>
       </div>
       <div class="foot-col">
         <h4>Care</h4>
-        <a href="#">Contact</a>
-        <a href="#">Shipping &amp; cold-chain</a>
-        <a href="#">Returns</a>
+        <a href="track-order.html">Track Order</a>
+        <a href="mailto:care@optimalabs.co">Contact</a>
+        <a href="the-ritual.html#routine">Shipping &amp; cold-chain</a>
       </div>
     </div>
     <p class="foot-legal">
@@ -1036,135 +1036,8 @@
 })();
 </script>
 
-<!-- Peptide Dose Calculator -->
-<script>
-(function () {
-  var DOSES     = [0.1, 0.25, 0.5, 1, 2, 2.5, 5, 7.5, 10, 12.5, 15];
-  var STRENGTHS = [1, 5, 10, 15, 20, 50];
-  var DILUENTS  = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0];
-
-  // Current values (defaults mirror a classic reconstitution: 5mg dose, 25mg vial, 2mL).
-  var state = { dose: 5, strength: 25, diluent: 2.0 };
-
-  var UX = 7.5; // svg px per unit (0u @ x=150, 100u @ x=900)
-
-  var groups = {
-    dose:     { values: DOSES,     pills: 'pillsDose',     field: 'fieldDose',     input: 'inDose',     preset: 5   },
-    strength: { values: STRENGTHS, pills: 'pillsStrength', field: 'fieldStrength', input: 'inStrength', preset: null },
-    diluent:  { values: DILUENTS,  pills: 'pillsDiluent',  field: 'fieldDiluent',  input: 'inDiluent',  preset: 2.0 }
-  };
-
-  function fmt(n) {
-    if (!isFinite(n)) return '—';
-    var r = Math.round(n * 100) / 100;
-    return (Math.round(r * 10) / 10).toString();
-  }
-  function el(id) { return document.getElementById(id); }
-  function setVal(id, num, unit) {
-    var node = el(id); if (!node) return;
-    node.innerHTML = num + (unit ? '<small>' + unit + '</small>' : '');
-  }
-
-  // ---- Pills ------------------------------------------------------------
-  function buildPills(key) {
-    var g = groups[key], host = el(g.pills);
-    if (!host) return;
-    host.innerHTML = g.values.map(function (v) {
-      var on = (g.preset !== null && v === g.preset);
-      return '<button type="button" class="pill' + (on ? ' active' : '') +
-             '" data-v="' + v + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + v +
-             (key === 'diluent' ? ' mL' : ' mg') + '</button>';
-    }).join('');
-    host.querySelectorAll('.pill').forEach(function (b) {
-      b.addEventListener('click', function () {
-        selectPill(key, parseFloat(b.dataset.v), b);
-      });
-    });
-  }
-  function clearPills(key) {
-    el(groups[key].pills).querySelectorAll('.pill').forEach(function (p) {
-      p.classList.remove('active'); p.setAttribute('aria-pressed', 'false');
-    });
-  }
-  function selectPill(key, value, btn) {
-    clearPills(key);
-    btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
-    var f = el(groups[key].field); f.classList.remove('invalid');
-    el(groups[key].input).value = '';           // pill wins → clear custom
-    state[key] = value;
-    recompute();
-  }
-
-  // ---- Custom inputs ----------------------------------------------------
-  function wireInput(key) {
-    var g = groups[key], input = el(g.input), field = el(g.field);
-    if (!input) return;
-    input.addEventListener('input', function () {
-      var raw = input.value.trim();
-      if (raw === '') { field.classList.remove('invalid'); return; } // ignore empty, keep last valid
-      var v = parseFloat(raw);
-      if (!isFinite(v) || v <= 0) { field.classList.add('invalid'); return; }
-      field.classList.remove('invalid');
-      clearPills(key);                            // custom wins → deactivate pills
-      state[key] = v;
-      recompute();
-    });
-  }
-
-  // ---- Syringe ticks ----------------------------------------------------
-  function buildTicks() {
-    var g = el('syrTicks'); if (!g) return;
-    var parts = '';
-    for (var u = 0; u <= 100; u += 5) {
-      var x = 150 + u * UX, major = (u % 10 === 0);
-      parts += '<line x1="' + x + '" y1="' + (major ? 118 : 124) + '" x2="' + x +
-               '" y2="134" stroke="#8F5545" stroke-opacity="' + (major ? '.55' : '.3') +
-               '" stroke-width="' + (major ? 1.6 : 1) + '"/>';
-      if (major) parts += '<text class="syr-tick-num" x="' + x + '" y="102" text-anchor="middle">' + u + '</text>';
-    }
-    g.innerHTML = parts;
-  }
-
-  // ---- Compute + render -------------------------------------------------
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function recompute() {
-    var d = state.dose, s = state.strength, w = state.diluent;
-    var ok = d > 0 && s > 0 && w > 0;
-    var conc = ok ? s / w : 0;                 // mg/mL
-    var vol  = (ok && conc > 0) ? d / conc : 0; // mL
-    var units = vol * 100;                      // U-100
-
-    setVal('sumDose', fmt(d), 'mg');
-    setVal('sumStrength', fmt(s), 'mg');
-    setVal('sumDil', fmt(w), 'mL');
-    setVal('sumConc', ok ? fmt(conc) : '—', 'mg/mL');
-    setVal('sumUnits', ok ? fmt(units) : '—', 'units');
-
-    var clamped = Math.max(0, Math.min(100, units));
-    var dx = clamped * UX;
-    var fill = el('syrFill'), plunger = el('syrPlunger'), marker = el('syrMarker');
-    fill.style.transform = 'scaleX(' + (clamped / 100) + ')';
-    plunger.style.transform = 'translateX(' + dx + 'px)';
-    marker.style.transform = 'translateX(' + dx + 'px)';
-    el('syrMarkerText').textContent = ok ? fmt(units) : '0';
-
-    var note = el('calcNoteText');
-    if (ok && units > 100) note.textContent = 'That draw exceeds 100 units (1 mL) — use more diluent or split into two doses.';
-    else if (!ok) note.textContent = 'Enter a dose, strength and diluent to see your draw.';
-    else note.textContent = 'For research purposes only. Always follow your research protocol.';
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    if (!el('calculator')) return;
-    Object.keys(groups).forEach(function (k) { buildPills(k); wireInput(k); });
-    // Seed the strength custom field (no matching pill for 25 mg).
-    el('inStrength').value = '25';
-    buildTicks();
-    recompute();
-  });
-})();
-</script>
+<!-- Peptide Dose Calculator (shared module) -->
+<script src="js/calculator.js"></script>
 
 <!-- Navbar scroll state: transparent over the hero → warm ivory once scrolled -->
 <script>
@@ -1209,98 +1082,8 @@
 })();
 </script>
 
-<!-- Track My Order -->
-<script>
-(function () {
-  var form = document.getElementById('trackForm');
-  if (!form) return;
-  var idEl = document.getElementById('trackId');
-  var emailEl = document.getElementById('trackEmail');
-  var btn = document.getElementById('trackBtn');
-  var btnText = document.getElementById('trackBtnText');
-  var result = document.getElementById('trackResult');
-  var errorEl = document.getElementById('trackError');
-  var summary = document.getElementById('trackSummary');
-  var timeline = document.getElementById('trackTimeline');
-
-  idEl.addEventListener('input', function () { idEl.value = idEl.value.toUpperCase(); });
-  document.getElementById('trackRetry').addEventListener('click', function () {
-    errorEl.classList.add('track-hidden'); result.classList.add('track-hidden');
-    idEl.focus();
-  });
-
-  // Prefill email once auth resolves (rules require the signed-in email to match).
-  if (window.fbAuth) window.fbAuth.onAuthStateChanged(function (u) {
-    if (u && u.email && !emailEl.value) emailEl.value = u.email;
-  });
-
-  function fmtTs(ts) {
-    if (!ts) return '';
-    var d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
-  function money(n) { return window.fmtPHP ? window.fmtPHP(n) : '₱' + Number(n || 0).toFixed(2); }
-  function loading(on) {
-    btn.disabled = on; btn.classList.toggle('loading', on);
-    btnText.textContent = on ? 'Tracking…' : 'Track Order';
-  }
-  function showError() { result.classList.add('track-hidden'); errorEl.classList.remove('track-hidden'); }
-
-  function render(o) {
-    errorEl.classList.add('track-hidden');
-    summary.innerHTML =
-      '<span class="who">Order for ' + (o.customer_name || 'you') + '</span>' +
-      '<span class="meta">Total <b>' + money(o.total) + '</b></span>' +
-      '<span class="meta">' + (o.delivery_type === 'express' ? 'Express' : 'Standard') + ' delivery</span>';
-
-    var os = (o.order_status || 'pending').toLowerCase();
-    var ps = (o.payment_status || 'pending').toLowerCase();
-    var steps = [
-      { name: 'Order Placed', done: true, time: fmtTs(o.created_at) },
-      { name: 'Payment Verified', done: ps === 'verified', time: ps === 'verified' ? fmtTs(o.updated_at) : '' },
-      { name: 'Processing', done: ['processing', 'shipped', 'delivered'].indexOf(os) > -1, time: '' },
-      { name: 'Shipped', done: ['shipped', 'delivered'].indexOf(os) > -1, time: '', track: o.tracking_number },
-      { name: 'Delivered', done: os === 'delivered', time: '' }
-    ];
-    var firstPending = steps.findIndex(function (s) { return !s.done; });
-    timeline.innerHTML = steps.map(function (s, i) {
-      var cls = s.done ? 'done' : (i === firstPending ? 'active' : '');
-      return '<div class="tl-step ' + cls + '">' +
-        '<div class="tl-dot">' + (s.done ? '✓' : (i + 1)) + '</div>' +
-        '<div class="tl-body"><div class="tl-name">' + s.name + '</div>' +
-        (s.time ? '<div class="tl-time">' + s.time + '</div>' : '') +
-        (s.track && s.done ? '<div class="tl-track">Tracking #: ' + s.track + ' — via J&T / LBC / Ninja Van</div>' : '') +
-        '</div></div>';
-    }).join('');
-    result.classList.remove('track-hidden');
-  }
-
-  async function lookup() {
-    var id = idEl.value.trim().toUpperCase();
-    var email = emailEl.value.trim().toLowerCase();
-    if (!id || !email) { showError(); return; }
-    if (!window.fbDb || !window.fbAuth) { showError(); return; }
-    loading(true);
-    try {
-      // Our rules require the requester to be signed in as the order's email.
-      if (!window.fbAuth.currentUser) {
-        await window.fbAuth.signInWithPopup(window.fbGoogle);
-      }
-      var snap = await window.fbDb.collection('orders')
-        .where('order_id', '==', id)
-        .where('customer_email', '==', email)
-        .limit(1).get();
-      if (snap.empty) { showError(); }
-      else { render(snap.docs[0].data()); }
-    } catch (e) {
-      console.error('track lookup failed', e);
-      showError();
-    } finally { loading(false); }
-  }
-
-  form.addEventListener('submit', function (e) { e.preventDefault(); lookup(); });
-})();
-</script>
+<!-- Track My Order (shared module) -->
+<script src="js/track-order.js"></script>
 
 </body>
 </html>
