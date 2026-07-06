@@ -50,6 +50,15 @@
             '<button class="btn btn-primary" id="addBtn"' + (product.inStock === false ? ' disabled' : '') + '>Add to Cart</button>' +
             '<button class="btn btn-ghost" id="viewCartBtn">View cart</button>' +
           '</div>' +
+          '<div class="qa-box">' +
+            '<div class="qa-head">' +
+              '<span class="qa-badge"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="rgba(255,255,255,.28)"/><path d="M6 10.4l2.6 2.6 5-5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Janoshik Verified</span>' +
+              '<span class="qa-title">Quality Assurance</span>' +
+            '</div>' +
+            '<p>Independently third-party tested by Janoshik for identity, purity and quality — so you know exactly what\'s in every vial.</p>' +
+            '<a class="btn btn-ghost btn-sm" href="verification.html?coa=' + encodeURIComponent(product.slug) + '">View Certificate of Analysis ' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4h6v6M20 4l-9 9M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>' +
+          '</div>' +
           (product.coaURL
             ? '<a class="coa-link" href="' + product.coaURL + '" target="_blank" rel="noopener">' +
                 '<svg width="20" height="20" viewBox="0 0 22 22" fill="none"><path d="M11 2l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V5l7-3z" stroke="#B79A6B" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.8 11l2.2 2.2 4.2-4.4" stroke="#A96A58" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
