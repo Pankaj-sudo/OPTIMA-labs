@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab Verification — OPTIMA Labs</title>
+<meta name="description" content="Every OPTIMA Labs batch is independently tested by Janoshik for identity, purity and quality. Browse all Certificates of Analysis (COAs).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/optima.css">
+<style>body{ display:flex; flex-direction:column; min-height:100vh; }</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="logo" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="10" cy="14" r="6" fill="#C08D80"/><circle cx="18" cy="8.5" r="3.6" fill="#B79A6B"/><circle cx="18.5" cy="18.5" r="3" fill="#A96A58"/></svg>
+      <b>OPTIMA <span>Labs</span></b>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="products.html">Shop</a>
+      <a href="index.html#ritual">The Ritual</a>
+      <a href="verification.html" class="active">Lab Verification</a>
+      <a href="index.html#quality">Quality</a>
+    </nav>
+    <div class="nav-auth" id="navAuth"></div>
+    <button class="nav-cart" aria-label="Open cart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="count"></span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- ===== HERO ===== -->
+  <section class="lab-hero">
+    <div class="wrap lab-hero-inner">
+      <div class="lab-eyebrow">Third-Party Lab Testing</div>
+      <h1>Lab Verification</h1>
+      <p>At OPTIMA Labs, transparency is our promise. Every batch is independently tested by
+         Janoshik for identity, purity and quality — so you can trust what you put in your body.</p>
+      <a class="btn btn-primary" href="#lab-why">Our Commitment to Quality</a>
+    </div>
+  </section>
+
+  <!-- ===== TRUST BAND ===== -->
+  <section class="lab-trust">
+    <div class="wrap lab-trust-grid">
+      <div class="lab-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 8.9-8 10-4.6-1.1-8-5-8-10V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div class="lt-h">100%</div><div class="lt-s">Third-Party Tested</div>
+      </div>
+      <div class="lab-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 3h6M10 3v6l-4.2 7.5A2 2 0 0 0 7.6 20h8.8a2 2 0 0 0 1.8-3.5L14 9V3"/></svg>
+        <div class="lt-h">Independent</div><div class="lt-s">Laboratory Verification</div>
+      </div>
+      <div class="lab-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M9 14l-1.5 7L12 18l4.5 3L15 14"/><path d="M9.5 9l1.7 1.7L15 7"/></svg>
+        <div class="lt-h">Premium</div><div class="lt-s">Quality Standards</div>
+      </div>
+      <div class="lab-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/></svg>
+        <div class="lt-h">Batch</div><div class="lt-s">Verification</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COA GRID ===== -->
+  <section class="lab-coa">
+    <div class="wrap">
+      <div class="lab-coa-head">
+        <div>
+          <hr class="rule">
+          <h2>Certificates of Analysis</h2>
+          <p>Browse all Certificates of Analysis (COA) for our peptides. Open any product to view its full laboratory report.</p>
+        </div>
+        <div class="lab-filters">
+          <div class="search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+            <input id="coaSearch" type="search" placeholder="Search peptide…" aria-label="Search certificates">
+          </div>
+          <select id="coaCat" class="lab-select" aria-label="Filter by category"><option value="All">All Categories</option></select>
+        </div>
+      </div>
+      <div class="result-count" id="coaCount">Loading…</div>
+      <div class="coa-grid" id="coaGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===== WHY THIRD-PARTY TESTING ===== -->
+  <section class="lab-why" id="lab-why">
+    <div class="wrap lab-why-card">
+      <div class="lab-why-body">
+        <h2>Why Third-Party Testing Matters</h2>
+        <p>Independent laboratory testing ensures the highest standards of safety, purity and accuracy —
+           verified by a lab with no stake in the result.</p>
+        <ul class="lab-check">
+          <li><i></i>Identity Confirmation</li>
+          <li><i></i>Concentration Verification</li>
+          <li><i></i>Purity Analysis</li>
+          <li><i></i>Contaminant Screening</li>
+          <li><i></i>Sterility Testing</li>
+          <li><i></i>Heavy-Metal Screening</li>
+        </ul>
+      </div>
+      <div class="lab-seal" aria-hidden="true">
+        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 4" opacity=".5"/><circle cx="60" cy="60" r="46" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+        <div class="lab-seal-t"><span>Verified by</span><b>JANOSHIK</b><span>Laboratory</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT CTA ===== -->
+  <section class="lab-cta-wrap">
+    <div class="wrap lab-cta">
+      <div class="lab-cta-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/><path d="M20 18v1a3 3 0 0 1-3 3h-3"/></svg>
+      </div>
+      <div class="lab-cta-copy">
+        <h3>Have questions about our lab reports?</h3>
+        <p>Our team is here to help you understand our testing process and results.</p>
+      </div>
+      <a class="btn btn-primary" href="mailto:care@optimalabs.co?subject=Question%20about%20a%20lab%20report">Contact Support</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="10" cy="14" r="6" fill="#C08D80"/><circle cx="18" cy="8.5" r="3.6" fill="#B79A6B"/><circle cx="18.5" cy="18.5" r="3" fill="#DDB4A7"/></svg>
+      <b style="color:#fff;">OPTIMA <span style="color:#DDB4A7;">Labs</span></b>
+    </a>
+    <p>Independently tested, elegantly delivered — every batch verified by Janoshik before it reaches you.</p>
+    <p class="footer-legal">© 2026 OPTIMA Labs. Certificates of Analysis are provided for transparency. Statements have not been
+      evaluated by the FDA. Not intended to diagnose, treat, cure, or prevent any disease.</p>
+  </div>
+</footer>
+
+<!-- Cart drawer (nav cart parity across the site) -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="cartDrawer" aria-label="Shopping cart">
+  <div class="drawer-head"><h3>Your Cart</h3><button class="drawer-close" id="drawerClose" aria-label="Close">✕</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot" style="display:none;">
+    <div class="drawer-total"><span>Subtotal</span><b id="drawerTotal">₱0.00</b></div>
+    <button class="btn btn-primary btn-block" id="checkoutBtn" type="button">Proceed to Checkout</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/coa-data.js"></script>
+<script src="js/vial-art.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/verification.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/auth-nav.js"></script>
+<script src="js/viber-button.js" defer></script>
+</body>
+</html>
