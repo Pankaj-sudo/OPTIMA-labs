@@ -206,7 +206,8 @@
   }
   .hero-video{
     position:absolute; inset:0; width:100%; height:100%;
-    object-fit:cover; z-index:0; pointer-events:none;
+    object-fit:cover; object-position:center; z-index:0; pointer-events:none;
+    backface-visibility:hidden; transform:translateZ(0); /* stable GPU layer — no repaint at loop */
     /* Cinematic grade: warmer tones, deeper blacks, gently lowered highlights
        while preserving natural skin tones. */
     filter:brightness(.82) contrast(1.08) saturate(1.08) sepia(.06);
@@ -584,13 +585,14 @@
 
 <!-- ============ HERO ============ -->
 <div class="hero">
-  <!-- Cinematic background video (decorative → aria-hidden). Poster shows during
-       load and if autoplay is blocked; a dark gradient sits under it as the final
-       fallback. preload="metadata" keeps it off the critical render path. -->
+  <!-- Cinematic background video (decorative → aria-hidden). Seamless boomerang
+       loop (end frame == start frame) so it repeats with no visible cut. Poster
+       shows until the first frame is ready; a dark gradient is the final fallback.
+       preload="auto" fully buffers it so the loop never re-buffers/stutters. -->
   <video class="hero-video" id="heroVideo" poster="hero-poster.png"
-         autoplay muted loop playsinline preload="metadata"
+         autoplay muted loop playsinline preload="auto"
          disablepictureinpicture tabindex="-1" aria-hidden="true">
-    <source src="https://firebasestorage.googleapis.com/v0/b/optima-labs.firebasestorage.app/o/The%20Amine%20Protocol.mp4?alt=media&token=8727ee15-9b35-472d-ac80-b9ee63a70fe7" type="video/mp4">
+    <source src="hero-loop.mp4" type="video/mp4">
   </video>
   <div class="hero-overlay" aria-hidden="true"></div>
 
