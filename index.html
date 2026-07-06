@@ -310,6 +310,8 @@
 
   /* ---------- Sections ---------- */
   section{ padding:clamp(64px,8vw,110px) 0; }
+  /* offset in-page anchor jumps so headings clear the fixed navbar */
+  section[id]{ scroll-margin-top:86px; }
   .sec-head{ max-width:640px; }
   .sec-head h2{ font-size:clamp(30px,3.4vw,44px); }
   .sec-head p{ margin-top:16px; color:var(--ink-soft); }
@@ -343,6 +345,106 @@
   .product .price{ font-family:var(--serif); font-size:24px; }
   .product .dose{ font-size:13.5px; font-weight:600; color:var(--ink-soft); }
   .product .btn{ margin-top:18px; }
+
+  /* ---------- Peptide Dose Calculator ---------- */
+  .calc{ background:radial-gradient(120% 78% at 82% -4%, rgba(241,226,219,.6), var(--porcelain) 58%); }
+  .calc-panel{
+    margin-top:48px; padding:clamp(24px,3.4vw,46px);
+    background:rgba(255,255,255,.55);
+    -webkit-backdrop-filter:blur(24px) saturate(1.2); backdrop-filter:blur(24px) saturate(1.2);
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:28px; box-shadow:var(--shadow-lift);
+  }
+  .calc-cols{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(22px,2.6vw,40px); }
+  .calc-group + .calc-group{ padding-left:clamp(22px,2.6vw,40px); border-left:1px solid rgba(183,154,107,.22); }
+  .calc-group h3{
+    display:flex; align-items:center; gap:11px;
+    font-family:var(--sans); font-weight:700; font-size:17px; letter-spacing:-.005em;
+  }
+  .calc-num{
+    width:26px; height:26px; border-radius:50%; flex:none;
+    background:var(--espresso); color:#fff; font-size:13px; font-weight:700;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .calc-group .hint{ font-size:13px; color:var(--ink-soft); margin:5px 0 16px; padding-left:37px; }
+  .calc-pills{ display:flex; flex-wrap:wrap; gap:9px; }
+  .pill{
+    appearance:none; cursor:pointer; font:inherit; font-size:14px; font-weight:600;
+    padding:9px 15px; min-height:40px; border-radius:999px; touch-action:manipulation;
+    border:1px solid rgba(183,154,107,.45); background:var(--surface); color:var(--espresso);
+    transition:transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .pill:hover{ border-color:var(--clay); transform:translateY(-1px); box-shadow:0 6px 16px -10px rgba(58,46,41,.4); }
+  .pill.active{ background:var(--espresso); color:#fff; border-color:var(--espresso); box-shadow:0 10px 22px -12px rgba(58,46,41,.7); }
+  .pill:active{ transform:scale(.96); }
+  .pill:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+  .calc-or{
+    display:flex; align-items:center; gap:12px; margin:16px 0;
+    font-size:11.5px; font-weight:700; letter-spacing:.16em; color:var(--ink-soft);
+  }
+  .calc-or::before,.calc-or::after{ content:""; flex:1; height:1px; background:rgba(183,154,107,.3); }
+  .calc-field{ position:relative; }
+  .calc-field input{
+    width:100%; padding:19px 46px 9px 16px; border-radius:14px;
+    border:1px solid rgba(183,154,107,.42); background:var(--surface);
+    font:inherit; font-size:15px; color:var(--espresso);
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .calc-field label{
+    position:absolute; left:16px; top:15px; color:var(--ink-soft); font-size:15px;
+    pointer-events:none; transform-origin:left center; transition:transform .18s ease, color .18s ease;
+  }
+  .calc-field input:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(169,106,88,.15); }
+  .calc-field input:focus + label,
+  .calc-field input:not(:placeholder-shown) + label{ transform:translateY(-10px) scale(.76); color:var(--clay-deep); }
+  .calc-field .unit{ position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--ink-soft); font-size:13px; font-weight:600; pointer-events:none; }
+  .calc-field .err{ display:none; margin-top:6px; font-size:12px; color:#b8503f; font-weight:600; }
+  .calc-field.invalid input{ border-color:#c2564d; box-shadow:0 0 0 3px rgba(194,86,77,.14); }
+  .calc-field.invalid .err{ display:block; }
+
+  /* Results */
+  .calc-results{ margin-top:30px; }
+  .calc-results h3{ font-family:var(--serif); font-size:clamp(24px,2.4vw,30px); margin-bottom:22px; }
+  .calc-summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:16px; }
+  .sum-card{
+    background:var(--surface); border:1px solid rgba(183,154,107,.22); border-radius:18px;
+    padding:18px 20px; box-shadow:var(--shadow-soft); display:flex; flex-direction:column; gap:12px;
+  }
+  .sum-card .sc-top{ display:flex; align-items:center; gap:9px; color:var(--ink-soft); font-size:12px; font-weight:700; letter-spacing:.02em; }
+  .sum-card .sc-top svg{ width:18px; height:18px; flex:none; color:var(--clay); }
+  .sum-val{ font-family:var(--serif); font-size:29px; line-height:1; color:var(--espresso); }
+  .sum-val small{ font-family:var(--sans); font-size:13.5px; color:var(--ink-soft); margin-left:5px; font-weight:600; }
+  .sum-hi{ background:linear-gradient(160deg, var(--clay), var(--clay-deep)); border-color:transparent; }
+  .sum-hi .sc-top, .sum-hi .sc-top svg, .sum-hi .sum-val{ color:#fff; }
+  .sum-hi .sum-val small{ color:rgba(255,255,255,.82); }
+  .sum-hi .sc-note{ font-size:11.5px; color:rgba(255,255,255,.8); font-weight:600; }
+
+  /* Syringe */
+  .syringe-wrap{
+    margin-top:22px; padding:24px clamp(14px,3vw,32px);
+    background:var(--surface); border:1px solid rgba(183,154,107,.22); border-radius:22px;
+    box-shadow:var(--shadow-soft); overflow-x:auto;
+  }
+  .syringe-wrap svg{ width:100%; min-width:660px; height:auto; display:block; }
+  .syr-fill{ transition:transform .6s cubic-bezier(.22,.61,.36,1); transform-origin:150px 105px; }
+  .syr-plunger, .syr-marker{ transition:transform .6s cubic-bezier(.22,.61,.36,1); }
+  .syr-tick-num{ font-family:var(--sans); font-size:15px; font-weight:600; fill:var(--ink-soft); }
+  .syr-units-lbl{ font-family:var(--sans); font-size:13px; font-weight:700; letter-spacing:.16em; fill:var(--ink-soft); }
+  .syr-marker text{ font-family:var(--sans); font-size:17px; font-weight:700; fill:#fff; }
+  .calc-note{
+    display:flex; align-items:center; gap:10px; margin-top:20px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .calc-note svg{ flex:none; color:var(--champagne); }
+  @media (prefers-reduced-motion:reduce){
+    .pill,.pill:hover,.pill:active,.syr-fill,.syr-plunger,.syr-marker{ transition:none; transform:none; }
+    .syr-fill{ transition:none; }
+  }
+  @media (max-width:860px){
+    .calc-cols{ grid-template-columns:1fr; gap:28px; }
+    .calc-group + .calc-group{ padding-left:0; border-left:none; padding-top:28px; border-top:1px solid rgba(183,154,107,.22); }
+    .calc-group .hint{ padding-left:37px; }
+  }
 
   /* Ritual */
   .ritual-grid{
@@ -468,6 +570,7 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="products.html">The Collection</a>
+      <a href="#calculator">Calculator</a>
       <a href="#ritual">The Ritual</a>
       <a href="#track">Track Order</a>
       <a href="#quality">Quality</a>
@@ -548,6 +651,148 @@
     </div>
 
     <div class="products" id="collectionGrid"></div>
+  </div>
+</section>
+
+<!-- ============ PEPTIDE DOSE CALCULATOR ============ -->
+<section class="calc" id="calculator">
+  <div class="wrap">
+    <div class="sec-head">
+      <hr class="rule">
+      <h2>Peptide Dose Calculator</h2>
+      <p>Reconstitute with confidence. Choose your dose, vial strength and diluent —
+         we'll show your concentration and the exact unit to draw on a U-100 syringe.</p>
+    </div>
+
+    <div class="calc-panel">
+      <div class="calc-cols">
+        <!-- 1 · Dose -->
+        <div class="calc-group" role="group" aria-label="Dose of peptide">
+          <h3><span class="calc-num">1</span>Dose of Peptide</h3>
+          <p class="hint">The amount you want per injection.</p>
+          <div class="calc-pills" id="pillsDose"></div>
+          <div class="calc-or">OR</div>
+          <div class="calc-field" id="fieldDose">
+            <input type="text" inputmode="decimal" id="inDose" placeholder=" " autocomplete="off" aria-label="Custom dose in milligrams">
+            <label for="inDose">Enter custom dose</label>
+            <span class="unit">mg</span>
+            <div class="err">Enter a number greater than 0</div>
+          </div>
+        </div>
+
+        <!-- 2 · Strength -->
+        <div class="calc-group" role="group" aria-label="Strength of peptide">
+          <h3><span class="calc-num">2</span>Strength of Peptide</h3>
+          <p class="hint">Total peptide in the vial.</p>
+          <div class="calc-pills" id="pillsStrength"></div>
+          <div class="calc-or">OR</div>
+          <div class="calc-field" id="fieldStrength">
+            <input type="text" inputmode="decimal" id="inStrength" placeholder=" " autocomplete="off" aria-label="Custom strength in milligrams">
+            <label for="inStrength">Enter custom strength</label>
+            <span class="unit">mg</span>
+            <div class="err">Enter a number greater than 0</div>
+          </div>
+        </div>
+
+        <!-- 3 · Diluent -->
+        <div class="calc-group" role="group" aria-label="Water or diluent volume">
+          <h3><span class="calc-num">3</span>Water / Diluent</h3>
+          <p class="hint">Volume used to reconstitute.</p>
+          <div class="calc-pills" id="pillsDiluent"></div>
+          <div class="calc-or">OR</div>
+          <div class="calc-field" id="fieldDiluent">
+            <input type="text" inputmode="decimal" id="inDiluent" placeholder=" " autocomplete="off" aria-label="Custom diluent in millilitres">
+            <label for="inDiluent">Enter custom water</label>
+            <span class="unit">mL</span>
+            <div class="err">Enter a number greater than 0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="calc-results" aria-live="polite">
+        <h3>Results</h3>
+        <div class="calc-summary">
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2.5" width="8" height="4" rx="1"/><path d="M6.5 6.5h9v11a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2z"/><path d="M6.5 12h9"/></svg>Peptide Dose</div>
+            <div class="sum-val" id="sumDose">5<small>mg</small></div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h4M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h7.4a2 2 0 0 0 1.8-3L12 8V3"/></svg>Peptide Strength</div>
+            <div class="sum-val" id="sumStrength">25<small>mg</small></div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3s5 5.5 5 9a5 5 0 0 1-10 0c0-3.5 5-9 5-9z"/></svg>Diluent (Water)</div>
+            <div class="sum-val" id="sumDil">2.0<small>mL</small></div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7.5"/><circle cx="11" cy="11" r="2.2"/><path d="M11 1.5v3M11 17.5v3M1.5 11h3M17.5 11h3"/></svg>Concentration</div>
+            <div class="sum-val" id="sumConc">12.5<small>mg/mL</small></div>
+          </div>
+          <div class="sum-card sum-hi">
+            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l6-6M8 8l6 6M12.5 3.5l6 6-3 3-6-6zM9 13l-1.5 4.5L3 19"/></svg>Draw Syringe To</div>
+            <div class="sum-val" id="sumUnits">40<small>units</small></div>
+            <div class="sc-note">on a U-100 insulin syringe</div>
+          </div>
+        </div>
+
+        <!-- Syringe -->
+        <div class="syringe-wrap">
+          <svg viewBox="0 0 1180 250" role="img" aria-label="Insulin syringe illustration showing the draw level">
+            <defs>
+              <linearGradient id="syrLiquid" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#C08D80"/><stop offset="1" stop-color="#A96A58"/>
+              </linearGradient>
+              <linearGradient id="syrRod" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#EDE4DD"/><stop offset="1" stop-color="#CBBBB0"/>
+              </linearGradient>
+              <linearGradient id="syrGlass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity=".65"/><stop offset="1" stop-color="#F1E2DB" stop-opacity=".28"/>
+              </linearGradient>
+            </defs>
+
+            <!-- needle -->
+            <line x1="26" y1="107" x2="120" y2="107" stroke="#B0A79F" stroke-width="3" stroke-linecap="round"/>
+            <path d="M120 100h34l-8 7 8 7h-34z" fill="#CBBBB0"/>
+
+            <!-- plunger rod (through flange to thumb) -->
+            <rect x="150" y="101" width="900" height="12" rx="6" fill="url(#syrRod)"/>
+            <!-- barrel glass tint (extends past the 100 mark to a neck + flange) -->
+            <rect x="150" y="74" width="790" height="66" rx="12" fill="url(#syrGlass)"/>
+            <!-- liquid fill (animated) -->
+            <rect class="syr-fill" id="syrFill" x="150" y="76" width="750" height="62" rx="10" fill="url(#syrLiquid)" opacity=".62"/>
+
+            <!-- graduations + numbers -->
+            <g id="syrTicks"></g>
+
+            <!-- barrel outline on top -->
+            <rect x="150" y="74" width="790" height="66" rx="12" fill="none" stroke="#B79A6B" stroke-opacity=".55" stroke-width="2"/>
+
+            <!-- rubber seal at the fill boundary (animated) -->
+            <g class="syr-plunger" id="syrPlunger"><rect x="143" y="74" width="14" height="66" rx="3" fill="#3A2E29"/></g>
+
+            <!-- finger flange + thumb rest -->
+            <rect x="936" y="56" width="14" height="102" rx="5" fill="#D8C9BC"/>
+            <rect x="1040" y="70" width="18" height="74" rx="6" fill="#3A2E29"/>
+
+            <!-- UNITS label -->
+            <text class="syr-units-lbl" x="900" y="166" text-anchor="end">UNITS</text>
+
+            <!-- moving marker -->
+            <g class="syr-marker" id="syrMarker">
+              <rect x="124" y="6" width="52" height="30" rx="15" fill="#8F5545"/>
+              <text x="150" y="27" text-anchor="middle" id="syrMarkerText">40</text>
+              <path d="M140 40h20l-10 14z" fill="#8F5545"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="calc-note" id="calcNote">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.2v.2" stroke-linecap="round"/></svg>
+          <span id="calcNoteText">For research purposes only. Always follow your research protocol.</span>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -781,6 +1026,136 @@
     if (!grid || !window.PRODUCTS_DATA) return;
     var sorted = window.PRODUCTS_DATA.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
     grid.innerHTML = sorted.map(cardHTML).join('');
+  });
+})();
+</script>
+
+<!-- Peptide Dose Calculator -->
+<script>
+(function () {
+  var DOSES     = [0.1, 0.25, 0.5, 1, 2, 2.5, 5, 7.5, 10, 12.5, 15];
+  var STRENGTHS = [1, 5, 10, 15, 20, 50];
+  var DILUENTS  = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0];
+
+  // Current values (defaults mirror a classic reconstitution: 5mg dose, 25mg vial, 2mL).
+  var state = { dose: 5, strength: 25, diluent: 2.0 };
+
+  var UX = 7.5; // svg px per unit (0u @ x=150, 100u @ x=900)
+
+  var groups = {
+    dose:     { values: DOSES,     pills: 'pillsDose',     field: 'fieldDose',     input: 'inDose',     preset: 5   },
+    strength: { values: STRENGTHS, pills: 'pillsStrength', field: 'fieldStrength', input: 'inStrength', preset: null },
+    diluent:  { values: DILUENTS,  pills: 'pillsDiluent',  field: 'fieldDiluent',  input: 'inDiluent',  preset: 2.0 }
+  };
+
+  function fmt(n) {
+    if (!isFinite(n)) return '—';
+    var r = Math.round(n * 100) / 100;
+    return (Math.round(r * 10) / 10).toString();
+  }
+  function el(id) { return document.getElementById(id); }
+  function setVal(id, num, unit) {
+    var node = el(id); if (!node) return;
+    node.innerHTML = num + (unit ? '<small>' + unit + '</small>' : '');
+  }
+
+  // ---- Pills ------------------------------------------------------------
+  function buildPills(key) {
+    var g = groups[key], host = el(g.pills);
+    if (!host) return;
+    host.innerHTML = g.values.map(function (v) {
+      var on = (g.preset !== null && v === g.preset);
+      return '<button type="button" class="pill' + (on ? ' active' : '') +
+             '" data-v="' + v + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + v +
+             (key === 'diluent' ? ' mL' : ' mg') + '</button>';
+    }).join('');
+    host.querySelectorAll('.pill').forEach(function (b) {
+      b.addEventListener('click', function () {
+        selectPill(key, parseFloat(b.dataset.v), b);
+      });
+    });
+  }
+  function clearPills(key) {
+    el(groups[key].pills).querySelectorAll('.pill').forEach(function (p) {
+      p.classList.remove('active'); p.setAttribute('aria-pressed', 'false');
+    });
+  }
+  function selectPill(key, value, btn) {
+    clearPills(key);
+    btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
+    var f = el(groups[key].field); f.classList.remove('invalid');
+    el(groups[key].input).value = '';           // pill wins → clear custom
+    state[key] = value;
+    recompute();
+  }
+
+  // ---- Custom inputs ----------------------------------------------------
+  function wireInput(key) {
+    var g = groups[key], input = el(g.input), field = el(g.field);
+    if (!input) return;
+    input.addEventListener('input', function () {
+      var raw = input.value.trim();
+      if (raw === '') { field.classList.remove('invalid'); return; } // ignore empty, keep last valid
+      var v = parseFloat(raw);
+      if (!isFinite(v) || v <= 0) { field.classList.add('invalid'); return; }
+      field.classList.remove('invalid');
+      clearPills(key);                            // custom wins → deactivate pills
+      state[key] = v;
+      recompute();
+    });
+  }
+
+  // ---- Syringe ticks ----------------------------------------------------
+  function buildTicks() {
+    var g = el('syrTicks'); if (!g) return;
+    var parts = '';
+    for (var u = 0; u <= 100; u += 5) {
+      var x = 150 + u * UX, major = (u % 10 === 0);
+      parts += '<line x1="' + x + '" y1="' + (major ? 118 : 124) + '" x2="' + x +
+               '" y2="134" stroke="#8F5545" stroke-opacity="' + (major ? '.55' : '.3') +
+               '" stroke-width="' + (major ? 1.6 : 1) + '"/>';
+      if (major) parts += '<text class="syr-tick-num" x="' + x + '" y="102" text-anchor="middle">' + u + '</text>';
+    }
+    g.innerHTML = parts;
+  }
+
+  // ---- Compute + render -------------------------------------------------
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function recompute() {
+    var d = state.dose, s = state.strength, w = state.diluent;
+    var ok = d > 0 && s > 0 && w > 0;
+    var conc = ok ? s / w : 0;                 // mg/mL
+    var vol  = (ok && conc > 0) ? d / conc : 0; // mL
+    var units = vol * 100;                      // U-100
+
+    setVal('sumDose', fmt(d), 'mg');
+    setVal('sumStrength', fmt(s), 'mg');
+    setVal('sumDil', fmt(w), 'mL');
+    setVal('sumConc', ok ? fmt(conc) : '—', 'mg/mL');
+    setVal('sumUnits', ok ? fmt(units) : '—', 'units');
+
+    var clamped = Math.max(0, Math.min(100, units));
+    var dx = clamped * UX;
+    var fill = el('syrFill'), plunger = el('syrPlunger'), marker = el('syrMarker');
+    fill.style.transform = 'scaleX(' + (clamped / 100) + ')';
+    plunger.style.transform = 'translateX(' + dx + 'px)';
+    marker.style.transform = 'translateX(' + dx + 'px)';
+    el('syrMarkerText').textContent = ok ? fmt(units) : '0';
+
+    var note = el('calcNoteText');
+    if (ok && units > 100) note.textContent = 'That draw exceeds 100 units (1 mL) — use more diluent or split into two doses.';
+    else if (!ok) note.textContent = 'Enter a dose, strength and diluent to see your draw.';
+    else note.textContent = 'For research purposes only. Always follow your research protocol.';
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!el('calculator')) return;
+    Object.keys(groups).forEach(function (k) { buildPills(k); wireInput(k); });
+    // Seed the strength custom field (no matching pill for 25 mg).
+    el('inStrength').value = '25';
+    buildTicks();
+    recompute();
   });
 })();
 </script>
