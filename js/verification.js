@@ -130,32 +130,69 @@
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
   }
 
+  // Map a Firestore product (with its labVerification field) → COA card shape.
+  function fromProduct(id, p) {
+    var lv = p.labVerification || {};
+    var dose = (p.dosageOptions && p.dosageOptions[0] && p.dosageOptions[0].mg && p.dosageOptions[0].mg !== '—') ? p.dosageOptions[0].mg : '';
+    return { slug: p.slug || id, name: p.name, dosage: dose, category: p.category,
+      purity: lv.purity, batch: lv.batchNumber, tested: lv.testedDate, lab: lv.laboratory || 'Janoshik Analytical',
+      coaURL: '', janoshikURL: lv.coaUrl || '', featured: !!lv.featured };
+  }
+
+  var catsDone = false, pendingCoa = null;
+  function staticList() { return (window.COA_DATA || []).slice(); }
+
+  function setData(list) {
+    ALL = list.slice().sort(function (a, b) {
+      var f = (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+      return f || a.name.localeCompare(b.name);
+    });
+    if (!catsDone) {
+      (window.CATEGORIES || []).forEach(function (cat) {
+        if (ALL.some(function (c) { return c.category === cat; })) {
+          var o = document.createElement('option'); o.value = cat; o.textContent = cat; catEl.appendChild(o);
+        }
+      });
+      catsDone = true;
+    }
+    apply();
+    if (pendingCoa) { openModal(pendingCoa); pendingCoa = null; }
+  }
+
+  // Live from Firestore: products whose labVerification is verified + shown.
+  // Real-time — admin edits appear here instantly. Static COA_DATA covers any
+  // peptides that aren't shop products (merged with no duplicates) + offline.
+  function subscribe() {
+    if (!window.fbDb) { setData(staticList()); return; }
+    var got = false;
+    var to = setTimeout(function () { if (!got) setData(staticList()); }, 6000);
+    try {
+      window.fbDb.collection('products').where('status', '==', 'active').onSnapshot(function (snap) {
+        got = true; clearTimeout(to);
+        var live = [], have = {};
+        snap.docs.forEach(function (d) {
+          var p = d.data(), lv = p.labVerification;
+          if (lv && lv.verificationStatus === 'verified' && lv.showOnHomepage !== false) {
+            live.push(fromProduct(d.id, p)); have[p.slug || d.id] = true;
+          }
+        });
+        staticList().forEach(function (c) { if (!have[c.slug]) live.push(c); });
+        setData(live);
+      }, function () { clearTimeout(to); setData(staticList()); });
+    } catch (e) { clearTimeout(to); setData(staticList()); }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     grid = document.getElementById('coaGrid');
     searchEl = document.getElementById('coaSearch');
     catEl = document.getElementById('coaCat');
     countEl = document.getElementById('coaCount');
     if (!grid) return;
-
-    ALL = (window.COA_DATA || []).slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
-
-    // category options
-    (window.CATEGORIES || []).forEach(function (cat) {
-      if (ALL.some(function (c) { return c.category === cat; })) {
-        var o = document.createElement('option'); o.value = cat; o.textContent = cat; catEl.appendChild(o);
-      }
-    });
-
     buildModal();
-
     var t;
     searchEl.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { state.q = searchEl.value; apply(); }, 140); });
     catEl.addEventListener('change', function () { state.cat = catEl.value; apply(); });
-
-    apply();
-
-    // deep link: ?coa=slug opens that certificate
-    var want = new URLSearchParams(location.search).get('coa');
-    if (want) openModal(want);
+    pendingCoa = new URLSearchParams(location.search).get('coa');
+    subscribe();
   });
 })();

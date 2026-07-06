@@ -213,6 +213,11 @@
   .img-tools button{ background:none; border:none; color:#fff; font-size:12px; padding:2px 4px; line-height:1; }
   .img-tools button:hover{ color:var(--gold); }
   .inv-warn{ font-size:12px; color:#E1BC6A; margin-top:4px; }
+  /* lab verification edit modal — read-only product identity */
+  .lv-read{ display:flex; gap:14px; align-items:center; padding:14px; border-radius:12px; background:var(--surface-2); border:1px solid var(--border); margin-bottom:4px; }
+  .lv-read-img{ width:54px; height:54px; border-radius:10px; overflow:hidden; flex:none; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:20px; }
+  .lv-read-img img{ width:100%; height:100%; object-fit:cover; }
+  .lv-read-name{ font-weight:700; color:var(--white); font-size:15px; }
 </style>
 </head>
 <body>
@@ -243,6 +248,7 @@
       <button class="sb-item" data-page="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Orders</button>
       <button class="sb-item" data-page="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.6 8.4 12 3 3.4 8.4v7.2L12 21l8.6-5.4z"/><path d="M3.4 8.4 12 13.8l8.6-5.4M12 21v-7.2"/></svg> Products</button>
       <button class="sb-item" data-page="arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 2.09 4.26L19 8l-3.5 3.4.83 4.85L12 14l-4.33 2.25.83-4.85L5 8l4.91-.74z"/></svg> New Arrivals</button>
+      <button class="sb-item" data-page="labverif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 3v5l-4.4 7.5A2 2 0 0 0 7.3 19h9.4a2 2 0 0 0 1.7-3.5L14 8V3"/><path d="M8.5 14h7"/></svg> Lab Verification</button>
       <button class="sb-item" data-page="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 14l3-4 3 3 5-6"/></svg> Analytics</button>
       <button class="sb-item" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V1a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H23a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</button>
     </nav>
@@ -363,6 +369,32 @@
         <div class="tbl-wrap"><table>
           <thead><tr><th></th><th>Name</th><th>Category</th><th>Price (from)</th><th></th></tr></thead>
           <tbody id="arrivalsBody"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- LAB VERIFICATION -->
+    <section class="page" id="page-labverif">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+        <div class="muted" id="lvCount">Loading…</div>
+        <a class="btn-ghost" href="verification.html" target="_blank" rel="noopener" style="text-decoration:none;">View public page ↗</a>
+      </div>
+      <div class="filters">
+        <input class="search" id="lvSearch" placeholder="Search name, batch…">
+        <select id="lvCat"><option value="All">All categories</option></select>
+        <select id="lvStatus">
+          <option value="all">All statuses</option>
+          <option value="verified">Verified</option>
+          <option value="pending">Pending</option>
+          <option value="unverified">Unverified</option>
+        </select>
+      </div>
+      <div class="card" style="padding:8px 22px 22px;">
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th></th><th>Product</th><th>Category</th><th>Purity</th><th>Batch No.</th><th>Tested</th><th>Laboratory</th><th>Status</th><th>COA</th><th></th>
+          </tr></thead>
+          <tbody id="lvBody"></tbody>
         </table></div>
       </div>
     </section>
@@ -560,6 +592,54 @@
   </div>
 </div>
 
+<!-- LAB VERIFICATION EDIT MODAL -->
+<div class="overlay" id="lvModal">
+  <div class="modal sm">
+    <div class="modal-head"><div><div class="oid" style="font-size:22px;">Certificate of Analysis</div><div class="sub" id="lvMSub">Edit lab verification</div></div><button class="modal-close" onclick="OL.lvClose()">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="lvId">
+      <!-- read-only product identity -->
+      <div class="lv-read">
+        <div class="lv-read-img" id="lvMImg"></div>
+        <div>
+          <div class="lv-read-name" id="lvMName"></div>
+          <div class="muted" id="lvMCat" style="font-size:12.5px;"></div>
+          <div class="muted" style="font-size:11px;margin-top:4px;">Name, image &amp; category are managed in Products.</div>
+        </div>
+      </div>
+
+      <div class="sec-t">Certificate details</div>
+      <div class="grid2">
+        <div class="field"><label>Purity</label><input id="lvPurity" placeholder="99.87%"></div>
+        <div class="field"><label>Batch Number</label><input id="lvBatch" placeholder="e.g. 6JW9EI82MZML"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Tested Date</label><input id="lvTested" placeholder="e.g. Mar 2024"></div>
+        <div class="field"><label>Laboratory</label><input id="lvLab" placeholder="Janoshik"></div>
+      </div>
+      <div class="field"><label>COA Verification URL</label><input id="lvUrl" placeholder="https://verify.janoshik.com/tests/…"></div>
+      <div class="grid2">
+        <div class="field"><label>Verification Status</label>
+          <select id="lvStat"><option value="verified">Verified</option><option value="pending">Pending</option><option value="unverified">Unverified</option></select>
+        </div>
+        <div class="field"><label>&nbsp;</label>
+          <div style="display:flex;gap:20px;padding-top:9px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><span class="sw"><input type="checkbox" id="lvFeatured"><span></span></span> Featured</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><span class="sw"><input type="checkbox" id="lvShow" checked><span></span></span> Show on page</label>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Notes (internal)</label><textarea id="lvNotes" placeholder="Optional internal notes"></textarea></div>
+
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <button class="btn-gold" id="lvSaveBtn" onclick="OL.lvSave()">Save Certificate</button>
+        <button class="btn-ghost" onclick="OL.lvClose()">Cancel</button>
+        <button class="btn-ghost" id="lvClearBtn" onclick="OL.lvClear()" style="margin-left:auto;">Clear COA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -613,10 +693,11 @@ window.OL = (function () {
     document.querySelectorAll('.sb-item').forEach(function(b){ b.classList.toggle('active', b.dataset.page===p); });
     document.querySelectorAll('.page').forEach(function(s){ s.classList.remove('active'); });
     $('page-'+p).classList.add('active');
-    $('pageTitle').textContent={dashboard:'Dashboard',orders:'Orders',products:'Products',arrivals:'New Arrivals',analytics:'Analytics',settings:'Settings'}[p];
+    $('pageTitle').textContent={dashboard:'Dashboard',orders:'Orders',products:'Products',arrivals:'New Arrivals',labverif:'Lab Verification',analytics:'Analytics',settings:'Settings'}[p];
     $('sidebar').classList.remove('open');
     if(p==='analytics') renderAnalytics();
     if(p==='arrivals') renderArrivals();
+    if(p==='labverif') renderLabVerif();
   }
   document.getElementById('sbNav').addEventListener('click',function(e){ var b=e.target.closest('.sb-item'); if(b) go(b.dataset.page); });
 
@@ -793,13 +874,16 @@ window.OL = (function () {
       PRODUCTS=snap.docs.map(function(d){ return Object.assign({_id:d.id},d.data()); });
       // drop selections for products that vanished
       Object.keys(psel).forEach(function(id){ if(!PRODUCTS.some(function(p){return p._id===id;})) delete psel[id]; });
-      renderProducts(); if($('page-arrivals').classList.contains('active')) renderArrivals();
+      renderProducts();
+      if($('page-arrivals').classList.contains('active')) renderArrivals();
+      if($('page-labverif').classList.contains('active')) renderLabVerif();
     },function(err){ $('prodCount').textContent='Failed to load products: '+err.code; });
   }
 
   function pFiltered(){
     var q=pf.q.toLowerCase();
     var list=PRODUCTS.filter(function(p){
+      if(p.coaOnly) return false;                 // COA-only records live under Lab Verification
       if(pf.cat!=='All' && p.category!==pf.cat) return false;
       if(pf.status!=='all' && (p.status||'active')!==pf.status) return false;
       if(pf.stock!=='all' && pStock(p).status!==pf.stock) return false;
@@ -822,7 +906,8 @@ window.OL = (function () {
 
   function renderProducts(){
     var list=pFiltered();
-    $('prodCount').textContent=list.length+(list.length===1?' product':' products')+(list.length!==PRODUCTS.length?(' · '+PRODUCTS.length+' total'):'');
+    var totalSellable=PRODUCTS.filter(function(p){return !p.coaOnly;}).length;
+    $('prodCount').textContent=list.length+(list.length===1?' product':' products')+(list.length!==totalSellable?(' · '+totalSellable+' total'):'');
     var pages=Math.ceil(list.length/pf.per)||1; if(pf.page>pages) pf.page=pages;
     var start=(pf.page-1)*pf.per, view=list.slice(start,start+pf.per);
     $('productsBody').innerHTML=view.map(rowHTML).join('')||'<tr><td colspan="8" class="empty">No products match these filters.</td></tr>';
@@ -1027,6 +1112,83 @@ window.OL = (function () {
   ['dragleave','dragend'].forEach(function(ev){ $('pmDrop').addEventListener(ev,function(e){ e.preventDefault(); this.classList.remove('drag'); }); });
   $('pmDrop').addEventListener('drop',function(e){ e.preventDefault(); this.classList.remove('drag'); if(e.dataTransfer&&e.dataTransfer.files) pmUpload(e.dataTransfer.files); });
 
+  /* ================= LAB VERIFICATION ================= */
+  var lvf = { q:'', cat:'All', status:'all' }, lvCatsDone = false;
+  function lvStatusOf(p){ var lv=p.labVerification; return (lv&&lv.verificationStatus)||'unverified'; }
+  function lvImg(p){ return p.featuredImage||p.imageURL||(p.images&&p.images[0])||''; }
+  var LVLBL={ verified:'Verified', pending:'Pending', unverified:'Unverified' };
+  var LVCLS={ verified:'st-in_stock', pending:'st-low_stock', unverified:'st-out_of_stock' };
+
+  function renderLabVerif(){
+    if(!lvCatsDone){ $('lvCat').innerHTML='<option value="All">All categories</option>'+window.CATEGORIES.map(function(c){return '<option>'+c+'</option>';}).join(''); lvCatsDone=true; }
+    var q=lvf.q.toLowerCase();
+    var list=PRODUCTS.filter(function(p){
+      if(lvf.cat!=='All' && p.category!==lvf.cat) return false;
+      if(lvf.status!=='all' && lvStatusOf(p)!==lvf.status) return false;
+      if(q){ var lv=p.labVerification||{}; if(((p.name||'')+' '+(lv.batchNumber||'')).toLowerCase().indexOf(q)<0) return false; }
+      return true;
+    }).sort(function(a,b){ var d=((lvStatusOf(b)==='verified')?1:0)-((lvStatusOf(a)==='verified')?1:0); return d || a.name.localeCompare(b.name); });
+    var nVer=PRODUCTS.filter(function(p){return lvStatusOf(p)==='verified';}).length;
+    $('lvCount').textContent=list.length+' of '+PRODUCTS.length+' products · '+nVer+' verified';
+    $('lvBody').innerHTML=list.map(lvRow).join('')||'<tr><td colspan="10" class="empty">No products match these filters.</td></tr>';
+  }
+  function lvRow(p){
+    var lv=p.labVerification||{}, st=lvStatusOf(p), img=lvImg(p);
+    var thumb=img?'<img class="p-thumb" src="'+img+'" loading="lazy">':'<div class="p-thumb ph">◫</div>';
+    var coa=lv.coaUrl?'<a class="icon-btn" href="'+lv.coaUrl+'" target="_blank" rel="noopener" title="Open COA link">Open ↗</a>':'<span class="muted">—</span>';
+    var feat=lv.featured?' <span class="st-badge st-active" title="Featured">★</span>':'';
+    var dash='<span class="muted">—</span>';
+    return '<tr>'+
+      '<td>'+thumb+'</td>'+
+      '<td><div class="p-name">'+p.name+feat+'</div></td>'+
+      '<td class="muted">'+p.category+'</td>'+
+      '<td>'+(lv.purity||dash)+'</td>'+
+      '<td style="font-family:ui-monospace,monospace;font-size:12px;">'+(lv.batchNumber||dash)+'</td>'+
+      '<td>'+(lv.testedDate||dash)+'</td>'+
+      '<td class="muted">'+(lv.laboratory||'—')+'</td>'+
+      '<td><span class="st-badge '+(LVCLS[st])+'">'+LVLBL[st]+'</span></td>'+
+      '<td>'+coa+'</td>'+
+      '<td><div class="row-act"><button class="icon-btn" onclick="OL.lvEdit(\''+p._id+'\')">Edit</button>'+
+        '<button class="icon-btn" onclick="OL.lvPreview(\''+p._id+'\')" title="Preview on public page">Preview</button></div></td>'+
+    '</tr>';
+  }
+  $('lvSearch').addEventListener('input',function(){ lvf.q=this.value.trim(); renderLabVerif(); });
+  $('lvCat').addEventListener('change',function(){ lvf.cat=this.value; renderLabVerif(); });
+  $('lvStatus').addEventListener('change',function(){ lvf.status=this.value; renderLabVerif(); });
+
+  function lvEdit(id){
+    var p=PRODUCTS.find(function(x){return x._id===id;}); if(!p) return;
+    var lv=p.labVerification||{}, img=lvImg(p);
+    $('lvId').value=id;
+    $('lvMImg').innerHTML=img?'<img src="'+img+'">':'<span>◫</span>';
+    $('lvMName').textContent=p.name; $('lvMCat').textContent=p.category;
+    $('lvPurity').value=lv.purity||''; $('lvBatch').value=lv.batchNumber||''; $('lvTested').value=lv.testedDate||'';
+    $('lvLab').value=lv.laboratory||'Janoshik'; $('lvUrl').value=lv.coaUrl||'';
+    $('lvStat').value=lv.verificationStatus||'verified';
+    $('lvFeatured').checked=!!lv.featured; $('lvShow').checked=lv.showOnHomepage!==false;
+    $('lvNotes').value=lv.notes||'';
+    $('lvModal').classList.add('open');
+  }
+  function lvClose(){ $('lvModal').classList.remove('open'); }
+  async function lvSave(){
+    var id=$('lvId').value; if(!id) return;
+    var lv={ purity:$('lvPurity').value.trim(), batchNumber:$('lvBatch').value.trim(), testedDate:$('lvTested').value.trim(),
+      laboratory:$('lvLab').value.trim()||'Janoshik', coaUrl:$('lvUrl').value.trim(), verificationStatus:$('lvStat').value,
+      featured:$('lvFeatured').checked, showOnHomepage:$('lvShow').checked, notes:$('lvNotes').value.trim(),
+      updatedAt:svTs(), updatedBy:(window.fbAuth.currentUser&&window.fbAuth.currentUser.email)||'admin' };
+    var btn=$('lvSaveBtn'); btn.disabled=true;
+    try{ await pdoc(id).set({ labVerification:lv, updated_at:svTs() },{merge:true}); toast('Certificate saved'); lvClose(); }
+    catch(e){ toast('Save failed: '+(e.code||e.message)); }
+    btn.disabled=false;
+  }
+  async function lvClear(){
+    var id=$('lvId').value; if(!id) return;
+    if(!confirm('Remove all certificate data from this product?')) return;
+    try{ await pdoc(id).update({ labVerification:firebase.firestore.FieldValue.delete(), updated_at:svTs() }); toast('COA cleared'); lvClose(); }
+    catch(e){ toast('Failed: '+(e.code||e.message)); }
+  }
+  function lvPreview(id){ var p=PRODUCTS.find(function(x){return x._id===id;}); if(!p) return; window.open('verification.html?coa='+encodeURIComponent(p.slug||id),'_blank','noopener'); }
+
   /* ---------- new arrivals ---------- */
   function renderArrivals(){
     var list=PRODUCTS.filter(function(p){return p.is_new_arrival;});
@@ -1099,7 +1261,7 @@ window.OL = (function () {
   }
 
   // overlay click-out
-  ['orderModal','productModal','markNewModal'].forEach(function(id){ $(id).addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); }); });
+  ['orderModal','productModal','markNewModal','lvModal'].forEach(function(id){ $(id).addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); }); });
 
   document.addEventListener('DOMContentLoaded',initAuth);
   return { signOut:signOut, go:go, openOrder:openOrder, closeOrder:closeOrder, setPage:setPage, clearFilters:clearFilters, exportCSV:exportCSV, copy:copy,
@@ -1107,6 +1269,7 @@ window.OL = (function () {
     editProduct:editProduct, saveProduct:saveProduct, closeProduct:closeProduct, delProduct:delProduct,
     pGo:pGo, pClearFilters:pClearFilters, pSel:pSel, pSelectAll:pSelectAll, pBulk:pBulk, pStockAdj:pStockAdj, setStatus:setStatus, duplicateProduct:duplicateProduct,
     pmAddDose:pmAddDose, pmDelDose:pmDelDose, pmDoseSet:pmDoseSet, pmImgMove:pmImgMove, pmImgFeat:pmImgFeat, pmImgDel:pmImgDel, pmSyncStock:pmSyncStock,
+    lvEdit:lvEdit, lvClose:lvClose, lvSave:lvSave, lvClear:lvClear, lvPreview:lvPreview,
     openMarkNew:openMarkNew, closeMarkNew:closeMarkNew, markNew:markNew, saveConfig:saveConfig, changePassword:changePassword };
 })();
 </script>

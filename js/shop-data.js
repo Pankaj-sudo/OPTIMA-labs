@@ -73,7 +73,9 @@
         .where('status', '==', 'active')
         .onSnapshot(function (snap) {
           got = true; clearTimeout(t);
-          var list = snap.docs.map(function (d) { return normalize(d.id, d.data()); });
+          var list = snap.docs
+            .filter(function (d) { return !d.data().coaOnly; })   // COA-only records aren't sellable
+            .map(function (d) { return normalize(d.id, d.data()); });
           list.sort(function (a, b) { return a.name.localeCompare(b.name); });
           cb(list);
         }, function () { clearTimeout(t); cb(fromStatic()); });  // error → fallback
