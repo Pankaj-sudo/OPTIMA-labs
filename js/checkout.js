@@ -11,7 +11,7 @@
   /* ---- Editable business config -------------------------------------
      Replace these before launch. QR image goes in the project root. */
   var GCASH_NUMBER  = '09XX-XXX-XXXX';                 // TODO: your GCash number
-  var GCASH_QR_IMG  = '';                              // TODO: e.g. 'gcash-qr.png' (leave '' to show placeholder)
+  var GCASH_QR_IMG  = 'https://firebasestorage.googleapis.com/v0/b/optima-labs.firebasestorage.app/o/Gcash%20Reciept%2FOptima%20labs%20Gcash%20QR.jpg?alt=media&token=605d30e0-4294-4d3b-8c27-7e4b02f47cfa';  // GCash QR (leave '' to show placeholder)
   var FREE_SHIP_MIN = 2500;                            // free standard shipping at/above this subtotal
   var FEE_STANDARD  = 150;
   var FEE_EXPRESS   = 300;
@@ -575,7 +575,7 @@
     });
     document.getElementById('coShop').addEventListener('click', function () { window.location.href = 'products.html'; });
     document.getElementById('coDone').addEventListener('click', close);
-    document.getElementById('coOrders').addEventListener('click', function () { window.location.href = 'index.html#track'; });
+    document.getElementById('coOrders').addEventListener('click', function () { window.location.href = 'track-order.html'; });
 
     // Viber: personal chats can't be pre-filled, so copy the order details,
     // tell the user, then open the Viber conversation.

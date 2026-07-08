@@ -35,5 +35,19 @@ service cloud.firestore {
       allow read:  if true;
       allow write: if isAdmin();
     }
+
+    // Self-assessment responses. Any signed-in session (incl. anonymous) may
+    // record their own questionnaire; only admins can read/manage them.
+    match /assessments/{id} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Specialist consultation bookings. Any signed-in session (incl. anonymous)
+    // may book; only admins can read all and change verification status.
+    match /consultations/{id} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

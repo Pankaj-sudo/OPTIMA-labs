@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-Assessment — OPTIMA Labs</title>
+<meta name="description" content="A short, educational self-assessment that suggests wellness peptides based on your goals — informational only, not medical advice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/optima.css">
+<link rel="stylesheet" href="css/premium.css">
+<link rel="stylesheet" href="css/assessment.css">
+<style>body{ display:flex; flex-direction:column; min-height:100vh; }</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="logo" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="10" cy="14" r="6" fill="#C08D80"/><circle cx="18" cy="8.5" r="3.6" fill="#B79A6B"/><circle cx="18.5" cy="18.5" r="3" fill="#A96A58"/></svg>
+      <b>OPTIMA <span>Labs</span></b>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="products.html">The Collection</a>
+      <a href="calculator.html">Calculator</a>
+      <a href="the-ritual.html">The Ritual</a>
+      <a href="verification.html">Lab Verification</a>
+      <a href="track-order.html">Track Order</a>
+    </nav>
+    <div class="nav-auth" id="navAuth"></div>
+    <button class="nav-cart" aria-label="Open cart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="count"></span>
+    </button>
+  </div>
+</header>
+
+<main class="asv-main">
+  <div class="asv-wrap">
+    <!-- animated progress (shown on questionnaire steps only) -->
+    <div class="asv-progress-wrap" id="asvProgressWrap" hidden>
+      <div class="asv-progress-head">
+        <span class="asv-progress-step" id="asvProgressStep">Step 1 of 6</span>
+        <span class="asv-progress-pct" id="asvProgressPct">0%</span>
+      </div>
+      <div class="asv-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="asvProgressBar"><span></span></div>
+    </div>
+
+    <!-- steps + results render here -->
+    <div id="asvApp" aria-live="polite"></div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="10" cy="14" r="6" fill="#C08D80"/><circle cx="18" cy="8.5" r="3.6" fill="#B79A6B"/><circle cx="18.5" cy="18.5" r="3" fill="#DDB4A7"/></svg>
+      <b style="color:#fff;">OPTIMA <span style="color:#DDB4A7;">Labs</span></b>
+    </a>
+    <p>Pharmaceutical-grade peptides, delivered as one elegant system — from a &gt;99% pure vial to the reusable OptiPen.</p>
+    <p class="footer-legal">© 2026 OPTIMA Labs. This self-assessment is educational only and is not medical advice, diagnosis, or a prescription.
+      Supplied for personal wellness use under professional guidance. Statements have not been evaluated by the FDA.
+      Not intended to diagnose, treat, cure, or prevent any disease. Always consult your clinician before beginning any peptide protocol.</p>
+  </div>
+</footer>
+
+<!-- Cart drawer (shared with the rest of the store) -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="cartDrawer" aria-label="Shopping cart">
+  <div class="drawer-head"><h3>Your Cart</h3><button class="drawer-close" id="drawerClose" aria-label="Close">✕</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot" style="display:none;">
+    <div class="drawer-total"><span>Subtotal</span><b id="drawerTotal">₱0.00</b></div>
+    <button class="btn btn-primary btn-block" id="checkoutBtn" type="button">Proceed to Checkout</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Firebase (auth + firestore + storage) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/products-data.js"></script>
+<script src="js/shop-data.js"></script>
+<script src="js/vial-art.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/auth-nav.js"></script>
+<!-- Assessment: config (data) → engine (pure) → controller (UI) -->
+<script src="js/assessment-config.js"></script>
+<script src="js/recommendationEngine.js"></script>
+<script src="js/assessment.js"></script>
+<script src="js/mobile-nav.js" defer></script>
+<script src="js/whatsapp-button.js" defer></script>
+</body>
+</html>

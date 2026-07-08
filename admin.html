@@ -246,6 +246,7 @@
     <nav class="sb-nav" id="sbNav">
       <button class="sb-item active" data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dashboard</button>
       <button class="sb-item" data-page="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Orders</button>
+      <button class="sb-item" data-page="consultations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg> Consultations</button>
       <button class="sb-item" data-page="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.6 8.4 12 3 3.4 8.4v7.2L12 21l8.6-5.4z"/><path d="M3.4 8.4 12 13.8l8.6-5.4M12 21v-7.2"/></svg> Products</button>
       <button class="sb-item" data-page="arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 2.09 4.26L19 8l-3.5 3.4.83 4.85L12 14l-4.33 2.25.83-4.85L5 8l4.91-.74z"/></svg> New Arrivals</button>
       <button class="sb-item" data-page="labverif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 3v5l-4.4 7.5A2 2 0 0 0 7.3 19h9.4a2 2 0 0 0 1.7-3.5L14 8V3"/><path d="M8.5 14h7"/></svg> Lab Verification</button>
@@ -301,6 +302,22 @@
           <tbody id="ordersBody"></tbody>
         </table></div>
         <div class="pager" id="ordersPager"></div>
+      </div>
+    </section>
+
+    <!-- CONSULTATIONS -->
+    <section class="page" id="page-consultations">
+      <div class="filters">
+        <input class="search" id="cSearch" placeholder="Search reference, name, email…">
+        <select id="cStatus"><option value="">All statuses</option><option value="pending_verification">Pending Verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option></select>
+        <div class="muted" id="cCount" style="margin-left:auto;">Loading…</div>
+      </div>
+      <div class="card" style="padding:8px 22px 22px;">
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Reference</th><th>Booked</th><th>Customer</th><th>Contact</th><th>Preferred</th><th>Method</th><th>Fee</th><th>Payment</th><th></th></tr></thead>
+          <tbody id="consultBody"></tbody>
+        </table></div>
+        <div class="pager" id="consultPager"></div>
       </div>
     </section>
 
@@ -516,6 +533,52 @@
   </div>
 </div>
 
+<!-- CONSULTATION MODAL -->
+<div class="overlay" id="consultModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="oid" id="cmRef">—</div><div class="sub" id="cmDate"></div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="cmBadge"></span>
+        <button class="modal-close" onclick="OL.closeConsult()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="m3">
+        <div>
+          <div class="sec-t">Customer</div>
+          <div class="kv b" id="cmName"></div>
+          <div class="kv"><a id="cmEmail"></a></div>
+          <div class="kv"><a id="cmPhone"></a></div>
+          <div class="divider"></div>
+          <div class="sec-t">Preferred Session</div>
+          <div class="kv" id="cmWhen"></div>
+          <div class="kv muted" id="cmMethod" style="margin-top:6px;"></div>
+        </div>
+        <div>
+          <div class="sec-t">Notes</div>
+          <div class="kv muted" id="cmNotes" style="font-style:italic;"></div>
+          <div class="divider"></div>
+          <div class="sec-t">Goals (from assessment)</div>
+          <div class="kv muted" id="cmGoals"></div>
+          <div class="divider"></div>
+          <div class="sec-t">Consultation Fee</div>
+          <div class="total-row"><span>Fee</span><span id="cmFee"></span></div>
+        </div>
+        <div>
+          <div class="sec-t">Payment Receipt</div>
+          <div id="cmProof" class="muted">No receipt uploaded</div>
+          <div class="divider"></div>
+          <div class="sec-t">Payment Status</div>
+          <div style="margin-bottom:8px;" id="cmStatusCur"></div>
+          <div class="field"><select id="cmStatusSel"><option value="pending_verification">pending_verification</option><option value="verified">verified</option><option value="rejected">rejected</option></select></div>
+          <button class="btn-gold" style="width:100%;" onclick="OL.updateConsultStatus()">Update Payment Status</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PRODUCT MODAL -->
 <div class="overlay" id="productModal">
   <div class="modal lg">
@@ -681,7 +744,7 @@ window.OL = (function () {
       }
       $('gate').style.display='none'; $('app').style.display='block';
       $('sbEmail').textContent=user.email; $('setEmail').value=user.email;
-      startClock(); startOrders(); loadProducts(); loadConfig();
+      startClock(); startOrders(); startConsults(); loadProducts(); loadConfig();
     });
     $('gateSignIn').onclick=function(){ window.fbAuth.signInWithPopup(window.fbGoogle).catch(function(){toast('Sign-in failed');}); };
   }
@@ -693,7 +756,7 @@ window.OL = (function () {
     document.querySelectorAll('.sb-item').forEach(function(b){ b.classList.toggle('active', b.dataset.page===p); });
     document.querySelectorAll('.page').forEach(function(s){ s.classList.remove('active'); });
     $('page-'+p).classList.add('active');
-    $('pageTitle').textContent={dashboard:'Dashboard',orders:'Orders',products:'Products',arrivals:'New Arrivals',labverif:'Lab Verification',analytics:'Analytics',settings:'Settings'}[p];
+    $('pageTitle').textContent={dashboard:'Dashboard',orders:'Orders',consultations:'Consultations',products:'Products',arrivals:'New Arrivals',labverif:'Lab Verification',analytics:'Analytics',settings:'Settings'}[p];
     $('sidebar').classList.remove('open');
     if(p==='analytics') renderAnalytics();
     if(p==='arrivals') renderArrivals();
@@ -853,6 +916,88 @@ window.OL = (function () {
     try{ await window.fbDb.collection('orders').doc(curOrderId).update({ admin_notes:$('omAdminNotes').value }); toast('Notes saved'); }
     catch(e){ toast('Failed: '+e.code); }
   }
+
+  /* ================= CONSULTATIONS (realtime) =================
+     Bookings written by the self-assessment consult panel. Same
+     `consultations` collection; visibility-first (list + detail + receipt),
+     with a simple no-side-effect payment-status update. */
+  var CONSULTS = [], consultsUnsub = null, curConsultId = null, cpage = 1;
+  function cLabel(s){ return s==='verified'?'Verified':s==='rejected'?'Rejected':'Pending Verification'; }
+  function cBadge(s){ var cls=s==='verified'?'b-verified':s==='rejected'?'b-rejected':'b-pending'; return '<span class="badge '+cls+'">'+cLabel(s)+'</span>'; }
+  function startConsults(){
+    if(consultsUnsub) consultsUnsub();
+    consultsUnsub = window.fbDb.collection('consultations').orderBy('created_at','desc').onSnapshot(function(snap){
+      CONSULTS = snap.docs.map(function(d){ return Object.assign({_id:d.id}, d.data()); });
+      renderConsults();
+    }, function(err){ console.error(err); toast('Failed to load consultations: '+err.code); });
+  }
+  function cFiltered(){
+    var q=($('cSearch').value||'').toLowerCase(), st=$('cStatus').value;
+    return CONSULTS.filter(function(c){
+      if(st && (c.payment_status||'pending_verification')!==st) return false;
+      if(q){ var hay=((c.booking_ref||'')+' '+(c.full_name||'')+' '+(c.email||'')+' '+(c.mobile||'')).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      return true;
+    });
+  }
+  function renderConsults(){
+    if(!$('consultBody')) return;
+    var list=cFiltered(); var pages=Math.max(1,Math.ceil(list.length/PER)); if(cpage>pages) cpage=pages;
+    var slice=list.slice((cpage-1)*PER, cpage*PER);
+    $('cCount').textContent=list.length+' consultation'+(list.length===1?'':'s');
+    $('consultBody').innerHTML=slice.map(function(c){
+      var when=(c.preferred_date||'—')+(c.preferred_time?' '+c.preferred_time:'');
+      return '<tr class="click" onclick="OL.openConsult(\''+c._id+'\')">'+
+        '<td class="oid" onclick="event.stopPropagation();OL.copy(\''+(c.booking_ref||'')+'\')">'+(c.booking_ref||'—')+'</td>'+
+        '<td class="muted">'+fmtTs(c.created_at)+'</td>'+
+        '<td>'+(c.full_name||'—')+'</td>'+
+        '<td class="muted" style="font-size:11px;">'+(c.email||'')+'<br>'+(c.mobile||'')+'</td>'+
+        '<td>'+when+'</td>'+
+        '<td>'+(c.contact_method||'—')+'</td>'+
+        '<td>'+money(c.consultation_fee||0)+'</td>'+
+        '<td>'+cBadge(c.payment_status||'pending_verification')+'</td>'+
+        '<td><button class="btn-ghost" style="padding:6px 12px;" onclick="event.stopPropagation();OL.openConsult(\''+c._id+'\')">View</button></td></tr>';
+    }).join('')||'<tr><td colspan="9" class="empty">No consultations yet.</td></tr>';
+    var pg=''; for(var i=1;i<=pages;i++) pg+='<button class="'+(i===cpage?'active':'')+'" onclick="OL.cSetPage('+i+')">'+i+'</button>';
+    $('consultPager').innerHTML=pages>1?('<button onclick="OL.cSetPage('+(cpage-1)+')" '+(cpage===1?'disabled':'')+'>‹</button>'+pg+'<button onclick="OL.cSetPage('+(cpage+1)+')" '+(cpage===pages?'disabled':'')+'>›</button>'):'';
+  }
+  function cSetPage(p){ cpage=Math.max(1,p); renderConsults(); }
+  function openConsult(id){
+    var c=CONSULTS.find(function(x){return x._id===id;}); if(!c) return; curConsultId=id;
+    $('cmRef').textContent=c.booking_ref||'—'; $('cmDate').textContent=fmtTs(c.created_at);
+    $('cmBadge').innerHTML=cBadge(c.payment_status||'pending_verification');
+    $('cmName').textContent=c.full_name||'—';
+    $('cmEmail').textContent=c.email||'—'; $('cmEmail').href='mailto:'+(c.email||'');
+    $('cmPhone').textContent=c.mobile||'—'; $('cmPhone').href='tel:'+(c.mobile||'');
+    $('cmWhen').textContent=(c.preferred_date||'—')+(c.preferred_time?' · '+c.preferred_time:'');
+    $('cmMethod').textContent='Contact method: '+(c.contact_method||'—');
+    $('cmNotes').textContent=c.notes||'No notes';
+    $('cmGoals').textContent=(c.goals&&c.goals.length)?c.goals.join(', '):'—';
+    $('cmFee').textContent=money(c.consultation_fee||0);
+    $('cmProof').innerHTML=consultProof(c);
+    $('cmStatusCur').innerHTML=cBadge(c.payment_status||'pending_verification');
+    $('cmStatusSel').value=c.payment_status||'pending_verification';
+    $('consultModal').classList.add('open');
+  }
+  function consultProof(c){
+    var url=c.payment_proof_url, path=c.payment_proof_path, type=c.payment_proof_type;
+    if(url){
+      if(type==='pdf') return '<iframe src="'+url+'" style="width:100%;height:260px;border:0;border-radius:8px;background:#fff;" title="Payment receipt (PDF)"></iframe><a href="'+url+'" target="_blank" rel="noopener">View Receipt (PDF) ↗</a>';
+      return '<img class="proof-img" src="'+url+'"><a href="'+url+'" target="_blank" rel="noopener">View Full Size ↗</a>';
+    }
+    if(path) return '<span class="muted">Receipt uploaded ('+(type||'file')+') — public URL not available. Storage path: '+path+'</span>';
+    return '<span class="muted">No receipt uploaded</span>';
+  }
+  function closeConsult(){ $('consultModal').classList.remove('open'); }
+  async function updateConsultStatus(){
+    var c=CONSULTS.find(function(x){return x._id===curConsultId;}); if(!c) return;
+    var v=$('cmStatusSel').value, old=c.payment_status||'pending_verification';
+    if(v===old){ toast('No change'); return; }
+    try{
+      await window.fbDb.collection('consultations').doc(curConsultId).update({ payment_status:v, updated_at:firebase.firestore.FieldValue.serverTimestamp() });
+      toast('Payment status → '+cLabel(v)); c.payment_status=v; openConsult(curConsultId);
+    }catch(e){ console.error(e); toast('Update failed: '+e.code); }
+  }
+  ['cSearch','cStatus'].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('input',function(){ cpage=1; renderConsults(); }); });
 
   /* ================= PRODUCTS (management dashboard) ================= */
   var pf = { q:'', cat:'All', stock:'all', status:'all', sort:'name', page:1, per:12 };
@@ -1261,10 +1406,11 @@ window.OL = (function () {
   }
 
   // overlay click-out
-  ['orderModal','productModal','markNewModal','lvModal'].forEach(function(id){ $(id).addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); }); });
+  ['orderModal','consultModal','productModal','markNewModal','lvModal'].forEach(function(id){ $(id).addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); }); });
 
   document.addEventListener('DOMContentLoaded',initAuth);
   return { signOut:signOut, go:go, openOrder:openOrder, closeOrder:closeOrder, setPage:setPage, clearFilters:clearFilters, exportCSV:exportCSV, copy:copy,
+    openConsult:openConsult, closeConsult:closeConsult, cSetPage:cSetPage, updateConsultStatus:updateConsultStatus,
     updateStatus:updateStatus, saveTracking:saveTracking, saveAdminNotes:saveAdminNotes, toggle:toggle,
     editProduct:editProduct, saveProduct:saveProduct, closeProduct:closeProduct, delProduct:delProduct,
     pGo:pGo, pClearFilters:pClearFilters, pSel:pSel, pSelectAll:pSelectAll, pBulk:pBulk, pStockAdj:pStockAdj, setStatus:setStatus, duplicateProduct:duplicateProduct,

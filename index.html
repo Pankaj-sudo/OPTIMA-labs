@@ -320,10 +320,15 @@
 
   /* Collection */
   .collection{ background:linear-gradient(180deg, var(--porcelain), var(--rosewater) 30%, var(--rosewater) 85%, var(--porcelain)); }
+  /* Featured products: fixed 3×2 on desktop/laptop → 2-up tablet → 1-up mobile.
+     Cards stretch to equal height per row; the tightened top margin keeps the
+     heading → description → grid rhythm balanced. */
   .products{
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));
-    gap:26px; margin-top:52px;
+    display:grid; grid-template-columns:repeat(3, 1fr);
+    gap:26px; margin-top:34px;
   }
+  @media (max-width:900px){ .products{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:600px){ .products{ grid-template-columns:1fr; } }
   .product{
     background:var(--surface); border-radius:var(--radius);
     padding:34px 30px 30px; box-shadow:var(--shadow-soft);
@@ -499,6 +504,25 @@
   .coa-pass{ color:var(--clay-deep) !important; font-weight:700; }
   .coa-foot{ margin-top:18px; font-size:12px; color:var(--ink-soft); }
 
+  /* Self-assessment CTA */
+  .assess{ background:var(--porcelain); }
+  .assess-band{
+    position:relative; overflow:hidden; text-align:center;
+    padding:clamp(46px,6vw,74px) clamp(26px,5vw,64px);
+    border-radius:28px; border:1px solid rgba(183,154,107,.28);
+    background:
+      radial-gradient(680px 340px at 50% -20%, rgba(241,226,219,.9), transparent 72%),
+      linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.5));
+    -webkit-backdrop-filter:blur(20px) saturate(1.15); backdrop-filter:blur(20px) saturate(1.15);
+    box-shadow:var(--shadow-lift);
+  }
+  .assess-copy{ max-width:640px; margin-inline:auto; }
+  .assess-eyebrow{ font-size:12px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:var(--clay-deep); }
+  .assess-band h2{ font-size:clamp(28px,3.4vw,42px); margin-top:14px; }
+  .assess-band p{ margin:16px auto 0; max-width:52ch; color:var(--ink-soft); }
+  .assess-band .btn{ margin-top:30px; }
+  .assess-note{ margin-top:16px; font-size:12.5px; font-weight:600; letter-spacing:.02em; color:var(--ink-soft); }
+
   /* Closing CTA */
   .closing{
     text-align:center;
@@ -603,13 +627,14 @@
       <span class="hero-badge"><i></i>Optima Labs · The Peptide Ritual</span>
       <h1>Self-care, <em>measured</em> beautifully.</h1>
       <p class="hero-sub">
-        Pharmaceutical-grade peptides — &gt;99% pure, third-party tested, and delivered
-        in a system as considered as the rest of your routine. One sealed vial, one
-        gentle pen, one calm and precise dose.
+        OPTIMA Labs brings pharmaceutical-grade peptides into a calm, considered wellness
+        ritual. Understand how the right peptide — third-party tested and precisely delivered —
+        can support your energy, recovery and longevity, with gentle guidance from your very
+        first question.
       </p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="products.html">Shop the system</a>
-        <a class="btn btn-ghost" href="the-ritual.html">See the ritual</a>
+        <a class="btn btn-primary" href="assessment.html">Take the 3-minute assessment</a>
+        <a class="btn btn-ghost" href="products.html">Explore the collection</a>
       </div>
       <ul class="hero-trust">
         <li><i></i>&gt;99% Purity</li>
@@ -640,15 +665,32 @@
   </div>
 </div>
 
+<!-- ============ SELF-ASSESSMENT CTA ============ -->
+<section class="assess" id="assessment-cta">
+  <div class="wrap">
+    <div class="assess-band">
+      <div class="assess-copy">
+        <div class="assess-eyebrow">Not sure where to start?</div>
+        <h2>Find your peptides in three quiet minutes</h2>
+        <p>Answer a few gentle questions about your goals and wellness profile. We'll help you
+           understand which peptides may suit you — thoughtfully, and at your own pace, before you
+           ever speak with a specialist.</p>
+        <a class="btn btn-primary" href="assessment.html">Take the 3-minute assessment</a>
+        <div class="assess-note">Free · No account needed · About 3 minutes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ COLLECTION ============ -->
 <section class="collection" id="collection">
   <div class="wrap">
     <div class="sec-head" style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:20px;">
       <div>
         <hr class="rule">
-        <h2>The Collection</h2>
-        <p>Each peptide arrives as a complete, considered set — sealed vial, matched cartridge,
-           and everything the OptiPen needs. Precision you can feel good about.</p>
+        <h2>Our Top 6 Products</h2>
+        <p>Discover our six most sought-after pharmaceutical-grade peptides and essentials. Each product
+           is selected for exceptional quality, third-party verification, and a seamless wellness experience.</p>
       </div>
       <a class="btn btn-ghost" href="products.html" style="flex:none;">View full collection</a>
     </div>
@@ -657,181 +699,39 @@
   </div>
 </section>
 
-<!-- ============ PEPTIDE DOSE CALCULATOR ============ -->
-<section class="calc" id="calculator">
-  <div class="wrap">
-    <div class="sec-head">
-      <hr class="rule">
-      <h2>Peptide Dose Calculator</h2>
-      <p>Reconstitute with confidence. Choose your dose, vial strength and diluent —
-         we'll show your concentration and the exact unit to draw on a U-100 syringe.</p>
-    </div>
-
-    <div class="calc-panel">
-      <div class="calc-cols">
-        <!-- 1 · Dose -->
-        <div class="calc-group" role="group" aria-label="Dose of peptide">
-          <h3><span class="calc-num">1</span>Dose of Peptide</h3>
-          <p class="hint">The amount you want per injection.</p>
-          <div class="calc-pills" id="pillsDose"></div>
-          <div class="calc-or">OR</div>
-          <div class="calc-field" id="fieldDose">
-            <input type="text" inputmode="decimal" id="inDose" placeholder=" " autocomplete="off" aria-label="Custom dose in milligrams">
-            <label for="inDose">Enter custom dose</label>
-            <span class="unit">mg</span>
-            <div class="err">Enter a number greater than 0</div>
-          </div>
-        </div>
-
-        <!-- 2 · Strength -->
-        <div class="calc-group" role="group" aria-label="Strength of peptide">
-          <h3><span class="calc-num">2</span>Strength of Peptide</h3>
-          <p class="hint">Total peptide in the vial.</p>
-          <div class="calc-pills" id="pillsStrength"></div>
-          <div class="calc-or">OR</div>
-          <div class="calc-field" id="fieldStrength">
-            <input type="text" inputmode="decimal" id="inStrength" placeholder=" " autocomplete="off" aria-label="Custom strength in milligrams">
-            <label for="inStrength">Enter custom strength</label>
-            <span class="unit">mg</span>
-            <div class="err">Enter a number greater than 0</div>
-          </div>
-        </div>
-
-        <!-- 3 · Diluent -->
-        <div class="calc-group" role="group" aria-label="Water or diluent volume">
-          <h3><span class="calc-num">3</span>Water / Diluent</h3>
-          <p class="hint">Volume used to reconstitute.</p>
-          <div class="calc-pills" id="pillsDiluent"></div>
-          <div class="calc-or">OR</div>
-          <div class="calc-field" id="fieldDiluent">
-            <input type="text" inputmode="decimal" id="inDiluent" placeholder=" " autocomplete="off" aria-label="Custom diluent in millilitres">
-            <label for="inDiluent">Enter custom water</label>
-            <span class="unit">mL</span>
-            <div class="err">Enter a number greater than 0</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Results -->
-      <div class="calc-results" aria-live="polite">
-        <h3>Results</h3>
-        <div class="calc-summary">
-          <div class="sum-card">
-            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2.5" width="8" height="4" rx="1"/><path d="M6.5 6.5h9v11a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2z"/><path d="M6.5 12h9"/></svg>Peptide Dose</div>
-            <div class="sum-val" id="sumDose">5<small>mg</small></div>
-          </div>
-          <div class="sum-card">
-            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h4M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h7.4a2 2 0 0 0 1.8-3L12 8V3"/></svg>Peptide Strength</div>
-            <div class="sum-val" id="sumStrength">25<small>mg</small></div>
-          </div>
-          <div class="sum-card">
-            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3s5 5.5 5 9a5 5 0 0 1-10 0c0-3.5 5-9 5-9z"/></svg>Diluent (Water)</div>
-            <div class="sum-val" id="sumDil">2.0<small>mL</small></div>
-          </div>
-          <div class="sum-card">
-            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7.5"/><circle cx="11" cy="11" r="2.2"/><path d="M11 1.5v3M11 17.5v3M1.5 11h3M17.5 11h3"/></svg>Concentration</div>
-            <div class="sum-val" id="sumConc">12.5<small>mg/mL</small></div>
-          </div>
-          <div class="sum-card sum-hi">
-            <div class="sc-top"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l6-6M8 8l6 6M12.5 3.5l6 6-3 3-6-6zM9 13l-1.5 4.5L3 19"/></svg>Draw Syringe To</div>
-            <div class="sum-val" id="sumUnits">40<small>units</small></div>
-            <div class="sc-note">on a U-100 insulin syringe</div>
-          </div>
-        </div>
-
-        <!-- Syringe -->
-        <div class="syringe-wrap">
-          <svg viewBox="0 0 1180 250" role="img" aria-label="Insulin syringe illustration showing the draw level">
-            <defs>
-              <linearGradient id="syrLiquid" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#C08D80"/><stop offset="1" stop-color="#A96A58"/>
-              </linearGradient>
-              <linearGradient id="syrRod" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#EDE4DD"/><stop offset="1" stop-color="#CBBBB0"/>
-              </linearGradient>
-              <linearGradient id="syrGlass" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#ffffff" stop-opacity=".65"/><stop offset="1" stop-color="#F1E2DB" stop-opacity=".28"/>
-              </linearGradient>
-            </defs>
-
-            <!-- needle -->
-            <line x1="26" y1="107" x2="120" y2="107" stroke="#B0A79F" stroke-width="3" stroke-linecap="round"/>
-            <path d="M120 100h34l-8 7 8 7h-34z" fill="#CBBBB0"/>
-
-            <!-- plunger rod (through flange to thumb) -->
-            <rect x="150" y="101" width="900" height="12" rx="6" fill="url(#syrRod)"/>
-            <!-- barrel glass tint (extends past the 100 mark to a neck + flange) -->
-            <rect x="150" y="74" width="790" height="66" rx="12" fill="url(#syrGlass)"/>
-            <!-- liquid fill (animated) -->
-            <rect class="syr-fill" id="syrFill" x="150" y="76" width="750" height="62" rx="10" fill="url(#syrLiquid)" opacity=".62"/>
-
-            <!-- graduations + numbers -->
-            <g id="syrTicks"></g>
-
-            <!-- barrel outline on top -->
-            <rect x="150" y="74" width="790" height="66" rx="12" fill="none" stroke="#B79A6B" stroke-opacity=".55" stroke-width="2"/>
-
-            <!-- rubber seal at the fill boundary (animated) -->
-            <g class="syr-plunger" id="syrPlunger"><rect x="143" y="74" width="14" height="66" rx="3" fill="#3A2E29"/></g>
-
-            <!-- finger flange + thumb rest -->
-            <rect x="936" y="56" width="14" height="102" rx="5" fill="#D8C9BC"/>
-            <rect x="1040" y="70" width="18" height="74" rx="6" fill="#3A2E29"/>
-
-            <!-- UNITS label -->
-            <text class="syr-units-lbl" x="900" y="166" text-anchor="end">UNITS</text>
-
-            <!-- moving marker -->
-            <g class="syr-marker" id="syrMarker">
-              <rect x="124" y="6" width="52" height="30" rx="15" fill="#8F5545"/>
-              <text x="150" y="27" text-anchor="middle" id="syrMarkerText">40</text>
-              <path d="M140 40h20l-10 14z" fill="#8F5545"/>
-            </g>
-          </svg>
-        </div>
-
-        <div class="calc-note" id="calcNote">
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.2v.2" stroke-linecap="round"/></svg>
-          <span id="calcNoteText">For research purposes only. Always follow your research protocol.</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ============ RITUAL ============ -->
 <section id="ritual">
   <div class="wrap">
     <div class="sec-head">
       <hr class="rule">
-      <h2>A ritual in four quiet steps</h2>
-      <p>No guesswork, no waste, nothing sharp about the experience. The system is designed
-         so the most precise part of your routine is also the calmest.</p>
+      <h2>A ritual in four steps</h2>
+      <p>No guesswork. A calm, guided path — from a short self-assessment to a personalised set
+         of suggestions, thoughtfully reviewed by a wellness peptide specialist.</p>
     </div>
     <div class="ritual-grid">
       <div class="step">
         <div class="num">1</div>
-        <h3>Your vial arrives, sealed</h3>
-        <p>Cold-chain protected from our lab to your door, with its certificate of analysis
-           already published under its lot number.</p>
+        <h3>Complete the self-assessment</h3>
+        <p>Answer a few gentle questions about your goals, lifestyle and wellness profile.
+           It takes about three minutes.</p>
       </div>
       <div class="step">
         <div class="num">2</div>
-        <h3>It becomes your cartridge</h3>
-        <p>Reconstituted once, drawn into a matched glass cartridge — measured, labeled,
-           and ready for the week ahead.</p>
+        <h3>Optionally share your lab results</h3>
+        <p>Have recent bloodwork? You can upload it for added context — entirely optional,
+           and only ever to help tailor your suggestions.</p>
       </div>
       <div class="step">
         <div class="num">3</div>
-        <h3>The OptiPen completes it</h3>
-        <p>The cartridge settles into the reusable OptiPen with a gentle, reassuring click.
-           One pen, refill after refill.</p>
+        <h3>A specialist reviews your submission</h3>
+        <p>A healthcare and wellness peptide specialist thoughtfully reviews what you've shared,
+           considering your goals and your profile.</p>
       </div>
       <div class="step">
         <div class="num">4</div>
-        <h3>One calm, exact dose</h3>
-        <p>Dial your dose to the unit and let the pen do the rest — gentle, near-silent,
-           and over before your coffee cools.</p>
+        <h3>Receive your recommendations</h3>
+        <p>Based on your goals and health profile, you'll receive a suggested set of peptides to
+           consider — personalised guidance, never a prescription or medical diagnosis.</p>
       </div>
     </div>
   </div>
@@ -861,7 +761,7 @@
           <span><b>Lot lookup on every label</b> — enter your lot number and read the full certificate.</span>
         </li>
       </ul>
-      <a class="btn btn-primary" href="#" style="margin-top:30px;">Look up your lot</a>
+      <a class="btn btn-primary" href="verification.html" style="margin-top:30px;">Look up your lot</a>
     </div>
 
     <div class="coa-card" aria-label="Sample certificate of analysis">
@@ -883,40 +783,12 @@
 </section>
 
 <!-- ============ CLOSING ============ -->
-<!-- ============ TRACK MY ORDER ============ -->
-<section id="track">
-  <div class="wrap">
-    <div class="track-head">
-      <div class="track-eyebrow">Order Tracking</div>
-      <h2>Where's My Order?</h2>
-    </div>
-
-    <form class="track-form" id="trackForm" autocomplete="off">
-      <input type="text" id="trackId" placeholder="OL-XXXXXX" aria-label="Order ID" style="text-transform:uppercase;">
-      <input type="email" id="trackEmail" placeholder="Email used at checkout" aria-label="Email">
-      <button type="submit" class="track-btn" id="trackBtn"><span class="track-spin"></span><span id="trackBtnText">Track Order</span></button>
-    </form>
-
-    <div class="track-result track-hidden" id="trackResult">
-      <div class="track-summary" id="trackSummary"></div>
-      <div class="timeline" id="trackTimeline"></div>
-    </div>
-
-    <div class="track-error track-hidden" id="trackError">
-      <h3>🔍 Order Not Found</h3>
-      <p>Check your Order ID and the email address you used at checkout, then try again.</p>
-      <p>Need help? <a href="mailto:care@optimalabs.co">Email us</a> or message us on Facebook.</p>
-      <button class="btn btn-ghost" id="trackRetry" type="button">Try Again</button>
-    </div>
-  </div>
-</section>
-
 <section class="closing">
   <div class="wrap">
     <h2>Where science meets your ritual.</h2>
-    <p>Clinically dosed peptides, elegantly delivered — one calm, considered step in the
-       care you already give yourself.</p>
-    <a class="btn btn-primary" href="products.html">Begin your ritual</a>
+    <p>Peptides, considered and precisely delivered — guided by a short assessment and a
+       specialist's eye, so your very first step is a calm and informed one.</p>
+    <a class="btn btn-primary" href="assessment.html">Take the 3-minute assessment</a>
   </div>
 </section>
 
@@ -1030,16 +902,14 @@
   document.addEventListener('DOMContentLoaded', function () {
     var grid = document.getElementById('collectionGrid');
     if (!grid || !window.ShopData) return;
-    // Live from Firestore (single source of truth) — updates on any admin change.
+    // Homepage shows the top 6 featured products (3×2). The full catalogue lives
+    // on the Collection page (products.html). Live from Firestore — updates on any admin change.
     window.ShopData.subscribe(function (list) {
-      grid.innerHTML = list.map(cardHTML).join('');
+      grid.innerHTML = list.slice(0, 6).map(cardHTML).join('');
     });
   });
 })();
 </script>
-
-<!-- Peptide Dose Calculator (shared module) -->
-<script src="js/calculator.js"></script>
 
 <!-- Navbar scroll state: transparent over the hero → warm ivory once scrolled -->
 <script>
@@ -1083,9 +953,6 @@
   }
 })();
 </script>
-
-<!-- Track My Order (shared module) -->
-<script src="js/track-order.js"></script>
 
 </body>
 </html>
