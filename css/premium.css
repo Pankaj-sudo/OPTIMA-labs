@@ -258,3 +258,48 @@ header.scrolled:not(.site-header) .m-nav-toggle{ color:var(--espresso); }
 @media (max-width:719px) and (prefers-reduced-motion:reduce){
   .card:active{ transform:none; }
 }
+
+/* ================================================================
+   LUXURY INTERACTION LAYER  (paired with js/lux.js)
+   Presentation-only. States are only active once js/lux.js has added
+   the classes, so with JS off nothing is ever hidden. transform+opacity
+   only; fully disabled under prefers-reduced-motion.
+   ================================================================ */
+
+/* crisper text rendering site-wide (no type redesign) */
+html.lux body{ text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+/* --- scroll reveals: soft fade + gentle rise, once on enter --- */
+.lux-reveal{
+  opacity:0; transform:translate3d(0,18px,0);
+  transition:opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1);
+  will-change:opacity, transform;
+}
+.lux-reveal.lux-in{ opacity:1; transform:none; }
+
+/* --- images: quiet fade-in over the placeholder tint --- */
+.lux-img{ opacity:0; }
+.lux-img.lux-loaded{ opacity:1; transition:opacity .6s ease; }
+
+/* --- page transition: brief fade so navigations never white-flash --- */
+html.lux-leaving body{ opacity:0; transition:opacity .17s ease; }
+
+/* --- refined micro-interactions (no redesign, just smoother) --- */
+/* product image breathes on card hover (catalog cards) */
+.card .card-art{ overflow:hidden; }
+.card .card-art img{ transition:transform .6s cubic-bezier(.22,1,.36,1); backface-visibility:hidden; }
+.card:hover .card-art img{ transform:scale(1.045); }
+/* homepage feature card art gets the same quiet zoom */
+.product .product-art img{ transition:transform .6s cubic-bezier(.22,1,.36,1); }
+.product:hover .product-art img{ transform:scale(1.04); }
+/* inputs: calmer, premium focus transition */
+input, select, textarea{ transition:border-color .25s ease, box-shadow .28s ease, background .25s ease; }
+
+@media (prefers-reduced-motion:reduce){
+  html.lux body{ text-rendering:auto; }
+  .lux-reveal{ opacity:1 !important; transform:none !important; transition:none; }
+  .lux-img{ opacity:1 !important; transition:none; }
+  html.lux-leaving body{ opacity:1 !important; transition:none; }
+  .card .card-art img, .product .product-art img{ transition:none; }
+  .card:hover .card-art img, .product:hover .product-art img{ transform:none; }
+}
