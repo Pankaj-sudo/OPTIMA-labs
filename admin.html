@@ -816,7 +816,7 @@ window.OL = (function () {
     $('omAddr').innerHTML=[a.street,a.barangay,a.city,a.province,a.zip].filter(Boolean).join('<br>')||'—';
     $('omDelivery').textContent=(o.delivery_type==='express'?'Express':'Standard')+' · '+money(o.delivery_fee||0);
     $('omNotes').textContent=o.notes||'No notes';
-    $('omItems').innerHTML=(o.items||[]).map(function(it){ return '<tr><td>'+it.name+' · '+it.dosage+'</td><td>'+it.qty+'</td><td>'+money(it.price)+'</td><td>'+money(it.price*it.qty)+'</td></tr>'; }).join('');
+    $('omItems').innerHTML=(o.items||[]).map(function(it){ var pkg=(it.packageId&&it.packageId!=='peptide-only')?'<br><span class="muted" style="font-size:11px;">'+it.packageName+'</span>':''; return '<tr><td>'+it.name+' · '+it.dosage+pkg+'</td><td>'+it.qty+'</td><td>'+money(it.price)+'</td><td>'+money(it.price*it.qty)+'</td></tr>'; }).join('');
     $('omSubtotal').textContent=money(o.subtotal); $('omFee').textContent=o.delivery_fee?money(o.delivery_fee):'FREE'; $('omTotal').textContent=money(o.total);
     $('omProof').innerHTML=o.payment_proof_url?('<img class="proof-img" src="'+o.payment_proof_url+'"><a href="'+o.payment_proof_url+'" target="_blank">View Full Size ↗</a>'):(o.payment_proof_path?'<span class="muted">Uploaded (path: '+o.payment_proof_path+') — URL not available</span>':'<span class="muted">No proof uploaded</span>');
     $('omPayCur').innerHTML=badge('p',o.payment_status); $('omPaySel').value=o.payment_status||'pending';

@@ -131,3 +131,130 @@ header.scrolled:not(.site-header) .m-nav-toggle{ color:var(--espresso); }
   .m-nav-overlay, .m-nav-panel, .m-nav-toggle span{ transition:none; }
   .m-nav-overlay.open .m-nav-links a{ animation:none; opacity:1; transform:none; }
 }
+
+/* ================================================================
+   PREMIUM MOBILE EXPERIENCE  (≤719px — desktop is never touched)
+   A dedicated luxury phone layer: calmer rhythm, editorial spacing,
+   generous touch targets, full-width CTAs, elevated cards. Every rule
+   is scoped to a mobile breakpoint, so the desktop design is byte-for
+   -byte identical. Brand tokens, fonts, colours and pill geometry are
+   preserved — only scale, spacing and touch ergonomics change.
+   ================================================================ */
+@media (max-width:719px){
+
+  /* ---- Sticky top bar: glass, soft shadow, softly rounded underside ---- */
+  header.site-header{
+    border-radius:0 0 22px 22px;
+    box-shadow:0 12px 34px -20px rgba(58,46,41,.5);
+    -webkit-backdrop-filter:blur(20px) saturate(1.06); backdrop-filter:blur(20px) saturate(1.06);
+  }
+  header.site-header .nav{ padding:13px 0; }
+
+  /* ---- Buttons: luxury one-thumb ergonomics (pill geometry preserved) ---- */
+  .btn{ min-height:54px; padding:16px 26px; font-size:15.5px; }
+  .btn-sm{ min-height:48px; }
+  .btn-block, .card-cta{ width:100%; }
+
+  /* ---- HERO: editorial stack, full-width CTAs, breathing room ---- */
+  .hero-inner{ padding:104px 0 66px; }
+  .hero-badge{ letter-spacing:.14em; font-size:11.5px; }
+  .hero h1{ margin-top:24px; letter-spacing:-.015em; }
+  .hero-sub{ margin-top:20px; font-size:16.5px; line-height:1.7; }
+  .hero-ctas{ flex-direction:column; align-items:stretch; gap:12px; margin-top:34px; }
+  .hero-ctas .btn{ width:100%; }
+  .hero-trust{ gap:11px 22px; margin-top:34px; font-size:13.5px; }
+
+  /* ---- Section headings: a touch more editorial presence ---- */
+  .lab-hero p, .lab-coa-head p{ font-size:15.5px; }
+
+  /* ---- PRODUCT COLLECTION: elevated, near-full-width cards ---- */
+  .grid{ gap:22px; margin:22px 0 76px; }
+  .card{ border-radius:24px; }
+  .card:active{ transform:scale(.99); }
+  .card-art{ aspect-ratio:5/4; }
+  .card-body{ padding:24px 22px 26px; }
+  .card-name{ font-size:26px; margin-top:9px; }
+  .card-desc{ font-size:14.5px; -webkit-line-clamp:3; margin-top:11px; }
+  .card-dose-row{ margin-top:16px; }
+  .card-foot{ margin-top:20px; padding-top:18px; }
+  .price{ font-size:25px; }
+  .card-cta{ margin-top:18px; }
+  .result-count{ margin-top:18px; }
+
+  /* ---- PRODUCT DETAIL: image-first, editorial, calm ---- */
+  .detail{ padding:26px 0 84px; }
+  .detail-grid{ gap:30px; }
+  .detail-art{ aspect-ratio:4/5; border-radius:24px; }
+  .detail-info h1{ font-size:clamp(30px,8.4vw,42px); }
+  .detail-price{ font-size:30px; margin-top:14px; }
+  .detail-desc{ font-size:15.5px; margin-top:16px; }
+  .detail-actions .btn{ width:100%; }
+
+  /* ---- CALCULATOR: guided flow, large controls, zero horizontal scroll ---- */
+  .calc-panel{ padding:26px 20px; border-radius:26px; margin-top:30px; }
+  .calc-cols{ gap:30px; }
+  .calc-group h3{ font-size:18px; }
+  .calc-field input{ min-height:58px; font-size:16px; padding:24px 46px 10px 18px; border-radius:16px; }
+  .calc-field label{ top:19px; font-size:16px; }
+  .pill{ min-height:48px; font-size:15px; padding:12px 18px; }
+  .calc-summary{ gap:14px; }
+  .sum-card{ padding:20px 22px; border-radius:20px; }
+  .sum-val{ font-size:30px; }
+  /* Syringe diagram scales to fit the viewport — never forces a scroll */
+  .syringe-wrap{ padding:20px 14px; overflow-x:visible; }
+  .syringe-wrap svg{ min-width:0; }
+  .calc-actions, .calc .btn-primary{ width:100%; }
+
+  /* ---- LAB VERIFICATION: vertical, stacked, readable ---- */
+  .lab-hero .btn{ width:100%; max-width:340px; }
+  .lab-item .lt-h{ font-size:23px; }
+  .coa-card{ padding:18px; border-radius:20px; }
+  .coa-view{ width:100%; min-height:48px; }
+  .lab-cta .btn{ width:100%; }
+  /* COA PDF viewer opens tall & comfortable on phones */
+  .coa-modal{ max-height:94vh; border-radius:22px; }
+  .coa-mpreview iframe{ height:64vh; }
+  .coa-mactions .btn{ flex:1 1 100%; }
+
+  /* ---- SHOPPING CART: each item a luxury card, sticky checkout foot ---- */
+  .drawer{ width:100%; }
+  .drawer-head{ padding:20px; }
+  .drawer-body{ padding:16px 16px 8px; }
+  .cart-item{
+    padding:16px; margin-bottom:14px; border:1px solid rgba(183,154,107,.2);
+    border-radius:20px; background:var(--surface); box-shadow:0 14px 34px -24px rgba(58,46,41,.4);
+  }
+  .cart-item:last-child{ margin-bottom:0; }
+  .cart-item-img{ width:78px; height:78px; border-radius:16px; }
+  .cart-item-name{ font-size:16px; }
+  .cart-item-controls{ margin-top:12px; gap:10px; }
+  .cart-item-controls button{ width:36px; height:36px; border-radius:11px; font-size:17px; }
+  .drawer-foot{ padding:18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  .drawer-foot .btn{ width:100%; min-height:54px; }
+  .drawer-total b{ font-size:23px; }
+
+  /* ---- CHECKOUT: Apple-calm step flow, large fields & targets ---- */
+  .co-head{ padding:22px 20px; }
+  .co-body{ padding:24px 20px 28px; }
+  .co-field label{ font-size:13.5px; }
+  .co-field input, .co-field textarea{ min-height:54px; font-size:16px; padding:15px 16px; border-radius:14px; }
+  .co-dcard{ padding:18px; }
+  .co-dcard .co-dtitle{ font-size:15.5px; }
+  .co-btn{ min-height:56px; font-size:17px; }
+  .co-google{ min-height:54px; width:100%; justify-content:center; }
+  .oc-mi{ flex:1 1 46%; }
+}
+
+/* ---- Finer phones (≤430px): calmest single-column rhythm ---- */
+@media (max-width:430px){
+  .wrap{ width:min(1160px, calc(100% - 34px)); }
+  .calc-summary{ grid-template-columns:1fr; }
+  .lab-trust-grid{ grid-template-columns:1fr 1fr; gap:22px 12px; }
+  .hero h1{ font-size:clamp(31px,8.6vw,40px); }
+  .oc-mi{ flex:1 1 100%; max-width:none; }
+}
+
+/* ---- Reduced-motion: keep the premium layer calm ---- */
+@media (max-width:719px) and (prefers-reduced-motion:reduce){
+  .card:active{ transform:none; }
+}

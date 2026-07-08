@@ -557,6 +557,7 @@ img,svg{ max-width:100%; }
 .co-item{ display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:6px 0; color:var(--espresso); }
 .co-item .co-iqty{ color:var(--ink-soft); }
 .co-item .co-iname{ flex:1; }
+.co-item .co-ipkg{ display:inline-block; margin-top:2px; font-size:11.5px; color:var(--clay-deep); font-weight:600; }
 .co-hr{ height:1px; background:rgba(183,154,107,.4); border:0; margin:14px 0; }
 .co-row{ display:flex; justify-content:space-between; font-size:14px; padding:4px 0; color:var(--espresso); }
 .co-row .free{ color:var(--clay-deep); font-weight:700; }
@@ -889,3 +890,46 @@ html.reveal-ready .reveal.in{ opacity:1; transform:none; }
 .lp-cta-band p{ margin:12px auto 26px; max-width:52ch; color:rgba(243,233,225,.78); font-size:15px; line-height:1.7; }
 
 @media (max-width:560px){ .lp-step{ padding:18px; gap:14px; } .lp-step .n{ width:38px; height:38px; font-size:17px; } }
+
+/* ================================================================
+   Complete Your Ritual — package selector (product detail page)
+   ================================================================ */
+.ritual-section{ margin-top:26px; padding-top:24px; border-top:1px solid rgba(183,154,107,.28); }
+.ritual-head h2{ font-family:var(--serif); font-size:22px; color:var(--espresso); }
+.ritual-head p{ margin-top:6px; font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+.pkg-grid{ display:grid; gap:12px; margin-top:18px; }
+.pkg-card{ display:flex; align-items:center; gap:16px; padding:16px 18px; min-height:72px; border-radius:18px;
+  background:linear-gradient(180deg,#ffffff,#FBF6F1); border:1px solid rgba(183,154,107,.3);
+  box-shadow:0 8px 22px -16px rgba(58,46,41,.22); cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:transform .25s ease-out, box-shadow .25s ease-out, border-color .25s ease-out, background .25s ease-out; }
+.pkg-card:hover{ transform:translateY(-2px); box-shadow:0 16px 34px -18px rgba(58,46,41,.32); border-color:rgba(169,106,88,.5); }
+.pkg-card:focus-visible{ outline:2px solid var(--clay); outline-offset:3px; }
+.pkg-card.sel{ border-color:var(--clay); background:linear-gradient(180deg,#ffffff,#FBEFE9);
+  box-shadow:0 0 0 1px var(--clay), 0 18px 40px -18px rgba(169,106,88,.5); transform:translateY(-2px); }
+.pkg-radio{ width:22px; height:22px; border-radius:50%; border:2px solid rgba(169,106,88,.45); flex:none; position:relative; transition:border-color .25s ease-out; }
+.pkg-radio::after{ content:""; position:absolute; inset:4px; border-radius:50%; background:var(--clay); transform:scale(0); transition:transform .25s ease-out; }
+.pkg-card.sel .pkg-radio{ border-color:var(--clay); }
+.pkg-card.sel .pkg-radio::after{ transform:scale(1); }
+.pkg-ico-tile{ flex:none; width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(155deg, rgba(183,154,107,.18), rgba(169,106,88,.12)); color:var(--clay-deep);
+  border:1px solid rgba(183,154,107,.32); transition:background .25s ease-out, color .25s ease-out, border-color .25s ease-out, box-shadow .25s ease-out, transform .25s ease-out; }
+.pkg-card:hover .pkg-ico-tile{ transform:scale(1.04); }
+.pkg-card.sel .pkg-ico-tile{ background:linear-gradient(155deg, var(--clay), var(--clay-deep)); color:#fff; border-color:transparent;
+  box-shadow:0 10px 20px -10px rgba(169,106,88,.65); }
+.pkg-ico{ width:22px; height:22px; display:block; }
+.pkg-main{ flex:1; min-width:0; }
+.pkg-title-row{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.pkg-title{ font-weight:700; font-size:14.5px; color:var(--espresso); }
+.pkg-badge{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:3px 9px; border-radius:999px;
+  background:rgba(183,154,107,.16); color:var(--clay-deep); border:1px solid rgba(183,154,107,.4); white-space:nowrap; }
+.pkg-badge.pop{ background:var(--clay); color:#fff; border-color:transparent; }
+.pkg-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; line-height:1.45; }
+.pkg-price{ font-family:var(--serif); font-size:16px; color:var(--espresso); white-space:nowrap; flex:none; }
+.pkg-price.free{ font-family:var(--sans); font-size:11.5px; font-weight:700; color:var(--champagne); text-transform:uppercase; letter-spacing:.05em; }
+.price-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
+.btn-ritual{ width:100%; margin-top:20px; }
+.ritual-actions{ display:block; }
+.ritual-actions .btn-sm{ display:block; margin:10px auto 0; }
+.cart-item-pkg{ font-size:11.5px; color:var(--clay-deep); font-weight:600; margin-top:2px; }
+@media (max-width:719px){ .pkg-card{ padding:14px 16px; gap:12px; } .pkg-ico-tile{ width:38px; height:38px; border-radius:11px; } .pkg-ico{ width:20px; height:20px; } }
+@media (prefers-reduced-motion:reduce){ .pkg-card, .pkg-card:hover, .pkg-card.sel{ transform:none; } .pkg-radio, .pkg-radio::after{ transition:none; } }

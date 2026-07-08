@@ -6,8 +6,85 @@
 (function () {
   var product = null, selected = null, qty = 1, ALL = [];
 
+  /* ---- Package options ("Complete Your Ritual") ---------------------------
+     addon = amount added to the chosen strength price. One is always active. */
+  var PACKAGES = [
+    { id: 'peptide-only',  name: 'Peptide Only',                    sub: 'Lyophilized vial only',                        badge: 'Base Package',    addon: 0 },
+    { id: 'bac-water',     name: 'Peptide + Bacteriostatic Water',  sub: 'Includes sterile 3ml bacteriostatic water',    badge: 'Most Popular',    addon: 180 },
+    { id: 'pro-kit',       name: 'Professional Kit',                sub: 'Peptide + Premium Reusable Injection Pen',     badge: 'Premium',         addon: 1500 },
+    { id: 'essential-kit', name: 'Essential Kit',                   sub: 'Peptide + Disposable Injection Pen',           badge: 'Budget Friendly', addon: 1000 }
+  ];
+  var selectedPkg = PACKAGES[0];
+
+  /* Refined line-art icons (Rose & Porcelain), one per package. currentColor
+     so they invert to white inside the accent-filled tile when selected. */
+  var S = '<svg class="pkg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var PKG_ICONS = {
+    // lab vial — Peptide Only
+    'peptide-only': S + '<path d="M9 2.75h6"/><path d="M10 2.75v14.75a2 2 0 0 0 4 0V2.75"/><path d="M10 12h4"/><path d="M10.6 15h2.8"/></svg>',
+    // water droplet — Reconstitution Kit
+    'bac-water':    S + '<path d="M12 3.2c2.9 3.4 5.4 6.2 5.4 9.3a5.4 5.4 0 0 1-10.8 0C6.6 9.4 9.1 6.6 12 3.2Z"/><path d="M9.6 12.9a2.6 2.6 0 0 0 2.1 2.5"/></svg>',
+    // injection pen — Professional Kit
+    'pro-kit':      S + '<rect x="8.6" y="2.5" width="6.8" height="4.3" rx="1.5"/><path d="M8.6 6.8h6.8v8.6a2.1 2.1 0 0 1-2.1 2.1h-2.6a2.1 2.1 0 0 1-2.1-2.1Z"/><path d="M10.7 10.6h2.6"/><path d="M12 17.5v3"/></svg>',
+    // syringe — Essential Kit
+    'essential-kit':S + '<path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3a2.4 2.4 0 0 1-3.4 0l-.6-.6a2.4 2.4 0 0 1 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-2.5 2.5"/></svg>'
+  };
+
   function fallbackArt(p, opts) {
     return window.vialArt(p, opts);
+  }
+
+  // --- DynamicPriceDisplay: base(strength/sale) + package add-on = final ---
+  function basePrice()  { return (product && product.saleActive && product.salePrice > 0) ? product.salePrice : (selected ? selected.price : 0); }
+  function finalPrice() { return basePrice() + (selectedPkg ? (selectedPkg.addon || 0) : 0); }
+  function updatePrice() {
+    var pd = document.getElementById('detailPrice');
+    if (pd) pd.innerHTML = fmtPHP(finalPrice()) +
+      (product.compareAtPrice ? ' <s class="price-was">' + fmtPHP(product.compareAtPrice) + '</s>' : '');
+    var note = document.getElementById('priceNote');
+    if (note) note.textContent = (selectedPkg && selectedPkg.addon > 0)
+      ? 'Base ' + fmtPHP(basePrice()) + '  ·  ' + selectedPkg.badge + ' + ' + fmtPHP(selectedPkg.addon) : '';
+  }
+
+  // --- PackageOptionCard ---
+  function packageCardHTML(p, i) {
+    var sel = i === 0;
+    var price = p.addon > 0
+      ? '<span class="pkg-price">+ ' + fmtPHP(p.addon) + '</span>'
+      : '<span class="pkg-price free">Included</span>';
+    return '<div class="pkg-card' + (sel ? ' sel' : '') + '" role="radio" data-i="' + i + '"' +
+        ' tabindex="' + (sel ? '0' : '-1') + '" aria-checked="' + (sel ? 'true' : 'false') + '"' +
+        ' aria-label="' + p.name + ', ' + (p.addon > 0 ? 'add ' + fmtPHP(p.addon) : 'included') + '">' +
+      '<span class="pkg-radio" aria-hidden="true"></span>' +
+      '<span class="pkg-ico-tile" aria-hidden="true">' + (PKG_ICONS[p.id] || '') + '</span>' +
+      '<div class="pkg-main"><div class="pkg-title-row"><span class="pkg-title">' + p.name + '</span>' +
+        '<span class="pkg-badge' + (p.id === 'bac-water' ? ' pop' : '') + '">' + p.badge + '</span></div>' +
+        '<div class="pkg-sub">' + p.sub + '</div></div>' + price +
+    '</div>';
+  }
+
+  // --- ProductPackageSelector (radio-group behaviour) ---
+  function selectPackage(i) {
+    selectedPkg = PACKAGES[i];
+    document.querySelectorAll('#pkgGrid .pkg-card').forEach(function (c) {
+      var on = +c.dataset.i === i;
+      c.classList.toggle('sel', on);
+      c.setAttribute('aria-checked', on ? 'true' : 'false');
+      c.tabIndex = on ? 0 : -1;
+    });
+    updatePrice();
+  }
+  function wirePackages() {
+    var cards = [].slice.call(document.querySelectorAll('#pkgGrid .pkg-card'));
+    cards.forEach(function (c) {
+      var i = +c.dataset.i;
+      c.addEventListener('click', function () { selectPackage(i); });
+      c.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPackage(i); }
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); var n = (i + 1) % PACKAGES.length; selectPackage(n); cards[n].focus(); }
+        else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); var n = (i - 1 + PACKAGES.length) % PACKAGES.length; selectPackage(n); cards[n].focus(); }
+      });
+    });
   }
 
   function render() {
@@ -15,6 +92,7 @@
     var opts = product.dosageOptions && product.dosageOptions.length
       ? product.dosageOptions : [{ mg: '—', price: product.price }];
     selected = opts[0];
+    selectedPkg = PACKAGES[0];
 
     root.innerHTML =
       '<nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span>' +
@@ -27,9 +105,10 @@
           '<div class="cat">' + product.category + '</div>' +
           '<h1>' + product.name + '</h1>' +
           '<div class="detail-price' + (product.saleActive ? ' on-sale' : '') + '" id="detailPrice" aria-live="polite">' +
-            fmtPHP(product.saleActive ? product.salePrice : selected.price) +
+            fmtPHP(finalPrice()) +
             (product.compareAtPrice ? ' <s class="price-was">' + fmtPHP(product.compareAtPrice) + '</s>' : '') +
           '</div>' +
+          '<div class="price-note" id="priceNote"></div>' +
           '<div class="stock-line stock-' + product.stockStatus + '">' +
             (product.stockStatus === 'out_of_stock' ? 'Out of stock'
               : product.stockStatus === 'low_stock' ? 'Low stock — order soon' : 'In stock') +
@@ -46,9 +125,16 @@
             '<div class="qty"><button id="qMinus" type="button" aria-label="Decrease quantity">−</button><span id="qVal" aria-live="polite">1</span><button id="qPlus" type="button" aria-label="Increase quantity">+</button></div>' +
             (product.inStock === false ? '<span style="color:var(--ink-soft);font-weight:600;">Currently out of stock</span>' : '') +
           '</div>' +
-          '<div class="detail-actions">' +
-            '<button class="btn btn-primary" id="addBtn"' + (product.inStock === false ? ' disabled' : '') + '>Add to Cart</button>' +
-            '<button class="btn btn-ghost" id="viewCartBtn">View cart</button>' +
+          '<section class="ritual-section" aria-labelledby="ritualTitle">' +
+            '<div class="ritual-head"><h2 id="ritualTitle">Complete Your Ritual</h2>' +
+              '<p>Choose how you would like your peptide prepared before adding it to your ritual.</p></div>' +
+            '<div class="pkg-grid" id="pkgGrid" role="radiogroup" aria-label="Package options">' +
+              PACKAGES.map(packageCardHTML).join('') +
+            '</div>' +
+          '</section>' +
+          '<div class="detail-actions ritual-actions">' +
+            '<button class="btn btn-primary btn-ritual" id="addBtn"' + (product.inStock === false ? ' disabled' : '') + '>Add to Ritual</button>' +
+            '<button class="btn btn-ghost btn-sm" id="viewCartBtn">View cart</button>' +
           '</div>' +
           '<div class="qa-box">' +
             '<div class="qa-head">' +
@@ -80,9 +166,11 @@
           x.classList.remove('active'); x.setAttribute('aria-pressed', 'false');
         });
         b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
-        document.getElementById('detailPrice').textContent = fmtPHP(selected.price);
+        updatePrice();
       });
     });
+    wirePackages();
+    updatePrice();
     document.getElementById('qMinus').addEventListener('click', function () { qty = Math.max(1, qty - 1); document.getElementById('qVal').textContent = qty; });
     document.getElementById('qPlus').addEventListener('click', function () { qty++; document.getElementById('qVal').textContent = qty; });
     document.getElementById('viewCartBtn').addEventListener('click', window.openCartDrawer);
@@ -92,11 +180,14 @@
       addBtn.addEventListener('click', function () {
         window.cartAPI.add({
           id: product.id, slug: product.slug, name: product.name, category: product.category,
-          imageURL: product.imageURL || '', dosage: selected.mg, price: selected.price
+          imageURL: product.imageURL || '', dosage: selected.mg,
+          basePrice: basePrice(),
+          packageId: selectedPkg.id, packageName: selectedPkg.name, packageAddon: selectedPkg.addon,
+          price: finalPrice()
         }, qty);
         addBtn.classList.add('added');
-        addBtn.textContent = '✓ Added';
-        setTimeout(function () { addBtn.classList.remove('added'); addBtn.textContent = 'Add to Cart'; }, 1800);
+        addBtn.textContent = '✓ Added to Ritual';
+        setTimeout(function () { addBtn.classList.remove('added'); addBtn.textContent = 'Add to Ritual'; }, 1800);
       });
     }
 

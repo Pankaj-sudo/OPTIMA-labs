@@ -2,8 +2,10 @@
    OPTIMA LABS — Cart (localStorage, self-contained snapshots)
    Each item carries everything the cart/checkout needs, so nothing
    depends on a hardcoded product array or a live Firestore read.
-   Item: { key, id, slug, name, category, imageURL, dosage, price, qty }
-   key = `${slug}_${dosage}`
+   Item: { key, id, slug, name, category, imageURL, dosage,
+           basePrice, packageId, packageName, packageAddon, price, qty }
+   price = final unit price (basePrice + packageAddon)
+   key   = `${slug}_${dosage}_${packageId}`
    ================================================================ */
 (function () {
   var KEY = 'optima_cart';
@@ -19,13 +21,19 @@
 
     add: function (item, qty) {
       qty = qty || 1;
-      var key = item.slug + '_' + item.dosage;
+      var pkgId = item.packageId || 'peptide-only';
+      var key = item.slug + '_' + item.dosage + '_' + pkgId;
       var found = cart.find(function (i) { return i.key === key; });
       if (found) { found.qty += qty; }
       else { cart.push({
         key: key, id: item.id, slug: item.slug, name: item.name,
         category: item.category, imageURL: item.imageURL || '',
-        dosage: item.dosage, price: item.price, qty: qty
+        dosage: item.dosage,
+        basePrice: (item.basePrice != null ? item.basePrice : item.price),
+        packageId: pkgId,
+        packageName: item.packageName || 'Peptide Only',
+        packageAddon: item.packageAddon || 0,
+        price: item.price, qty: qty
       }); }
       save(); syncBadges();
       if (window.showToast) showToast(item.name + ' · ' + item.dosage + ' added to cart');
@@ -79,6 +87,8 @@
         '<div class="cart-item-info">' +
           '<div class="cart-item-name">' + i.name + '</div>' +
           '<div class="cart-item-meta">' + i.dosage + ' · ' + fmtPHP(i.price) + '</div>' +
+          (i.packageId && i.packageId !== 'peptide-only'
+            ? '<div class="cart-item-pkg">' + i.packageName + '</div>' : '') +
           '<div class="cart-item-controls">' +
             '<button onclick="cartAPI.setQty(\'' + i.key + '\',-1)" aria-label="Decrease">−</button>' +
             '<span>' + i.qty + '</span>' +

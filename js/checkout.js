@@ -46,6 +46,7 @@
     ];
     (sum.items || []).forEach(function (i) {
       L.push(i.qty + ' × ' + i.name + (i.dosage ? ' · ' + i.dosage : ''));
+      if (i.packageId && i.packageId !== 'peptide-only') L.push('Package: ' + i.packageName);
       L.push('Price: ' + amt(i.price));
       L.push('');
     });
@@ -287,7 +288,9 @@
     var total = subtotal + fee;
     var rows = items.map(function (i) {
       return '<div class="co-item"><span class="co-iname"><span class="co-iqty">' + i.qty + '× </span>' +
-        i.name + ' · ' + i.dosage + '</span><span>' + money(i.price * i.qty) + '</span></div>';
+        i.name + ' · ' + i.dosage +
+        (i.packageId && i.packageId !== 'peptide-only' ? '<br><span class="co-ipkg">' + i.packageName + '</span>' : '') +
+        '</span><span>' + money(i.price * i.qty) + '</span></div>';
     }).join('');
 
     document.getElementById('coItems').innerHTML = rows;
