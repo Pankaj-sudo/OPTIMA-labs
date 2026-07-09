@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#fff}iframe{width:920px;height:100%;border:0;display:block}</style></head>
+<body><iframe id="f" src="/products.html"></iframe>
+<script>
+var q=new URLSearchParams(location.search), step=+(q.get('s')||'1'), scroll=+(q.get('y')||'0');
+var f=document.getElementById('f');
+function inject(d,n){
+  if(n===3){
+    d.getElementById('coCourierBox').innerHTML=
+      '<div class="co-title">Same-Day Delivery via GrabExpress</div>'+
+      '<span class="cx-badge">🚚 Same-Day Delivery Available</span>'+
+      '<p class="cx-desc">Your order qualifies for same-day delivery within Metro Manila. To ensure the fastest possible dispatch, please arrange your courier using GrabExpress through the secure booking link below.<br><br>Delivery fees are paid directly to Grab by the customer. Optima Labs does not collect or manage courier fees.</p>'+
+      '<div class="cx-summary"><div class="cx-row"><span class="cx-k">Courier</span><span class="cx-v">GrabExpress</span></div><div class="cx-row"><span class="cx-k">Delivery Speed</span><span class="cx-v">Same-Day</span></div><div class="cx-row"><span class="cx-k">Coverage</span><span class="cx-v">Metro Manila</span></div><div class="cx-row"><span class="cx-k">Delivery Fee</span><span class="cx-v">Paid Directly to Grab</span></div></div>'+
+      '<a class="co-btn cx-book" href="#" target="_blank">Book GrabExpress Delivery ↗</a>'+
+      '<div class="cx-next"><div class="cx-next-t">Next Step</div><p>After completing your GrabExpress booking, return to this page and confirm your courier booking below. This allows our fulfillment team to prepare your order immediately.</p></div>'+
+      '<div class="co-field full" style="margin-top:16px;"><label>Grab Booking Reference <span style="font-weight:500;color:var(--ink-soft);">(optional)</span></label><input type="text" placeholder="Example: GRAB-123456789"></div>'+
+      '<button class="co-btn cx-confirm">I’ve Booked My GrabExpress Courier</button>'+
+      '<button class="co-back">← Back to payment</button>';
+  }
+  if(n===4){
+    d.getElementById('coThanks').textContent='Thank you, Juana! Your order has been received and is awaiting verification.';
+    d.getElementById('coOrderId').textContent='OL-7K2M9Q';
+    d.getElementById('coOrderDate').textContent='Jul 9, 2026, 5:30 PM';
+    d.getElementById('coProcTime').textContent='2–4 hours';
+    d.getElementById('coItems3').innerHTML='<div class="co-item"><span class="co-iname"><span class="co-iqty">1× </span>BPC-157 · 10mg</span><span>₱2,407.50</span></div>';
+    d.getElementById('coTotal3').textContent='₱2,407.50';
+    d.getElementById('coSummary3').innerHTML='<div class="oc-line"><span class="oc-lk">Customer Name</span><span class="oc-lv">Juana Dela Cruz</span></div><div class="oc-line"><span class="oc-lk">Delivery Method</span><span class="oc-lv">Same-Day Courier · GrabExpress</span></div><div class="oc-line"><span class="oc-lk">Courier</span><span class="oc-lv">GrabExpress</span></div><div class="oc-line"><span class="oc-lk">Delivery Address</span><span class="oc-lv">12 Rizal St, Poblacion, Makati, Metro Manila, 1210</span></div><div class="oc-line"><span class="oc-lk">Payment Status</span><span class="oc-lv">Pending Verification</span></div>';
+    d.getElementById('coReassure').textContent='Thank you for choosing Optima Labs. Your order has been received successfully and is currently awaiting verification. We’ll keep you updated as your order progresses through verification, preparation, and dispatch.';
+  }
+}
+function go(){
+  var d=f.contentDocument, ov=d.querySelector('.co-overlay'); if(!ov) return false;
+  ov.classList.add('open'); ov.style.opacity='1'; ov.style.visibility='visible';
+  d.getElementById('coSteps').style.visibility='visible';
+  var n=step;
+  ['coGate','coStep1','coStep2','coStep3','coStep4'].forEach(function(id){var e=d.getElementById(id);if(e)e.classList.remove('active');});
+  d.getElementById('coStep'+n).classList.add('active');
+  d.querySelectorAll('.co-step').forEach(function(el){var s=+el.dataset.s;el.classList.toggle('active',s===n);el.classList.toggle('done',s<n);el.querySelector('.co-step-dot').innerHTML=s<n?'✓':s;});
+  d.querySelectorAll('.co-step-line').forEach(function(el){el.classList.toggle('filled',+el.dataset.l<n);});
+  inject(d,n);
+  if(scroll){ d.querySelector('.co-body').scrollTop=scroll; }
+  return true;
+}
+f.addEventListener('load',function(){ var t=0,iv=setInterval(function(){t++;try{if(go())clearInterval(iv);}catch(e){clearInterval(iv);}if(t>40)clearInterval(iv);},150); });
+</script></body></html>

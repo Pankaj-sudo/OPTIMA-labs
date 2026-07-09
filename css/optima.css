@@ -625,7 +625,7 @@ img,svg{ max-width:100%; }
 .co-idbox{ margin:24px 0; }
 .co-idbox .idlbl{ font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); }
 .co-idbox .idval{ font-family:var(--serif); font-size:30px; color:var(--clay-deep); margin-top:4px; }
-.co-copy{ margin-left:10px; font-size:12px; font-weight:700; color:var(--clay); background:rgba(192,141,128,.12); border:none; border-radius:999px; padding:6px 12px; cursor:pointer; vertical-align:middle; }
+.co-copy{ margin-left:10px; font-size:12px; font-weight:700; color:var(--clay); background:rgba(192,141,128,.12); border:none; border-radius:999px; padding:6px 12px; cursor:pointer; vertical-align:middle; white-space:nowrap; flex:none; }
 .co-info{
   text-align:left; background:var(--rosewater); border-left:4px solid var(--clay);
   border-radius:10px; padding:16px 18px; margin:20px 0; font-size:13px; color:var(--espresso); line-height:1.9;
@@ -634,14 +634,15 @@ img,svg{ max-width:100%; }
 .co-actions{ display:grid; gap:12px; margin-top:22px; }
 
 /* ---- Premium order confirmation (checkout step 3) ---- */
-#coStep3 .oc-confirm{ max-width:600px; }
+#coStep4 .oc-confirm{ max-width:600px; margin:0 auto; }
 .oc-confirm h2{ font-family:var(--serif); font-size:clamp(26px,4vw,34px); color:var(--espresso); margin-top:18px; }
 .oc-meta{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:20px 0 4px; }
 .oc-mi{ flex:1 1 150px; max-width:230px; text-align:center; padding:13px 14px; border-radius:14px;
   background:rgba(255,255,255,.6); border:1px solid rgba(183,154,107,.28);
   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
 .oc-mi .l{ display:block; font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-soft); }
-.oc-mi .v{ display:flex; align-items:center; justify-content:center; gap:8px; font-family:var(--serif); font-size:16px; color:var(--espresso); margin-top:6px; word-break:break-word; }
+.oc-mi .v{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 8px; font-family:var(--serif); font-size:16px; color:var(--espresso); margin-top:6px; }
+.oc-mi .v #coOrderId{ white-space:nowrap; }
 .oc-mi .co-copy{ margin-left:0; }
 .oc-card{ text-align:left; margin-top:14px; padding:18px 20px; border-radius:18px;
   background:rgba(255,255,255,.62); border:1px solid rgba(183,154,107,.26);
@@ -674,6 +675,66 @@ img,svg{ max-width:100%; }
 .oc-cbtn:focus-visible,.oc-copyorder:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
 @media (max-width:620px){ .oc-two{ grid-template-columns:1fr; } .oc-contact{ grid-template-columns:1fr; } }
 @media (prefers-reduced-motion:reduce){ .oc-cbtn:hover{ transform:none; } }
+
+/* ================================================================
+   Same-day courier booking step (GrabExpress / Lalamove)
+   ================================================================ */
+.cx-badge{ display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:8px 16px; border-radius:999px;
+  font-size:12.5px; font-weight:700; letter-spacing:.02em; color:#2f7a4f;
+  background:rgba(90,162,119,.12); border:1px solid rgba(90,162,119,.42); }
+.cx-desc{ margin-top:16px; font-size:14.5px; line-height:1.72; color:var(--ink-soft); }
+.cx-summary{ margin-top:20px; border:1px solid rgba(183,154,107,.3); border-radius:16px; overflow:hidden;
+  background:rgba(255,255,255,.55); }
+.cx-row{ display:flex; justify-content:space-between; gap:14px; padding:13px 18px; font-size:14px; }
+.cx-row + .cx-row{ border-top:1px solid rgba(183,154,107,.24); }
+.cx-row .cx-k{ color:var(--ink-soft); font-weight:600; }
+.cx-row .cx-v{ color:var(--espresso); font-weight:700; text-align:right; }
+.cx-book{ margin-top:22px; }
+.cx-next{ margin-top:22px; padding:18px 20px; border-radius:16px;
+  background:linear-gradient(135deg, rgba(241,226,219,.6), rgba(255,255,255,.5)); border:1px solid rgba(183,154,107,.3); }
+.cx-next-t{ font-size:11.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--clay-deep); }
+.cx-next p{ margin-top:8px; font-size:14px; line-height:1.65; color:var(--ink-soft); }
+.cx-confirm{ margin-top:18px; }
+
+/* ---- Order Complete: summary key/value lines ---- */
+.oc-line{ display:flex; justify-content:space-between; gap:16px; padding:7px 0; font-size:14px; }
+.oc-line + .oc-line{ border-top:1px solid rgba(183,154,107,.18); }
+.oc-lk{ color:var(--ink-soft); font-weight:600; flex:none; }
+.oc-lv{ color:var(--espresso); font-weight:700; text-align:right; word-break:break-word; }
+
+/* ================================================================
+   Priority Order Confirmation (optional premium concierge)
+   ================================================================ */
+.poc{ margin-top:26px; text-align:center; padding:24px 22px; border-radius:20px;
+  background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(241,226,219,.4));
+  border:1px solid rgba(183,154,107,.32); box-shadow:0 24px 50px -30px rgba(58,46,41,.3); }
+.poc-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--clay-deep); }
+.poc-head h3{ font-family:var(--serif); font-weight:400; font-size:clamp(21px,3vw,27px); color:var(--espresso); margin-top:8px; }
+.poc-sub{ font-size:14px; font-weight:600; color:var(--clay-deep); margin-top:5px; }
+.poc-desc{ font-size:13.5px; color:var(--ink-soft); line-height:1.72; max-width:520px; margin:14px auto 0; }
+.poc-benefits{ display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:520px; margin:20px auto; text-align:left; }
+.poc-benefit{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px;
+  background:rgba(255,255,255,.62); border:1px solid rgba(183,154,107,.28); font-size:13px; font-weight:600; color:var(--espresso); }
+.poc-benefit svg{ flex:none; color:#2f9e5b; }
+.poc-wa{ width:100%; max-width:440px; margin:2px auto 0; }
+.poc-note{ font-size:12px; color:var(--ink-soft); line-height:1.6; max-width:480px; margin:14px auto 0; }
+.poc-secondary{ display:flex; gap:10px; justify-content:center; align-items:stretch; max-width:440px; margin:16px auto 0; }
+.poc-secondary .oc-viber{ flex:1; min-height:46px; padding:12px 14px; font-size:13.5px; }
+.poc-secondary .oc-copyorder{ flex:1; margin-top:0; }
+.poc-reassure{ margin:22px auto 0; max-width:540px; font-size:14px; line-height:1.72; color:var(--ink-soft);
+  padding:16px 20px; border-radius:16px; background:rgba(183,154,107,.09); border:1px solid rgba(183,154,107,.24); }
+@media (max-width:520px){ .poc-benefits{ grid-template-columns:1fr; } .poc-secondary{ flex-direction:column; } }
+
+/* ---- 5-step indicator: keep it graceful on small screens ---- */
+@media (max-width:560px){
+  .co-steps{ max-width:100%; }
+  .co-step-dot{ width:26px; height:26px; font-size:12px; }
+  .co-step-line{ margin:0 5px 22px; }
+}
+@media (max-width:400px){
+  .co-step-label{ display:none; }
+  .co-step-line{ margin:0 5px; }
+}
 .co-loading{ display:none; align-items:center; justify-content:center; gap:10px; padding:30px; color:var(--ink-soft); }
 .co-loading.on{ display:flex; }
 .co-loading .co-spin{ border-color:rgba(169,106,88,.4); border-top-color:var(--clay); }

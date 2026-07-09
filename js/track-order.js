@@ -66,6 +66,52 @@
     result.classList.remove('track-hidden');
   }
 
+  /* ---- Consultation booking tracking (CONS-XXXXXX) ---- */
+  var CST = {
+    booking_received:      { label: 'Booking Received',      cls: 'amber', note: 'We’ve received your consultation request.' },
+    awaiting_verification: { label: 'Awaiting Verification', cls: 'amber', note: 'Our team is reviewing your payment and details.' },
+    verified:              { label: 'Verified',              cls: 'green', note: 'Your payment is verified — we’ll schedule your session shortly.' },
+    scheduled:             { label: 'Consultation Scheduled',cls: 'blue',  note: 'Your consultation is scheduled. Watch for our confirmation.' },
+    completed:             { label: 'Completed',             cls: 'green', note: 'Your consultation is complete. Thank you!' },
+    cancelled:             { label: 'Cancelled',             cls: 'red',   note: 'This booking was cancelled. Contact us if you have any questions.' }
+  };
+  var CORDER = ['booking_received', 'awaiting_verification', 'verified', 'scheduled', 'completed'];
+
+  function renderConsult(c) {
+    errorEl.classList.add('track-hidden');
+    var st = c.booking_status || 'booking_received';
+    var meta = CST[st] || CST.booking_received;
+    var updated = fmtTs(c.status_updated_at || c.updated_at || c.created_at);
+
+    summary.innerHTML =
+      '<span class="who">Consultation for ' + (c.full_name || 'you') + '</span>' +
+      '<span class="meta">' + (c.contact_method || 'Consultation') + '</span>' +
+      '<span class="meta">Ref <b>' + (c.booking_ref || '') + '</b></span>';
+
+    var head =
+      '<div class="tl-cur">' +
+        '<span class="tl-cbadge ' + meta.cls + '">' + meta.label + '</span>' +
+        '<p>' + meta.note + '</p>' +
+        (updated ? '<div class="tl-time">Last updated ' + updated + '</div>' : '') +
+      '</div>';
+
+    if (st === 'cancelled') {
+      timeline.innerHTML = head;
+    } else {
+      var cur = CORDER.indexOf(st);
+      timeline.innerHTML = head + CORDER.map(function (s, i) {
+        var done = i <= cur;
+        var cls = done ? 'done' : (i === cur + 1 ? 'active' : '');
+        return '<div class="tl-step ' + cls + '">' +
+          '<div class="tl-dot">' + (done ? '✓' : (i + 1)) + '</div>' +
+          '<div class="tl-body"><div class="tl-name">' + CST[s].label + '</div>' +
+          (i === cur && updated ? '<div class="tl-time">' + updated + '</div>' : '') +
+          '</div></div>';
+      }).join('');
+    }
+    result.classList.remove('track-hidden');
+  }
+
   async function lookup() {
     var id = idEl.value.trim().toUpperCase();
     var email = emailEl.value.trim().toLowerCase();
@@ -73,16 +119,26 @@
     if (!window.fbDb || !window.fbAuth) { showError(); return; }
     loading(true);
     try {
-      // Our rules require the requester to be signed in as the order's email.
+      // Our rules require the requester to be signed in as the record's email.
       if (!window.fbAuth.currentUser) {
         await window.fbAuth.signInWithPopup(window.fbGoogle);
       }
-      var snap = await window.fbDb.collection('orders')
-        .where('order_id', '==', id)
-        .where('customer_email', '==', email)
-        .limit(1).get();
-      if (snap.empty) { showError(); }
-      else { render(snap.docs[0].data()); }
+      if (id.indexOf('CONS') === 0) {
+        // Consultation booking — email must match the booking email.
+        var csnap = await window.fbDb.collection('consultations')
+          .where('booking_ref', '==', id)
+          .where('email', '==', email)
+          .limit(1).get();
+        if (csnap.empty) { showError(); }
+        else { renderConsult(csnap.docs[0].data()); }
+      } else {
+        var snap = await window.fbDb.collection('orders')
+          .where('order_id', '==', id)
+          .where('customer_email', '==', email)
+          .limit(1).get();
+        if (snap.empty) { showError(); }
+        else { render(snap.docs[0].data()); }
+      }
     } catch (e) {
       console.error('track lookup failed', e);
       showError();

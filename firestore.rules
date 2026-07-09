@@ -44,10 +44,14 @@ service cloud.firestore {
     }
 
     // Specialist consultation bookings. Any signed-in session (incl. anonymous)
-    // may book; only admins can read all and change verification status.
+    // may book. Admins read/manage all; the booking owner may read their own
+    // (signed-in email matches the booking email) to track its status. Only
+    // admins can update/delete.
     match /consultations/{id} {
       allow create: if request.auth != null;
-      allow read, update, delete: if isAdmin();
+      allow read:   if isAdmin() ||
+                    (request.auth != null && request.auth.token.email == resource.data.email);
+      allow update, delete: if isAdmin();
     }
   }
 }

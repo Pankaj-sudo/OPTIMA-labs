@@ -94,6 +94,10 @@
   .b-rejected,.b-cancelled{ background:rgba(194,91,77,.2); color:#E08B7F; }
   .b-confirmed{ background:rgba(92,130,168,.2); color:#89AAD0; }
   .b-processing{ background:rgba(149,123,176,.2); color:#B79BD6; }
+  /* consultation booking-status badges */
+  .b-booking_received,.b-awaiting_verification{ background:rgba(199,154,58,.18); color:#E1BC6A; }
+  .b-scheduled{ background:rgba(92,130,168,.2); color:#89AAD0; }
+  .b-completed{ background:rgba(90,162,119,.2); color:#7FCB9C; }
   .b-shipped{ background:rgba(197,130,72,.2); color:#E0A472; }
   .b-gray{ background:rgba(124,110,98,.24); color:#BCA99A; }
 
@@ -192,6 +196,23 @@
   .bulkbar .sep{ flex:1; }
   /* modal wide + grid */
   .modal.lg{ max-width:920px; }
+  /* consultation full-detail cards */
+  .cm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .cm-sec{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:15px 18px; }
+  .cm-sec.full{ grid-column:1 / -1; }
+  .cm-sec .sec-t{ margin-top:0; }
+  .cm-row{ display:flex; justify-content:space-between; gap:14px; padding:6px 0; font-size:13px; border-bottom:1px solid var(--border); }
+  .cm-row:last-child{ border-bottom:0; }
+  .cm-row .k{ color:var(--muted); flex:none; }
+  .cm-row .v{ color:var(--ink); text-align:right; font-weight:600; word-break:break-word; }
+  .cm-sub{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:700; margin:12px 0 4px; }
+  .cm-block{ font-size:13px; color:var(--ink); line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+  .cm-cols{ display:grid; grid-template-columns:1fr 1fr; gap:6px 24px; }
+  .cm-manage{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .cm-mfield{ display:flex; flex-direction:column; gap:8px; }
+  .cm-mfield label{ font-size:12px; color:var(--muted); font-weight:700; }
+  .cm-mfield select{ background:var(--surface); border:1px solid var(--border); border-radius:9px; color:var(--ink); padding:10px 12px; font-size:13.5px; }
+  @media (max-width:760px){ .cm-grid, .cm-cols, .cm-manage{ grid-template-columns:1fr; } }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
   .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 14px; }
   /* dosage rows */
@@ -314,7 +335,7 @@
       </div>
       <div class="card" style="padding:8px 22px 22px;">
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Reference</th><th>Booked</th><th>Customer</th><th>Contact</th><th>Preferred</th><th>Method</th><th>Fee</th><th>Payment</th><th></th></tr></thead>
+          <thead><tr><th>Reference</th><th>Booked</th><th>Customer</th><th>Contact</th><th>Preferred</th><th>Method</th><th>Fee</th><th>Payment</th><th>Booking Status</th><th></th></tr></thead>
           <tbody id="consultBody"></tbody>
         </table></div>
         <div class="pager" id="consultPager"></div>
@@ -535,7 +556,7 @@
 
 <!-- CONSULTATION MODAL -->
 <div class="overlay" id="consultModal">
-  <div class="modal">
+  <div class="modal lg">
     <div class="modal-head">
       <div><div class="oid" id="cmRef">—</div><div class="sub" id="cmDate"></div></div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -544,40 +565,7 @@
       </div>
     </div>
     <div class="modal-body">
-      <div class="m3">
-        <div>
-          <div class="sec-t">Customer</div>
-          <div class="kv b" id="cmName"></div>
-          <div class="kv"><a id="cmEmail"></a></div>
-          <div class="kv"><a id="cmPhone"></a></div>
-          <div class="divider"></div>
-          <div class="sec-t">Preferred Session</div>
-          <div class="kv" id="cmWhen"></div>
-          <div class="kv muted" id="cmMethod" style="margin-top:6px;"></div>
-        </div>
-        <div>
-          <div class="sec-t">Notes</div>
-          <div class="kv muted" id="cmNotes" style="font-style:italic;"></div>
-          <div class="divider"></div>
-          <div class="sec-t">Goals (from assessment)</div>
-          <div class="kv muted" id="cmGoals"></div>
-          <div class="divider"></div>
-          <div class="sec-t">Patient Lab Results</div>
-          <div id="cmLab" class="muted">No lab results uploaded</div>
-          <div class="divider"></div>
-          <div class="sec-t">Consultation Fee</div>
-          <div class="total-row"><span>Fee</span><span id="cmFee"></span></div>
-        </div>
-        <div>
-          <div class="sec-t">Payment Receipt</div>
-          <div id="cmProof" class="muted">No receipt uploaded</div>
-          <div class="divider"></div>
-          <div class="sec-t">Payment Status</div>
-          <div style="margin-bottom:8px;" id="cmStatusCur"></div>
-          <div class="field"><select id="cmStatusSel"><option value="pending_verification">pending_verification</option><option value="verified">verified</option><option value="rejected">rejected</option></select></div>
-          <button class="btn-gold" style="width:100%;" onclick="OL.updateConsultStatus()">Update Payment Status</button>
-        </div>
-      </div>
+      <div id="cmDetail"></div>
     </div>
   </div>
 </div>
@@ -713,6 +701,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="js/firebase-init.js"></script>
+<script src="js/assessment-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 window.OL = (function () {
@@ -880,7 +869,9 @@ window.OL = (function () {
     $('omPhone').textContent=o.customer_phone||'—'; $('omPhone').href='tel:'+o.customer_phone;
     var a=o.delivery_address||{};
     $('omAddr').innerHTML=[a.street,a.barangay,a.city,a.province,a.zip].filter(Boolean).join('<br>')||'—';
-    $('omDelivery').textContent=(o.delivery_type==='express'?'Express':'Standard')+' · '+money(o.delivery_fee||0);
+    var dmethod=o.delivery_method || (o.delivery_type==='express'?'Express Shipping':'Standard Shipping');
+    var dtail=o.courier ? (' · Paid to '+(o.delivery_type==='lalamove'?'Lalamove':'Grab')+(o.courier_reference?(' · Ref '+o.courier_reference):'')) : (' · '+(o.delivery_fee?money(o.delivery_fee):'FREE'));
+    $('omDelivery').textContent=dmethod+dtail;
     $('omNotes').textContent=o.notes||'No notes';
     $('omItems').innerHTML=(o.items||[]).map(function(it){ var pkg=(it.packageId&&it.packageId!=='peptide-only')?'<br><span class="muted" style="font-size:11px;">'+it.packageName+'</span>':''; return '<tr><td>'+it.name+' · '+it.dosage+pkg+'</td><td>'+it.qty+'</td><td>'+money(it.price)+'</td><td>'+money(it.price*it.qty)+'</td></tr>'; }).join('');
     $('omSubtotal').textContent=money(o.subtotal); $('omFee').textContent=o.delivery_fee?money(o.delivery_fee):'FREE'; $('omTotal').textContent=money(o.total);
@@ -958,28 +949,94 @@ window.OL = (function () {
         '<td>'+(c.contact_method||'—')+'</td>'+
         '<td>'+money(c.consultation_fee||0)+'</td>'+
         '<td>'+cBadge(c.payment_status||'pending_verification')+'</td>'+
+        '<td>'+bkBadge(c.booking_status||'booking_received')+'</td>'+
         '<td><button class="btn-ghost" style="padding:6px 12px;" onclick="event.stopPropagation();OL.openConsult(\''+c._id+'\')">View</button></td></tr>';
-    }).join('')||'<tr><td colspan="9" class="empty">No consultations yet.</td></tr>';
+    }).join('')||'<tr><td colspan="10" class="empty">No consultations yet.</td></tr>';
     var pg=''; for(var i=1;i<=pages;i++) pg+='<button class="'+(i===cpage?'active':'')+'" onclick="OL.cSetPage('+i+')">'+i+'</button>';
     $('consultPager').innerHTML=pages>1?('<button onclick="OL.cSetPage('+(cpage-1)+')" '+(cpage===1?'disabled':'')+'>‹</button>'+pg+'<button onclick="OL.cSetPage('+(cpage+1)+')" '+(cpage===pages?'disabled':'')+'>›</button>'):'';
   }
   function cSetPage(p){ cpage=Math.max(1,p); renderConsults(); }
+  /* ---- booking lifecycle status (customer-facing, tracked on Track Order) ---- */
+  var BK_ORDER = ['booking_received','awaiting_verification','verified','scheduled','completed','cancelled'];
+  function bkLabel(s){ return { booking_received:'Booking Received', awaiting_verification:'Awaiting Verification', verified:'Verified', scheduled:'Consultation Scheduled', completed:'Completed', cancelled:'Cancelled' }[s] || 'Booking Received'; }
+  function bkBadge(s){ s=s||'booking_received'; return '<span class="badge b-'+s+'">'+bkLabel(s)+'</span>'; }
+
+  /* ---- helpers for the full patient detail view ---- */
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function cfgLabel(list,id){ var f=(list||[]).filter(function(x){return x.id===id;})[0]; return f?f.label:id; }
+  function goalLabel(id){ return cfgLabel(window.ASSESSMENT_CONFIG&&window.ASSESSMENT_CONFIG.goals, id); }
+  function safetyLabel(id){ return cfgLabel(window.ASSESSMENT_CONFIG&&window.ASSESSMENT_CONFIG.safetyItems, id); }
+  function bmiOf(h,w){ h=parseFloat(h); w=parseFloat(w); if(!h||!w||h<=0) return null; var m=h/100; return (w/(m*m)).toFixed(1); }
+  function cmRow(k,v){ return '<div class="cm-row"><span class="k">'+esc(k)+'</span><span class="v">'+(v?esc(v):'—')+'</span></div>'; }
+  function cmBlock(text){ return '<div class="cm-block">'+(text?esc(text):'—')+'</div>'; }
+
+  function renderConsultDetail(c){
+    var a=c.assessment||{}, p=a.profile||{}, life=a.lifestyle||{}, exp=a.experience||{}, med=a.medical||{}, safety=a.safety||[];
+    var goals=(c.goals&&c.goals.length)?c.goals:(a.goals||[]);
+    var bmi=bmiOf(p.height,p.weight);
+    var fam=(med.family&&med.family.length)?med.family.join(', '):'';
+    var goalsLabeled=goals.map(goalLabel).join(', ');
+    var safetyLabeled=safety.length?safety.map(safetyLabel).join('; '):'None reported';
+    var allergy=safety.indexOf('allergies')>=0?'Reported (see safety screening)':'None reported';
+    return ''+
+    '<div class="cm-grid">'+
+      '<div class="cm-sec"><div class="sec-t">Personal Information</div>'+
+        cmRow('Full Name', c.full_name)+ cmRow('Age Range', p.ageRange)+ cmRow('Sex', p.sex)+
+        cmRow('Height', p.height?p.height+' cm':'')+ cmRow('Weight', p.weight?p.weight+' kg':'')+
+        cmRow('BMI', bmi)+ cmRow('Contact Number', c.mobile)+ cmRow('Email', c.email)+ cmRow('Country', p.country)+
+      '</div>'+
+      '<div class="cm-sec"><div class="sec-t">Session &amp; Booking</div>'+
+        cmRow('Preferred Date', c.preferred_date)+ cmRow('Preferred Time', c.preferred_time)+
+        cmRow('Contact Method', c.contact_method)+ cmRow('Consultation Fee', money(c.consultation_fee||0))+
+        cmRow('Payment Status', cLabel(c.payment_status||'pending_verification'))+
+        cmRow('Booking Status', bkLabel(c.booking_status||'booking_received'))+
+        cmRow('Submitted', fmtTs(c.created_at))+
+        (c.notes?'<div class="cm-sub">Patient Notes</div>'+cmBlock(c.notes):'')+
+      '</div>'+
+      '<div class="cm-sec full"><div class="sec-t">Medical Information</div><div class="cm-cols">'+
+        '<div>'+
+          '<div class="cm-sub">Past Medical History</div>'+cmBlock(med.pastHistory)+
+          '<div class="cm-sub">Current Conditions / Diagnoses</div>'+cmBlock(med.currentConditions)+
+          '<div class="cm-sub">Family Medical History</div>'+cmBlock(fam+(med.familyNotes?(fam?' — ':'')+med.familyNotes:''))+
+        '</div>'+
+        '<div>'+
+          '<div class="cm-sub">Current Medications</div>'+cmBlock(med.medications)+
+          '<div class="cm-sub">Current Supplements</div>'+cmBlock(med.supplements)+
+          '<div class="cm-sub">Allergies</div>'+cmBlock(allergy)+
+          '<div class="cm-sub">Previous Peptide Experience</div>'+cmBlock(p.experience)+
+        '</div>'+
+      '</div></div>'+
+      '<div class="cm-sec full"><div class="sec-t">Assessment Responses</div><div class="cm-cols">'+
+        '<div>'+
+          cmRow('Primary Goals', goalsLabeled)+ cmRow('In Metro Manila', exp.metroManila)+
+          cmRow('Delivery / Format Preference', exp.format)+
+        '</div>'+
+        '<div>'+
+          cmRow('Exercise', life.exercise)+ cmRow('Sleep Quality', life.sleepQuality)+ cmRow('Stress Level', life.stress)+
+          cmRow('Water Intake', life.water)+ cmRow('Nutrition', life.nutrition)+
+          cmRow('Smokes', life.smoking)+ cmRow('Drinks Alcohol', life.alcohol)+
+        '</div>'+
+      '</div><div class="cm-sub">Safety Screening / Contraindications</div>'+cmBlock(safetyLabeled)+'</div>'+
+      '<div class="cm-sec"><div class="sec-t">Patient Lab Results</div>'+labHTML(c.lab_results)+'</div>'+
+      '<div class="cm-sec"><div class="sec-t">Payment Receipt</div>'+consultProof(c)+'</div>'+
+      '<div class="cm-sec full"><div class="sec-t">Booking Management</div><div class="cm-manage">'+
+        '<div class="cm-mfield"><label>Payment Status</label>'+
+          '<select id="cmStatusSel"><option value="pending_verification">Pending Verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option></select>'+
+          '<button class="btn-gold" onclick="OL.updateConsultStatus()">Update Payment</button></div>'+
+        '<div class="cm-mfield"><label>Booking Status <span class="muted" style="font-weight:400;">(shown to customer)</span></label>'+
+          '<select id="cmBookingSel">'+BK_ORDER.map(function(s){ return '<option value="'+s+'">'+bkLabel(s)+'</option>'; }).join('')+'</select>'+
+          '<button class="btn-gold" onclick="OL.updateBookingStatus()">Update Booking Status</button></div>'+
+      '</div></div>'+
+    '</div>';
+  }
+
   function openConsult(id){
     var c=CONSULTS.find(function(x){return x._id===id;}); if(!c) return; curConsultId=id;
     $('cmRef').textContent=c.booking_ref||'—'; $('cmDate').textContent=fmtTs(c.created_at);
-    $('cmBadge').innerHTML=cBadge(c.payment_status||'pending_verification');
-    $('cmName').textContent=c.full_name||'—';
-    $('cmEmail').textContent=c.email||'—'; $('cmEmail').href='mailto:'+(c.email||'');
-    $('cmPhone').textContent=c.mobile||'—'; $('cmPhone').href='tel:'+(c.mobile||'');
-    $('cmWhen').textContent=(c.preferred_date||'—')+(c.preferred_time?' · '+c.preferred_time:'');
-    $('cmMethod').textContent='Contact method: '+(c.contact_method||'—');
-    $('cmNotes').textContent=c.notes||'No notes';
-    $('cmGoals').textContent=(c.goals&&c.goals.length)?c.goals.join(', '):'—';
-    $('cmLab').innerHTML=labHTML(c.lab_results);
-    $('cmFee').textContent=money(c.consultation_fee||0);
-    $('cmProof').innerHTML=consultProof(c);
-    $('cmStatusCur').innerHTML=cBadge(c.payment_status||'pending_verification');
+    $('cmBadge').innerHTML=bkBadge(c.booking_status||'booking_received');
+    $('cmDetail').innerHTML=renderConsultDetail(c);
     $('cmStatusSel').value=c.payment_status||'pending_verification';
+    $('cmBookingSel').value=c.booking_status||'booking_received';
     $('consultModal').classList.add('open');
   }
   function consultProof(c){
@@ -1009,6 +1066,17 @@ window.OL = (function () {
     try{
       await window.fbDb.collection('consultations').doc(curConsultId).update({ payment_status:v, updated_at:firebase.firestore.FieldValue.serverTimestamp() });
       toast('Payment status → '+cLabel(v)); c.payment_status=v; openConsult(curConsultId);
+    }catch(e){ console.error(e); toast('Update failed: '+e.code); }
+  }
+  // Booking lifecycle status — immediately reflected on the customer's Track Order page.
+  async function updateBookingStatus(){
+    var c=CONSULTS.find(function(x){return x._id===curConsultId;}); if(!c) return;
+    var v=$('cmBookingSel').value, old=c.booking_status||'booking_received';
+    if(v===old){ toast('No change'); return; }
+    try{
+      var now=firebase.firestore.FieldValue.serverTimestamp();
+      await window.fbDb.collection('consultations').doc(curConsultId).update({ booking_status:v, status_updated_at:now, updated_at:now });
+      toast('Booking status → '+bkLabel(v)); c.booking_status=v; c.status_updated_at=new Date(); openConsult(curConsultId);
     }catch(e){ console.error(e); toast('Update failed: '+e.code); }
   }
   ['cSearch','cStatus'].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('input',function(){ cpage=1; renderConsults(); }); });
@@ -1424,7 +1492,7 @@ window.OL = (function () {
 
   document.addEventListener('DOMContentLoaded',initAuth);
   return { signOut:signOut, go:go, openOrder:openOrder, closeOrder:closeOrder, setPage:setPage, clearFilters:clearFilters, exportCSV:exportCSV, copy:copy,
-    openConsult:openConsult, closeConsult:closeConsult, cSetPage:cSetPage, updateConsultStatus:updateConsultStatus,
+    openConsult:openConsult, closeConsult:closeConsult, cSetPage:cSetPage, updateConsultStatus:updateConsultStatus, updateBookingStatus:updateBookingStatus,
     updateStatus:updateStatus, saveTracking:saveTracking, saveAdminNotes:saveAdminNotes, toggle:toggle,
     editProduct:editProduct, saveProduct:saveProduct, closeProduct:closeProduct, delProduct:delProduct,
     pGo:pGo, pClearFilters:pClearFilters, pSel:pSel, pSelectAll:pSelectAll, pBulk:pBulk, pStockAdj:pStockAdj, setStatus:setStatus, duplicateProduct:duplicateProduct,

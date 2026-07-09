@@ -17,7 +17,11 @@
   var FEE_EXPRESS   = 300;
   var PAYMENT_METHOD = 'GCash';                        // shown on the confirmation + order message
   var VIBER_NUMBER   = '+639761831910';               // support Viber (change here only)
-  var WHATSAPP_NUMBER = '+639603952447';              // support WhatsApp (change here only)
+  var WHATSAPP_NUMBER = '+639603952447';              // fulfillment WhatsApp (change here only)
+  // Same-day courier booking links (Metro Manila). Delivery fees are paid by the
+  // customer directly to the courier — OPTIMA does not collect courier fees.
+  var GRAB_LINK     = 'https://express.grab.com/delivery-link/SMw6PJwBOLJB';
+  var LALAMOVE_LINK = 'https://delivery.lalamove.com/forms/PH1c8f6c0f5b704e71b7eeac9356f31025';
   /* ------------------------------------------------------------------- */
 
   var VB_DIGITS = VIBER_NUMBER.replace(/[^0-9]/g, '');
@@ -27,37 +31,55 @@
 
   var overlay, tempOrderId = null, proofFile = null, proofUrl = null, proofPath = null;
   var deliveryType = 'standard', currentStep = 1, form = {}, orderMsg = '';
+  var orderDocId = null, stashOrder = null, stashSum = null;   // courier path defers the write
+
+  /* ---- delivery-method helpers ---- */
+  function isCourier(t) { return t === 'grab' || t === 'lalamove'; }
+  function courierMeta(t) {
+    return t === 'grab'
+      ? { name: 'GrabExpress', payee: 'Grab', link: GRAB_LINK, book: 'Book GrabExpress Delivery',
+          refLabel: 'Grab Booking Reference', refPh: 'Example: GRAB-123456789', confirm: "I've Booked My GrabExpress Courier" }
+      : { name: 'Lalamove', payee: 'Lalamove', link: LALAMOVE_LINK, book: 'Book Lalamove Delivery',
+          refLabel: 'Lalamove Booking Reference', refPh: 'Example: LM-123456789', confirm: "I've Booked My Lalamove Courier" };
+  }
+  function deliveryLabel(t) {
+    return { grab: 'Same-Day Courier · GrabExpress', lalamove: 'Same-Day Courier · Lalamove',
+             express: 'Express Shipping', standard: 'Standard Shipping' }[t] || 'Standard Shipping';
+  }
 
   function amt(n) { return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-  // Build the formatted order message from the actual order + summary (no hardcoding).
+  // Structured, fulfillment-ready order message. The Order ID lets the team
+  // locate the order instantly in the Admin Dashboard.
   function buildOrderMessage(order, sum) {
     var a = order.delivery_address || {};
     var addr = [a.street, a.barangay, a.city, a.province, a.zip].filter(Boolean).join(', ');
+    var products = (sum.items || []).map(function (i) {
+      return '• ' + i.qty + ' × ' + i.name + (i.dosage ? ' · ' + i.dosage : '') +
+        (i.packageId && i.packageId !== 'peptide-only' ? ' (' + i.packageName + ')' : '');
+    }).join('\n');
+    // Distinct non-default packages selected across the cart.
+    var pkgs = {};
+    (sum.items || []).forEach(function (i) { if (i.packageId && i.packageId !== 'peptide-only' && i.packageName) pkgs[i.packageName] = 1; });
+    var pkgLine = Object.keys(pkgs).length ? Object.keys(pkgs).join(', ') : 'Peptide Only (standard)';
+    var courier = order.courier || (isCourier(order.delivery_type) ? courierMeta(order.delivery_type).name : '—');
     var L = [
-      'Hello OPTIMA Labs 👋', '',
-      'I have successfully placed an order through your website and would like to confirm my purchase.', '',
-      'Order Number:', '#' + order.order_id, '',
-      'Customer Name:', order.customer_name, '',
-      'Contact Number:', order.customer_phone, '',
+      'Hello Optima Labs,', '',
+      'I would like to fast-track the verification of my order.', '',
+      'Order ID:', order.order_id, '',
+      'Order Date:', (order._dateStr || new Date().toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })), '',
+      'Name:', order.customer_name, '',
       'Email:', order.customer_email, '',
-      'Shipping Address:', addr, '',
-      'Products Ordered:', ''
-    ];
-    (sum.items || []).forEach(function (i) {
-      L.push(i.qty + ' × ' + i.name + (i.dosage ? ' · ' + i.dosage : ''));
-      if (i.packageId && i.packageId !== 'peptide-only') L.push('Package: ' + i.packageName);
-      L.push('Price: ' + amt(i.price));
-      L.push('');
-    });
-    L.push(
-      'Subtotal:', amt(sum.subtotal), '',
-      'Shipping Fee:', (sum.fee === 0 ? 'FREE' : amt(sum.fee)), '',
+      'Contact Number:', order.customer_phone, '',
+      'Products Ordered:', products, '',
+      'Selected Package:', pkgLine, '',
+      'Delivery Method:', deliveryLabel(order.delivery_type), '',
+      'Courier:', courier, '',
+      'Delivery Address:', addr, '',
+      (order.courier_reference ? 'Courier Booking Ref:\n' + order.courier_reference + '\n' : '') +
       'Total:', amt(sum.total), '',
-      'Payment Method:', PAYMENT_METHOD, '',
-      'Additional Notes:', (order.notes || '—'), '',
-      'Thank you. I look forward to your order confirmation.'
-    );
+      'Thank you.'
+    ];
     return L.join('\n');
   }
 
@@ -85,6 +107,7 @@
   }
 
   function feeFor(type, subtotal) {
+    if (type === 'grab' || type === 'lalamove') return 0;   // paid directly to courier
     if (type === 'express') return FEE_EXPRESS;
     return subtotal >= FREE_SHIP_MIN ? 0 : FEE_STANDARD;
   }
@@ -96,11 +119,15 @@
       '<div class="co-head">' +
         '<button class="co-close" id="coClose" aria-label="Close checkout">&times;</button>' +
         '<div class="co-steps" id="coSteps">' +
+          '<div class="co-step" data-s="0"><div class="co-step-dot">✓</div><div class="co-step-label">Cart</div></div>' +
+          '<div class="co-step-line" data-l="0"></div>' +
           '<div class="co-step" data-s="1"><div class="co-step-dot">1</div><div class="co-step-label">Delivery</div></div>' +
           '<div class="co-step-line" data-l="1"></div>' +
           '<div class="co-step" data-s="2"><div class="co-step-dot">2</div><div class="co-step-label">Payment</div></div>' +
           '<div class="co-step-line" data-l="2"></div>' +
-          '<div class="co-step" data-s="3"><div class="co-step-dot">3</div><div class="co-step-label">Confirmed</div></div>' +
+          '<div class="co-step" data-s="3"><div class="co-step-dot">3</div><div class="co-step-label">Courier</div></div>' +
+          '<div class="co-step-line" data-l="3"></div>' +
+          '<div class="co-step" data-s="4"><div class="co-step-dot">4</div><div class="co-step-label">Complete</div></div>' +
         '</div>' +
       '</div>' +
       '<div class="co-body">' +
@@ -131,6 +158,8 @@
             fld('coZip', 'ZIP Code', 'text', '', '0000', '', 'postal-code', 'numeric') +
           '</div>' +
           '<div class="co-delivery" role="radiogroup" aria-label="Delivery method">' +
+            dcard('grab', '🚚 GrabExpress · Same-Day', 'Metro Manila · fastest dispatch', 'Paid to Grab') +
+            dcard('lalamove', '🛵 Lalamove · Same-Day', 'Metro Manila · fastest dispatch', 'Paid to Lalamove') +
             dcard('standard', '📦 Standard Shipping', '3–5 business days', 'Free on ₱2,500+ · else ₱150') +
             dcard('express', '⚡ Express Shipping', '1–2 business days', '₱300') +
           '</div>' +
@@ -187,12 +216,18 @@
           '<button class="co-back" id="coBack">&larr; Back to delivery</button>' +
         '</div>' +
 
-        /* STEP 3 — confirmed (premium order confirmation) */
+        /* STEP 3 — courier booking (only shown for Grab / Lalamove) */
         '<div class="co-panel" id="coStep3">' +
+          '<div id="coCourierBox"></div>' +
+          '<div class="co-loading" id="coCourierLoading"><span class="co-spin"></span> Placing your order…</div>' +
+        '</div>' +
+
+        /* STEP 4 — order complete (premium) + priority order confirmation */
+        '<div class="co-panel" id="coStep4">' +
           '<div class="co-confirm oc-confirm">' +
             '<svg class="co-check-svg" viewBox="0 0 96 96"><circle class="ring" cx="48" cy="48" r="42"/><path class="tick" d="M30 49 L43 62 L67 36"/></svg>' +
             '<div class="co-cfade">' +
-              '<h2>Order Successfully Placed!</h2>' +
+              '<h2>Order Successfully Received</h2>' +
               '<div class="thanks" id="coThanks"></div>' +
 
               '<div class="oc-meta">' +
@@ -203,32 +238,37 @@
 
               '<div class="oc-card">' +
                 '<div class="oc-ct">Order Summary</div>' +
-                '<div class="co-items" id="coItems3"></div>' +
+                '<div class="oc-kv" id="coSummary3"></div>' +
                 '<hr class="co-hr">' +
-                '<div class="co-row"><span>Subtotal</span><span id="coSub3"></span></div>' +
-                '<div class="co-row"><span>Shipping</span><span id="coFee3"></span></div>' +
+                '<div class="co-items" id="coItems3"></div>' +
                 '<div class="co-total" style="margin-top:8px;"><span class="lbl">Total</span><span class="amt" id="coTotal3"></span></div>' +
               '</div>' +
 
-              '<div class="oc-two">' +
-                '<div class="oc-card"><div class="oc-ct">Shipping</div><div class="oc-kv" id="coShip3"></div></div>' +
-                '<div class="oc-card"><div class="oc-ct">Payment</div><div class="oc-kv" id="coPay3"></div></div>' +
-              '</div>' +
-
-              '<div class="oc-faster">' +
-                '<h3>Need faster order confirmation?</h3>' +
-                '<p>You can instantly send your order details to us via Viber or WhatsApp. This helps us verify and process your order even faster.</p>' +
-                '<div class="oc-contact">' +
-                  '<button class="oc-cbtn oc-viber" id="coViber" type="button">' + VIBER_ICO + '<span>Send Order to Viber</span></button>' +
-                  '<button class="oc-cbtn oc-wa" id="coWhatsapp" type="button">' + WA_ICO + '<span>Send Order to WhatsApp</span></button>' +
+              /* Priority Order Confirmation — optional premium concierge */
+              '<div class="poc">' +
+                '<div class="poc-head"><div class="poc-eyebrow">Optional · Concierge</div>' +
+                  '<h3>Priority Order Confirmation</h3>' +
+                  '<div class="poc-sub">Fast-track your order verification and dispatch.</div></div>' +
+                '<p class="poc-desc">Your order has been successfully received. For even faster verification and preparation, you may optionally send your order details directly to our fulfillment team via WhatsApp. Our team can immediately match your message with your order, allowing us to begin verification and preparation more efficiently. This step is completely optional but recommended for same-day processing.</p>' +
+                '<div class="poc-benefits">' +
+                  pocBenefit('Faster order verification') +
+                  pocBenefit('Faster dispatch preparation') +
+                  pocBenefit('Direct communication with our fulfillment team') +
+                  pocBenefit('Easier order tracking') +
                 '</div>' +
-                '<button class="oc-copyorder" id="coCopyOrder" type="button">📋 Copy Order Details</button>' +
+                '<button class="oc-cbtn oc-wa poc-wa" id="coWhatsapp" type="button">' + WA_ICO + '<span>Send Order Details via WhatsApp</span></button>' +
+                '<div class="poc-note">This step is optional. Your order has already been received successfully. Sending your order details via WhatsApp simply allows our team to identify your order immediately and begin verification and preparation more quickly.</div>' +
+                '<div class="poc-secondary">' +
+                  '<button class="oc-cbtn oc-viber" id="coViber" type="button">' + VIBER_ICO + '<span>Send via Viber</span></button>' +
+                  '<button class="oc-copyorder" id="coCopyOrder" type="button" style="margin-top:0;">📋 Copy Order Details</button>' +
+                '</div>' +
               '</div>' +
 
+              '<div class="poc-reassure" id="coReassure"></div>' +
               '<div class="co-disc">OPTIMA Labs products are supplied for personal wellness use under professional guidance. Statements have not been evaluated by the FDA. All sales are final.</div>' +
               '<div class="co-actions">' +
                 '<button class="co-btn" style="margin-top:0;" id="coShop">Continue Shopping</button>' +
-                '<button class="btn btn-ghost" id="coOrders" style="display:none;">View My Orders</button>' +
+                '<button class="btn btn-ghost" id="coOrders" style="display:none;">Track My Order</button>' +
                 '<button class="btn btn-ghost" id="coDone">Close</button>' +
               '</div>' +
             '</div>' +
@@ -257,11 +297,42 @@
       '<div class="co-dmeta">' + meta + '</div>' +
     '</div>';
   }
+  var CHECK_SM = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  function pocBenefit(t) { return '<div class="poc-benefit">' + CHECK_SM + '<span>' + t + '</span></div>'; }
+  function cxRow(k, v) { return '<div class="cx-row"><span class="cx-k">' + k + '</span><span class="cx-v">' + v + '</span></div>'; }
+
+  /* Premium courier-booking card (Grab / Lalamove) for the Courier step. */
+  function renderCourier() {
+    var m = courierMeta(deliveryType);
+    document.getElementById('coCourierBox').innerHTML =
+      '<div class="co-title">Same-Day Delivery via ' + m.name + '</div>' +
+      '<span class="cx-badge">🚚 Same-Day Delivery Available</span>' +
+      '<p class="cx-desc">Your order qualifies for same-day delivery within Metro Manila. To ensure the fastest possible ' +
+        'dispatch, please arrange your courier using ' + m.name + ' through the secure booking link below.<br><br>' +
+        'Delivery fees are paid directly to ' + m.payee + ' by the customer. Optima Labs does not collect or manage courier fees.</p>' +
+      '<div class="cx-summary">' +
+        cxRow('Courier', m.name) +
+        cxRow('Delivery Speed', 'Same-Day') +
+        cxRow('Coverage', 'Metro Manila') +
+        cxRow('Delivery Fee', 'Paid Directly to ' + m.payee) +
+      '</div>' +
+      '<a class="co-btn cx-book" href="' + m.link + '" target="_blank" rel="noopener">' + m.book + ' ↗</a>' +
+      '<div class="cx-next"><div class="cx-next-t">Next Step</div>' +
+        '<p>After completing your ' + m.name + ' booking, return to this page and confirm your courier booking below. ' +
+        'This allows our fulfillment team to prepare your order immediately.</p></div>' +
+      '<div class="co-field full" style="margin-top:16px;">' +
+        '<label for="coCourierRef">' + m.refLabel + ' <span style="font-weight:500;color:var(--ink-soft);">(optional)</span></label>' +
+        '<input id="coCourierRef" type="text" placeholder="' + m.refPh + '"></div>' +
+      '<button class="co-btn cx-confirm" id="coCourierConfirm">' + m.confirm + '</button>' +
+      '<button class="co-back" id="coCourierBack">&larr; Back to payment</button>';
+    document.getElementById('coCourierConfirm').addEventListener('click', confirmCourier);
+    document.getElementById('coCourierBack').addEventListener('click', function () { setStep(2); });
+  }
 
   /* ---------- step / progress ---------- */
   function setStep(n) {
     currentStep = n;
-    ['coGate', 'coStep1', 'coStep2', 'coStep3'].forEach(function (id) {
+    ['coGate', 'coStep1', 'coStep2', 'coStep3', 'coStep4'].forEach(function (id) {
       document.getElementById(id).classList.remove('active');
     });
     document.getElementById(n === 0 ? 'coGate' : 'coStep' + n).classList.add('active');
@@ -295,7 +366,9 @@
 
     document.getElementById('coItems').innerHTML = rows;
     document.getElementById('coSubtotal').textContent = money(subtotal);
-    document.getElementById('coFee').innerHTML = fee === 0 ? '<span class="free">FREE 🎉</span>' : money(fee);
+    document.getElementById('coFee').innerHTML = isCourier(deliveryType)
+      ? '<span class="free">Paid to ' + courierMeta(deliveryType).payee + '</span>'
+      : (fee === 0 ? '<span class="free">FREE 🎉</span>' : money(fee));
     document.getElementById('coTotal').textContent = money(total);
     document.getElementById('coPayAmt').textContent = money(total);
     return { subtotal: subtotal, fee: fee, total: total, items: items };
@@ -368,8 +441,7 @@
   }
 
   /* ---------- confirm / write order ---------- */
-  function confirmOrder() {
-    if (!proofPath) return;   // upload must have completed (URL is best-effort)
+  function buildOrder() {
     var sum = renderSummary();
     var addr = {
       street: document.getElementById('coStreet').value.trim(),
@@ -378,6 +450,7 @@
       province: document.getElementById('coProvince').value.trim(),
       zip: document.getElementById('coZip').value.trim()
     };
+    var courier = isCourier(deliveryType) ? courierMeta(deliveryType).name : null;
     var order = {
       order_id: tempOrderId,
       customer_name: document.getElementById('coName').value.trim(),
@@ -385,6 +458,10 @@
       customer_phone: document.getElementById('coPhone').value.replace(/[\s-]/g, ''),
       delivery_address: addr,
       delivery_type: deliveryType,
+      delivery_method: deliveryLabel(deliveryType),
+      courier: courier,
+      courier_reference: null,
+      courier_booked: isCourier(deliveryType) ? false : null,
       delivery_fee: sum.fee,
       items: sum.items,
       subtotal: sum.subtotal,
@@ -397,23 +474,55 @@
       created_at: firebase.firestore.FieldValue.serverTimestamp(),
       updated_at: firebase.firestore.FieldValue.serverTimestamp()
     };
+    return { order: order, sum: sum };
+  }
 
-    document.getElementById('coConfirm').style.display = 'none';
-    document.getElementById('coBack').style.display = 'none';
-    document.getElementById('coLoading').classList.add('on');
+  // Non-courier orders are placed here at payment; courier orders defer the
+  // write to the courier-booking step (so the booking reference is captured
+  // in the single create — Firestore rules don't allow a client-side update).
+  function confirmOrder() {
+    if (!proofPath) return;   // upload must have completed (URL is best-effort)
+    var built = buildOrder();
+    stashOrder = built.order; stashSum = built.sum;
+    if (isCourier(deliveryType)) {
+      renderCourier();
+      setStep(3);
+    } else {
+      writeAndComplete(built.order, built.sum, {
+        busy: 'coLoading',
+        hide: [document.getElementById('coConfirm'), document.getElementById('coBack')]
+      });
+    }
+  }
 
-    window.fbDb.collection('orders').add(order).then(function () {
-      document.getElementById('coLoading').classList.remove('on');
+  function confirmCourier() {
+    if (!stashOrder) return;
+    var ref = (document.getElementById('coCourierRef').value || '').trim();
+    stashOrder.courier_reference = ref || null;
+    stashOrder.courier_booked = true;
+    writeAndComplete(stashOrder, stashSum, {
+      busy: 'coCourierLoading',
+      hide: [document.getElementById('coCourierConfirm'), document.getElementById('coCourierBack'),
+             document.querySelector('#coCourierBox .cx-book')]
+    });
+  }
+
+  function writeAndComplete(order, sum, opts) {
+    var busy = opts.busy ? document.getElementById(opts.busy) : null;
+    (opts.hide || []).forEach(function (el) { if (el) el.style.display = 'none'; });
+    if (busy) busy.classList.add('on');
+
+    window.fbDb.collection('orders').add(order).then(function (ref) {
+      orderDocId = ref.id;
+      if (busy) busy.classList.remove('on');
       showConfirmation(order, sum);
       window.cartAPI.clear();
     }).catch(function (err) {
       console.error('Order write failed:', err);
-      // Surface the real reason: 'permission-denied' = Firestore rules not
-      // deployed; 'unavailable'/'not-found' = Firestore not enabled.
+      // 'permission-denied' = rules not deployed; 'unavailable'/'not-found' = Firestore off.
       window.showToast('Could not place the order: ' + (err && (err.code || err.message) || 'try again') + '.');
-      document.getElementById('coLoading').classList.remove('on');
-      document.getElementById('coConfirm').style.display = '';
-      document.getElementById('coBack').style.display = '';
+      if (busy) busy.classList.remove('on');
+      (opts.hide || []).forEach(function (el) { if (el) el.style.display = ''; });
     });
   }
 
@@ -421,39 +530,46 @@
     var first = (order.customer_name || '').split(' ')[0] || 'friend';
     var a = order.delivery_address || {};
     var addr = [a.street, a.barangay, a.city, a.province, a.zip].filter(Boolean).join(', ');
-    var eta = order.delivery_type === 'express' ? '1–2 business days' : '3–5 business days';
+    var dateStr = new Date().toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    order._dateStr = dateStr;   // keep the WhatsApp message date consistent
+    var courier = order.courier || (isCourier(order.delivery_type) ? courierMeta(order.delivery_type).name : '—');
+    function kv(k, v) { return '<div class="oc-line"><span class="oc-lk">' + k + '</span><span class="oc-lv">' + v + '</span></div>'; }
 
     document.getElementById('coThanks').textContent =
-      'Thank you, ' + first + '! Your order has been received and is being prepared.';
+      'Thank you, ' + first + '! Your order has been received and is awaiting verification.';
     document.getElementById('coOrderId').textContent = order.order_id;
-    document.getElementById('coOrderDate').textContent =
-      new Date().toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('coOrderDate').textContent = dateStr;
     document.getElementById('coProcTime').textContent = '2–4 hours';
 
-    document.getElementById('coItems3').innerHTML = document.getElementById('coItems').innerHTML;
-    document.getElementById('coSub3').textContent = money(sum.subtotal);
-    document.getElementById('coFee3').innerHTML = sum.fee === 0 ? '<span class="free">FREE 🎉</span>' : money(sum.fee);
+    var rows = (sum.items || []).map(function (i) {
+      return '<div class="co-item"><span class="co-iname"><span class="co-iqty">' + i.qty + '× </span>' +
+        i.name + ' · ' + i.dosage +
+        (i.packageId && i.packageId !== 'peptide-only' ? '<br><span class="co-ipkg">' + i.packageName + '</span>' : '') +
+        '</span><span>' + money(i.price * i.qty) + '</span></div>';
+    }).join('');
+    document.getElementById('coItems3').innerHTML = rows;
     document.getElementById('coTotal3').textContent = money(sum.total);
 
-    document.getElementById('coShip3').innerHTML =
-      '<div><b>' + order.customer_name + '</b></div>' +
-      '<div>' + order.customer_phone + '</div>' +
-      '<div>' + addr + '</div>' +
-      '<div class="oc-muted">' + (order.delivery_type === 'express' ? '⚡ Express' : '📦 Standard') + ' · ' + eta + '</div>';
-    document.getElementById('coPay3').innerHTML =
-      '<div><b>' + PAYMENT_METHOD + '</b></div>' +
-      '<div class="oc-muted">Screenshot uploaded ✓</div>' +
-      '<div class="oc-muted">Status: Pending verification</div>' +
-      '<div class="oc-muted">📧 ' + order.customer_email + '</div>';
+    document.getElementById('coSummary3').innerHTML =
+      kv('Customer Name', order.customer_name) +
+      kv('Delivery Method', deliveryLabel(order.delivery_type)) +
+      kv('Courier', courier) +
+      kv('Delivery Address', addr) +
+      kv('Payment Status', 'Pending Verification') +
+      (order.courier_reference ? kv('Courier Booking Ref', order.courier_reference) : '');
+
+    document.getElementById('coReassure').textContent =
+      'Thank you for choosing Optima Labs. Your order has been received successfully and is currently awaiting verification. ' +
+      'We\'ll keep you updated as your order progresses through verification, preparation, and dispatch.';
 
     // Build the shareable order message from the real order data.
     orderMsg = buildOrderMessage(order, sum);
 
-    // Show "View My Orders" only when signed in (links to order tracking).
+    // Show "Track My Order" only when signed in (links to order tracking).
     var ordersBtn = document.getElementById('coOrders');
     if (ordersBtn) ordersBtn.style.display = (window.fbAuth && window.fbAuth.currentUser) ? '' : 'none';
 
-    setStep(3);
+    setStep(4);
   }
 
   /* ---------- open / close / reset ---------- */
@@ -468,11 +584,15 @@
       var f = document.querySelector('[data-for="' + id + '"]'); if (f) f.classList.remove('invalid');
     });
     deliveryType = 'standard';
-    overlay.querySelectorAll('.co-dcard').forEach(function (el) { el.classList.toggle('sel', el.dataset.type === 'standard'); });
+    overlay.querySelectorAll('.co-dcard').forEach(function (el) {
+      var on = el.dataset.type === 'standard';
+      el.classList.toggle('sel', on); el.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
     resetUpload();
-    document.getElementById('coConfirm').style.display = '';
+    var cc = document.getElementById('coConfirm');
+    cc.style.display = ''; cc.textContent = 'Confirm My Order';
     document.getElementById('coBack').style.display = '';
-    tempOrderId = null;
+    tempOrderId = null; stashOrder = null; stashSum = null; orderDocId = null;
   }
   function close() {
     overlay.classList.remove('open');
@@ -531,8 +651,11 @@
     });
 
     document.getElementById('coToPay').addEventListener('click', function () {
-      if (validateStep1(true)) { renderSummary(); setStep(2); }
-      else {
+      if (validateStep1(true)) {
+        renderSummary();
+        document.getElementById('coConfirm').textContent = isCourier(deliveryType) ? 'Continue to Courier Booking →' : 'Confirm My Order';
+        setStep(2);
+      } else {
         var b = this; b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 420);
         window.showToast('Please complete the highlighted fields.');
       }

@@ -61,6 +61,15 @@ body{ display:flex; flex-direction:column; min-height:100vh; }
   .tl-step:not(.done):not(.active) .tl-name{ color:var(--ink-soft); }
   .tl-time{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
   .tl-track{ font-size:13px; color:var(--clay-deep); margin-top:4px; font-weight:600; }
+  /* Consultation status callout (shown above the timeline) */
+  .tl-cur{ text-align:center; padding:6px 0 18px; border-bottom:1px solid rgba(183,154,107,.25); margin:4px 0 8px; }
+  .tl-cbadge{ display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; border-radius:999px; padding:6px 16px; }
+  .tl-cbadge.amber{ color:#9a6a1a; background:rgba(199,154,58,.16); border:1px solid rgba(199,154,58,.42); }
+  .tl-cbadge.green{ color:#2f7a4f; background:rgba(90,162,119,.14); border:1px solid rgba(90,162,119,.42); }
+  .tl-cbadge.blue{  color:#3f6390; background:rgba(92,130,168,.14); border:1px solid rgba(92,130,168,.42); }
+  .tl-cbadge.red{   color:#b8503f; background:rgba(194,86,77,.12);  border:1px solid rgba(194,86,77,.42); }
+  .tl-cur p{ font-size:14px; color:var(--ink-soft); margin:10px auto 0; line-height:1.55; max-width:44ch; }
+  .tl-cur .tl-time{ margin-top:8px; }
 
   .track-error{
     max-width:480px; margin:34px auto 0; text-align:center; background:var(--rosewater);
@@ -149,13 +158,14 @@ body{ display:flex; flex-direction:column; min-height:100vh; }
 <section id="track">
   <div class="wrap">
     <div class="track-head">
-      <div class="track-eyebrow">Order Tracking</div>
+      <div class="track-eyebrow">Order &amp; Consultation Tracking</div>
       <h2>Where's My Order?</h2>
+      <p style="font-size:14.5px;color:var(--ink-soft);margin-top:10px;">Enter an order number (<b>OL-…</b>) or a consultation booking reference (<b>CONS-…</b>) with the email you used.</p>
     </div>
 
     <form class="track-form" id="trackForm" autocomplete="off">
-      <input type="text" id="trackId" placeholder="OL-XXXXXX" aria-label="Order ID" style="text-transform:uppercase;">
-      <input type="email" id="trackEmail" placeholder="Email used at checkout" aria-label="Email">
+      <input type="text" id="trackId" placeholder="OL-XXXXXX or CONS-XXXXXX" aria-label="Order or Consultation ID" style="text-transform:uppercase;">
+      <input type="email" id="trackEmail" placeholder="Email used at checkout / booking" aria-label="Email">
       <button type="submit" class="track-btn" id="trackBtn"><span class="track-spin"></span><span id="trackBtnText">Track Order</span></button>
     </form>
 
@@ -165,8 +175,8 @@ body{ display:flex; flex-direction:column; min-height:100vh; }
     </div>
 
     <div class="track-error track-hidden" id="trackError">
-      <h3>🔍 Order Not Found</h3>
-      <p>Check your Order ID and the email address you used at checkout, then try again.</p>
+      <h3>🔍 Not Found</h3>
+      <p>Check your reference (order <b>OL-…</b> or consultation <b>CONS-…</b>) and the email you used, then try again.</p>
       <p>Need help? <a href="mailto:care@optimalabs.co">Email us</a> or message us on Facebook.</p>
       <button class="btn btn-ghost" id="trackRetry" type="button">Try Again</button>
     </div>
