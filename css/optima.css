@@ -526,6 +526,26 @@ img,svg{ max-width:100%; }
 .co-dcard .co-dtitle{ font-weight:700; font-size:15px; color:var(--espresso); }
 .co-dcard .co-dsub{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
 .co-dcard .co-dmeta{ font-size:13px; font-weight:700; color:var(--clay-deep); text-align:right; flex:none; }
+.co-dcard .co-dmeta .dmeta-l{ display:block; font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); }
+.co-dcard .co-dmeta .jnt-fee{ display:block; font-size:16px; color:var(--clay-deep); margin-top:2px; }
+
+/* Delivery-area select (matches the address inputs, with a soft chevron) */
+.co-select{
+  width:100%; padding:12px 38px 12px 14px; border-radius:12px; border:1px solid #E8E0D5;
+  background:#fff; font-family:var(--sans); font-size:14.5px; color:var(--espresso); cursor:pointer;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23A96A58' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.co-select:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(192,141,128,.15); }
+.co-field.invalid .co-select{ border-color:#EF4444; }
+.co-dhint{ margin-top:14px; font-size:13px; color:var(--ink-soft); font-style:italic; }
+.co-fee-pending{ color:var(--ink-soft); font-weight:600; font-style:italic; }
+
+/* Smooth fade + collapse when delivery options switch (Metro <-> province) */
+.co-delivery .co-dcard{ transition:opacity .32s ease, transform .32s ease, border-color .2s ease, background .2s ease; will-change:opacity, transform; }
+.co-dcard.is-hidden{ opacity:0; transform:translateY(-6px); pointer-events:none; }
 
 /* buttons */
 .co-btn{

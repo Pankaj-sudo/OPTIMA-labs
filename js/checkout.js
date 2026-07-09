@@ -12,9 +12,8 @@
      Replace these before launch. QR image goes in the project root. */
   var GCASH_NUMBER  = '09XX-XXX-XXXX';                 // TODO: your GCash number
   var GCASH_QR_IMG  = 'https://firebasestorage.googleapis.com/v0/b/optima-labs.firebasestorage.app/o/Gcash%20Reciept%2FOptima%20labs%20Gcash%20QR.jpg?alt=media&token=605d30e0-4294-4d3b-8c27-7e4b02f47cfa';  // GCash QR (leave '' to show placeholder)
-  var FREE_SHIP_MIN = 2500;                            // free standard shipping at/above this subtotal
-  var FEE_STANDARD  = 150;
-  var FEE_EXPRESS   = 300;
+  // J&T Express nationwide shipping fees by island group (outside Metro Manila).
+  var JNT_FEES = { luzon: 100, visayas: 150, mindanao: 200 };
   var PAYMENT_METHOD = 'GCash';                        // shown on the confirmation + order message
   var VIBER_NUMBER   = '+639761831910';               // support Viber (change here only)
   var WHATSAPP_NUMBER = '+639603952447';              // fulfillment WhatsApp (change here only)
@@ -30,7 +29,7 @@
   var WA_ICO = '<svg viewBox="0 0 24 24" width="20" height="20" fill="#fff" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
 
   var overlay, tempOrderId = null, proofFile = null, proofUrl = null, proofPath = null;
-  var deliveryType = 'standard', currentStep = 1, form = {}, orderMsg = '';
+  var deliveryType = '', deliveryRegion = '', currentStep = 1, form = {}, orderMsg = '';
   var orderDocId = null, stashOrder = null, stashSum = null;   // courier path defers the write
 
   /* ---- delivery-method helpers ---- */
@@ -44,8 +43,9 @@
   }
   function deliveryLabel(t) {
     return { grab: 'Same-Day Courier · GrabExpress', lalamove: 'Same-Day Courier · Lalamove',
-             express: 'Express Shipping', standard: 'Standard Shipping' }[t] || 'Standard Shipping';
+             jnt: 'J&T Express · Nationwide' }[t] || 'J&T Express · Nationwide';
   }
+  var REGION_NAME = { metro: 'Metro Manila', luzon: 'Luzon', visayas: 'Visayas', mindanao: 'Mindanao' };
 
   function amt(n) { return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -73,7 +73,7 @@
       'Contact Number:', order.customer_phone, '',
       'Products Ordered:', products, '',
       'Selected Package:', pkgLine, '',
-      'Delivery Method:', deliveryLabel(order.delivery_type), '',
+      'Delivery Method:', (order.delivery_method || deliveryLabel(order.delivery_type)), '',
       'Courier:', courier, '',
       'Delivery Address:', addr, '',
       (order.courier_reference ? 'Courier Booking Ref:\n' + order.courier_reference + '\n' : '') +
@@ -106,10 +106,10 @@
     return id;
   }
 
-  function feeFor(type, subtotal) {
+  function feeFor(type, region) {
     if (type === 'grab' || type === 'lalamove') return 0;   // paid directly to courier
-    if (type === 'express') return FEE_EXPRESS;
-    return subtotal >= FREE_SHIP_MIN ? 0 : FEE_STANDARD;
+    if (type === 'jnt') return JNT_FEES[region] || 0;       // nationwide, by island group
+    return 0;
   }
 
   /* ---------- markup ---------- */
@@ -157,11 +157,22 @@
             fld('coProvince', 'Province', 'text', '', 'Province', '', 'address-level1') +
             fld('coZip', 'ZIP Code', 'text', '', '0000', '', 'postal-code', 'numeric') +
           '</div>' +
+          '<div class="co-field full co-region-field" data-for="coRegion" style="margin-top:22px;">' +
+            '<label for="coRegion">Delivery area <span class="req" aria-hidden="true">*</span></label>' +
+            '<select id="coRegion" class="co-select" aria-required="true" aria-describedby="coRegion-err">' +
+              '<option value="" disabled selected>Select your delivery area…</option>' +
+              '<option value="metro">Metro Manila</option>' +
+              '<option value="luzon">Luzon (outside Metro Manila)</option>' +
+              '<option value="visayas">Visayas</option>' +
+              '<option value="mindanao">Mindanao</option>' +
+            '</select>' +
+            '<span class="co-err" id="coRegion-err" role="alert">Please choose your delivery area</span>' +
+          '</div>' +
+          '<div class="co-dhint" id="coDeliveryHint">Select your delivery area above to see available delivery options.</div>' +
           '<div class="co-delivery" role="radiogroup" aria-label="Delivery method">' +
             dcard('grab', '🚚 GrabExpress · Same-Day', 'Metro Manila · fastest dispatch', 'Paid to Grab') +
             dcard('lalamove', '🛵 Lalamove · Same-Day', 'Metro Manila · fastest dispatch', 'Paid to Lalamove') +
-            dcard('standard', '📦 Standard Shipping', '3–5 business days', 'Free on ₱2,500+ · else ₱150') +
-            dcard('express', '⚡ Express Shipping', '1–2 business days', '₱300') +
+            dcard('jnt', '📦 J&amp;T Express', 'Nationwide Delivery · Outside Metro Manila', '<span class="dmeta-l">Shipping Fee</span><span class="jnt-fee" id="coJntFee">' + money(100) + '</span>') +
           '</div>' +
           '<div class="co-field full" style="margin-top:18px;">' +
             '<label for="coNotes">Order notes <span style="font-weight:500;color:var(--ink-soft);">(optional)</span></label>' +
@@ -290,8 +301,8 @@
     '</div>';
   }
   function dcard(val, title, sub, meta) {
-    return '<div class="co-dcard' + (val === 'standard' ? ' sel' : '') + '" data-type="' + val + '"' +
-        ' role="radio" tabindex="0" aria-checked="' + (val === 'standard' ? 'true' : 'false') + '">' +
+    return '<div class="co-dcard" data-type="' + val + '"' +
+        ' role="radio" tabindex="0" aria-checked="false">' +
       '<div class="co-dradio"></div>' +
       '<div class="co-dmain"><div class="co-dtitle">' + title + '</div><div class="co-dsub">' + sub + '</div></div>' +
       '<div class="co-dmeta">' + meta + '</div>' +
@@ -355,7 +366,7 @@
   function renderSummary() {
     var items = window.cartAPI.all();
     var subtotal = window.cartAPI.total();
-    var fee = feeFor(deliveryType, subtotal);
+    var fee = feeFor(deliveryType, deliveryRegion);
     var total = subtotal + fee;
     var rows = items.map(function (i) {
       return '<div class="co-item"><span class="co-iname"><span class="co-iqty">' + i.qty + '× </span>' +
@@ -368,10 +379,48 @@
     document.getElementById('coSubtotal').textContent = money(subtotal);
     document.getElementById('coFee').innerHTML = isCourier(deliveryType)
       ? '<span class="free">Paid to ' + courierMeta(deliveryType).payee + '</span>'
-      : (fee === 0 ? '<span class="free">FREE 🎉</span>' : money(fee));
+      : (!deliveryType ? '<span class="co-fee-pending">Select delivery area</span>'
+         : (fee === 0 ? '<span class="free">FREE 🎉</span>' : money(fee)));
     document.getElementById('coTotal').textContent = money(total);
     document.getElementById('coPayAmt').textContent = money(total);
     return { subtotal: subtotal, fee: fee, total: total, items: items };
+  }
+
+  /* Smoothly show/hide a delivery card (fade + collapse out of flow). */
+  function fadeCard(card, show) {
+    if (show) {
+      if (card.style.display === 'none' || card.classList.contains('is-hidden')) {
+        card.style.display = '';
+        card.classList.add('is-hidden');
+        requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.remove('is-hidden'); }); });
+      }
+    } else if (!card.classList.contains('is-hidden')) {
+      card.classList.add('is-hidden');
+      setTimeout(function () { if (card.classList.contains('is-hidden')) card.style.display = 'none'; }, 360);
+    }
+  }
+
+  /* Delivery-area logic: Metro Manila -> same-day couriers; anywhere else ->
+     J&T Express (fee by island group). The two groups are never shown together. */
+  function applyRegion() {
+    if (!overlay) return;
+    var metro = deliveryRegion === 'metro';
+    var showTypes = metro ? ['grab', 'lalamove'] : (deliveryRegion ? ['jnt'] : []);
+    if (metro) { if (!isCourier(deliveryType)) deliveryType = 'grab'; }   // default to a same-day option
+    else if (deliveryRegion) { deliveryType = 'jnt'; }
+    else { deliveryType = ''; }
+
+    var jf = document.getElementById('coJntFee');
+    if (jf) jf.textContent = money(JNT_FEES[deliveryRegion] || 0);
+    var hint = document.getElementById('coDeliveryHint');
+    if (hint) hint.style.display = deliveryRegion ? 'none' : '';
+
+    overlay.querySelectorAll('.co-dcard').forEach(function (c) {
+      fadeCard(c, showTypes.indexOf(c.dataset.type) >= 0);
+      var on = c.dataset.type === deliveryType;
+      c.classList.toggle('sel', on); c.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+    renderSummary();
   }
 
   /* ---------- validation ---------- */
@@ -458,7 +507,8 @@
       customer_phone: document.getElementById('coPhone').value.replace(/[\s-]/g, ''),
       delivery_address: addr,
       delivery_type: deliveryType,
-      delivery_method: deliveryLabel(deliveryType),
+      delivery_region: deliveryRegion || null,
+      delivery_method: deliveryLabel(deliveryType) + (deliveryType === 'jnt' && deliveryRegion ? ' · ' + REGION_NAME[deliveryRegion] : ''),
       courier: courier,
       courier_reference: null,
       courier_booked: isCourier(deliveryType) ? false : null,
@@ -552,8 +602,8 @@
 
     document.getElementById('coSummary3').innerHTML =
       kv('Customer Name', order.customer_name) +
-      kv('Delivery Method', deliveryLabel(order.delivery_type)) +
-      kv('Courier', courier) +
+      kv('Delivery Method', (order.delivery_method || deliveryLabel(order.delivery_type))) +
+      (isCourier(order.delivery_type) ? kv('Courier', courier) : '') +
       kv('Delivery Address', addr) +
       kv('Payment Status', 'Pending Verification') +
       (order.courier_reference ? kv('Courier Booking Ref', order.courier_reference) : '');
@@ -583,11 +633,13 @@
       var el = document.getElementById(id); if (el) el.value = '';
       var f = document.querySelector('[data-for="' + id + '"]'); if (f) f.classList.remove('invalid');
     });
-    deliveryType = 'standard';
+    deliveryType = ''; deliveryRegion = '';
+    var regionEl = document.getElementById('coRegion'); if (regionEl) regionEl.selectedIndex = 0;
+    var regionField = document.querySelector('[data-for="coRegion"]'); if (regionField) regionField.classList.remove('invalid');
     overlay.querySelectorAll('.co-dcard').forEach(function (el) {
-      var on = el.dataset.type === 'standard';
-      el.classList.toggle('sel', on); el.setAttribute('aria-checked', on ? 'true' : 'false');
+      el.classList.remove('sel'); el.setAttribute('aria-checked', 'false');
     });
+    applyRegion();   // hide all options + show the "select your area" hint
     resetUpload();
     var cc = document.getElementById('coConfirm');
     cc.style.display = ''; cc.textContent = 'Confirm My Order';
@@ -644,20 +696,32 @@
       renderSummary();
     }
     overlay.querySelectorAll('.co-dcard').forEach(function (card) {
-      card.addEventListener('click', function () { selectDelivery(card); });
+      card.addEventListener('click', function () { if (card.style.display !== 'none') selectDelivery(card); });
       card.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectDelivery(card); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (card.style.display !== 'none') selectDelivery(card); }
       });
     });
 
+    // Delivery area drives which options show (couriers vs J&T) and the J&T fee.
+    var regionSel = document.getElementById('coRegion');
+    if (regionSel) regionSel.addEventListener('change', function () {
+      deliveryRegion = regionSel.value || '';
+      var rf = document.querySelector('[data-for="coRegion"]'); if (rf) rf.classList.remove('invalid');
+      applyRegion();
+    });
+    applyRegion();   // initial: hide options + show the hint until an area is chosen
+
     document.getElementById('coToPay').addEventListener('click', function () {
-      if (validateStep1(true)) {
+      var okFields = validateStep1(true);
+      var okArea = !!deliveryType;
+      if (!okArea) { var rf = document.querySelector('[data-for="coRegion"]'); if (rf) rf.classList.add('invalid'); }
+      if (okFields && okArea) {
         renderSummary();
         document.getElementById('coConfirm').textContent = isCourier(deliveryType) ? 'Continue to Courier Booking →' : 'Confirm My Order';
         setStep(2);
       } else {
         var b = this; b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 420);
-        window.showToast('Please complete the highlighted fields.');
+        window.showToast(okFields ? 'Please choose your delivery area.' : 'Please complete the highlighted fields.');
       }
     });
 

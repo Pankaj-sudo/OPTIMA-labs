@@ -44,7 +44,7 @@
     summary.innerHTML =
       '<span class="who">Order for ' + (o.customer_name || 'you') + '</span>' +
       '<span class="meta">Total <b>' + money(o.total) + '</b></span>' +
-      '<span class="meta">' + (o.delivery_type === 'express' ? 'Express' : 'Standard') + ' delivery</span>';
+      '<span class="meta">' + (o.delivery_method || 'Standard delivery') + '</span>';
 
     var os = (o.order_status || 'pending').toLowerCase();
     var ps = (o.payment_status || 'pending').toLowerCase();
