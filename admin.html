@@ -418,7 +418,7 @@
         <a class="btn-ghost" href="verification.html" target="_blank" rel="noopener" style="text-decoration:none;">View public page ↗</a>
       </div>
       <div class="filters">
-        <input class="search" id="lvSearch" placeholder="Search name, batch…">
+        <input class="search" id="lvSearch" placeholder="Search name…">
         <select id="lvCat"><option value="All">All categories</option></select>
         <select id="lvStatus">
           <option value="all">All statuses</option>
@@ -430,7 +430,7 @@
       <div class="card" style="padding:8px 22px 22px;">
         <div class="tbl-wrap"><table>
           <thead><tr>
-            <th></th><th>Product</th><th>Category</th><th>Purity</th><th>Batch No.</th><th>Tested</th><th>Laboratory</th><th>Status</th><th>COA</th><th></th>
+            <th></th><th>Product</th><th>Category</th><th>Purity</th><th>Tested</th><th>Laboratory</th><th>Status</th><th>COA</th><th></th>
           </tr></thead>
           <tbody id="lvBody"></tbody>
         </table></div>
@@ -665,13 +665,10 @@
       <div class="sec-t">Certificate details</div>
       <div class="grid2">
         <div class="field"><label>Purity</label><input id="lvPurity" placeholder="99.87%"></div>
-        <div class="field"><label>Batch Number</label><input id="lvBatch" placeholder="e.g. 6JW9EI82MZML"></div>
-      </div>
-      <div class="grid2">
         <div class="field"><label>Tested Date</label><input id="lvTested" placeholder="e.g. Mar 2024"></div>
-        <div class="field"><label>Laboratory</label><input id="lvLab" placeholder="Janoshik"></div>
       </div>
-      <div class="field"><label>COA Verification URL</label><input id="lvUrl" placeholder="https://verify.janoshik.com/tests/…"></div>
+      <div class="field"><label>Laboratory <span style="font-weight:400;color:var(--muted,#9a8a82);">(internal only — not shown publicly)</span></label><input id="lvLab" placeholder="e.g. certified third-party laboratory"></div>
+      <div class="field"><label>COA Verification URL</label><input id="lvUrl" placeholder="https://…/verification-link"></div>
       <div class="grid2">
         <div class="field"><label>Verification Status</label>
           <select id="lvStat"><option value="verified">Verified</option><option value="pending">Pending</option><option value="unverified">Unverified</option></select>
@@ -702,6 +699,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="js/firebase-init.js"></script>
 <script src="js/assessment-config.js"></script>
+<!-- Catalog importer: defines window.importOptimaCatalog() (dry-run by default). Run from the console; writes nothing until called with {apply:true}. -->
+<script src="js/import-products.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 window.OL = (function () {
@@ -1352,12 +1351,12 @@ window.OL = (function () {
     var list=PRODUCTS.filter(function(p){
       if(lvf.cat!=='All' && p.category!==lvf.cat) return false;
       if(lvf.status!=='all' && lvStatusOf(p)!==lvf.status) return false;
-      if(q){ var lv=p.labVerification||{}; if(((p.name||'')+' '+(lv.batchNumber||'')).toLowerCase().indexOf(q)<0) return false; }
+      if(q){ if((p.name||'').toLowerCase().indexOf(q)<0) return false; }
       return true;
     }).sort(function(a,b){ var d=((lvStatusOf(b)==='verified')?1:0)-((lvStatusOf(a)==='verified')?1:0); return d || a.name.localeCompare(b.name); });
     var nVer=PRODUCTS.filter(function(p){return lvStatusOf(p)==='verified';}).length;
     $('lvCount').textContent=list.length+' of '+PRODUCTS.length+' products · '+nVer+' verified';
-    $('lvBody').innerHTML=list.map(lvRow).join('')||'<tr><td colspan="10" class="empty">No products match these filters.</td></tr>';
+    $('lvBody').innerHTML=list.map(lvRow).join('')||'<tr><td colspan="9" class="empty">No products match these filters.</td></tr>';
   }
   function lvRow(p){
     var lv=p.labVerification||{}, st=lvStatusOf(p), img=lvImg(p);
@@ -1370,7 +1369,6 @@ window.OL = (function () {
       '<td><div class="p-name">'+p.name+feat+'</div></td>'+
       '<td class="muted">'+p.category+'</td>'+
       '<td>'+(lv.purity||dash)+'</td>'+
-      '<td style="font-family:ui-monospace,monospace;font-size:12px;">'+(lv.batchNumber||dash)+'</td>'+
       '<td>'+(lv.testedDate||dash)+'</td>'+
       '<td class="muted">'+(lv.laboratory||'—')+'</td>'+
       '<td><span class="st-badge '+(LVCLS[st])+'">'+LVLBL[st]+'</span></td>'+
@@ -1389,8 +1387,8 @@ window.OL = (function () {
     $('lvId').value=id;
     $('lvMImg').innerHTML=img?'<img src="'+img+'">':'<span>◫</span>';
     $('lvMName').textContent=p.name; $('lvMCat').textContent=p.category;
-    $('lvPurity').value=lv.purity||''; $('lvBatch').value=lv.batchNumber||''; $('lvTested').value=lv.testedDate||'';
-    $('lvLab').value=lv.laboratory||'Janoshik'; $('lvUrl').value=lv.coaUrl||'';
+    $('lvPurity').value=lv.purity||''; $('lvTested').value=lv.testedDate||'';
+    $('lvLab').value=lv.laboratory||''; $('lvUrl').value=lv.coaUrl||'';
     $('lvStat').value=lv.verificationStatus||'verified';
     $('lvFeatured').checked=!!lv.featured; $('lvShow').checked=lv.showOnHomepage!==false;
     $('lvNotes').value=lv.notes||'';
@@ -1399,8 +1397,8 @@ window.OL = (function () {
   function lvClose(){ $('lvModal').classList.remove('open'); }
   async function lvSave(){
     var id=$('lvId').value; if(!id) return;
-    var lv={ purity:$('lvPurity').value.trim(), batchNumber:$('lvBatch').value.trim(), testedDate:$('lvTested').value.trim(),
-      laboratory:$('lvLab').value.trim()||'Janoshik', coaUrl:$('lvUrl').value.trim(), verificationStatus:$('lvStat').value,
+    var lv={ purity:$('lvPurity').value.trim(), testedDate:$('lvTested').value.trim(),
+      laboratory:$('lvLab').value.trim(), coaUrl:$('lvUrl').value.trim(), verificationStatus:$('lvStat').value,
       featured:$('lvFeatured').checked, showOnHomepage:$('lvShow').checked, notes:$('lvNotes').value.trim(),
       updatedAt:svTs(), updatedBy:(window.fbAuth.currentUser&&window.fbAuth.currentUser.email)||'admin' };
     var btn=$('lvSaveBtn'); btn.disabled=true;

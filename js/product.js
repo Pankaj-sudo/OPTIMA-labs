@@ -10,9 +10,9 @@
      addon = amount added to the chosen strength price. One is always active. */
   var PACKAGES = [
     { id: 'peptide-only',  name: 'Peptide Only',                    sub: 'Lyophilized vial only',                        badge: 'Base Package',    addon: 0 },
-    { id: 'bac-water',     name: 'Peptide + Bacteriostatic Water',  sub: 'Includes sterile 3ml bacteriostatic water',    badge: 'Most Popular',    addon: 180 },
-    { id: 'pro-kit',       name: 'Professional Kit',                sub: 'Peptide + Premium Reusable Injection Pen',     badge: 'Premium',         addon: 1500 },
-    { id: 'essential-kit', name: 'Essential Kit',                   sub: 'Peptide + Disposable Injection Pen',           badge: 'Budget Friendly', addon: 1000 }
+    { id: 'bac-water',     name: 'Peptide + Bacteriostatic Water',  sub: 'Includes sterile bacteriostatic water',        badge: 'Most Popular',    addon: 300 },
+    { id: 'essential-kit', name: 'Essential Kit',                   sub: 'Peptide + Disposable Injection Pen',           badge: 'Budget Friendly', addon: 500 },
+    { id: 'pro-kit',       name: 'Elite Kit',                       sub: 'Peptide + Premium Reusable Injection Pen',     badge: 'Premium',         addon: 1000 }
   ];
   var selectedPkg = PACKAGES[0];
 
@@ -142,7 +142,7 @@
             (product.stockStatus === 'out_of_stock' ? 'Out of stock'
               : product.stockStatus === 'low_stock' ? 'Low stock — order soon' : 'In stock') +
           '</div>' +
-          '<p class="detail-desc">' + (product.description || '') + '</p>' +
+          '<div class="detail-desc">' + (product.description || '') + '</div>' +
           '<div class="opt-label" id="doseLabel">Select strength</div>' +
           '<div class="dose-options" id="doseOptions" role="group" aria-labelledby="doseLabel">' +
             opts.map(function (o, i) {
@@ -154,6 +154,7 @@
             '<div class="qty"><button id="qMinus" type="button" aria-label="Decrease quantity">−</button><span id="qVal" aria-live="polite">1</span><button id="qPlus" type="button" aria-label="Increase quantity">+</button></div>' +
             (product.inStock === false ? '<span style="color:var(--ink-soft);font-weight:600;">Currently out of stock</span>' : '') +
           '</div>' +
+          (product.noPackages ? '' :
           '<section class="ritual-section" aria-labelledby="ritualTitle">' +
             '<div class="ritual-head"><h2 id="ritualTitle">Complete Your Ritual</h2>' +
               '<p>Choose how you would like your peptide prepared before adding it to your ritual.</p></div>' +
@@ -170,17 +171,17 @@
             '<div class="pkg-grid" id="pkgGrid" role="radiogroup" aria-label="Package options">' +
               availablePkgs().map(packageCardHTML).join('') +
             '</div>' +
-          '</section>' +
+          '</section>') +
           '<div class="detail-actions ritual-actions">' +
             '<button class="btn btn-primary btn-ritual" id="addBtn"' + (product.inStock === false ? ' disabled' : '') + '>Add to Ritual</button>' +
             '<button class="btn btn-ghost btn-sm" id="viewCartBtn">View cart</button>' +
           '</div>' +
           '<div class="qa-box">' +
             '<div class="qa-head">' +
-              '<span class="qa-badge"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="rgba(255,255,255,.28)"/><path d="M6 10.4l2.6 2.6 5-5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Janoshik Verified</span>' +
+              '<span class="qa-badge"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="rgba(255,255,255,.28)"/><path d="M6 10.4l2.6 2.6 5-5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Third-Party Verified</span>' +
               '<span class="qa-title">Quality Assurance</span>' +
             '</div>' +
-            '<p>Independently third-party tested by Janoshik for identity, purity and quality — so you know exactly what\'s in every vial.</p>' +
+            '<p>Independently tested by a certified third-party laboratory for identity, purity and quality — so you know exactly what\'s in every vial.</p>' +
             '<a class="btn btn-ghost btn-sm" href="verification.html?coa=' + encodeURIComponent(product.slug) + '">View Certificate of Analysis ' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4h6v6M20 4l-9 9M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>' +
           '</div>' +
@@ -247,7 +248,7 @@
         '<div class="card-art">' + (p.imageURL ? '<img src="' + p.imageURL + '" alt="' + p.name + '" loading="lazy">' : fallbackArt(p)) + '</div>' +
         '<div class="card-body"><div class="card-cat">' + p.category + '</div>' +
         '<div class="card-name">' + p.name + '</div>' +
-        '<div class="card-desc">' + (p.description || '') + '</div>' +
+        '<div class="card-desc">' + (p.shortDescription || p.description || '') + '</div>' +
         '<div class="card-foot"><span class="price"><span class="from">from</span>' + fmtPHP(lowest) + '</span></div></div></a>';
     }).join('');
   }

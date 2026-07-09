@@ -35,7 +35,7 @@
       '<div class="card-body">' +
         '<div class="card-cat">' + p.category + '</div>' +
         '<div class="card-name">' + p.name + '</div>' +
-        '<div class="card-desc">' + (p.description || '') + '</div>' +
+        '<div class="card-desc">' + (p.shortDescription || p.description || '') + '</div>' +
         '<div class="card-dose-row">' + doseTags(p.dosageOptions) + '</div>' +
         '<div class="card-foot">' +
           '<span class="price' + (p.saleActive ? ' on-sale' : '') + '">' + (multi ? '<span class="from">from</span>' : '') + fmtPHP(p.displayPrice) + compare + '</span>' +

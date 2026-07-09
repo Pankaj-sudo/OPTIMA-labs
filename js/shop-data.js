@@ -50,7 +50,7 @@
       inStock: stockStatus !== 'out_of_stock',
       images: p.images || (img ? [img] : []), imageURL: img, featuredImage: img,
       verified: p.verified !== false, is_new_arrival: !!p.is_new_arrival,
-      coaURL: p.coaURL || null, status: status
+      coaURL: p.coaURL || null, status: status, noPackages: !!p.noPackages
     };
   }
 

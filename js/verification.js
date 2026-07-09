@@ -2,7 +2,7 @@
    OPTIMA LABS — Lab Verification page controller
    Renders the COA grid from window.COA_DATA, with search + category
    filters and a certificate detail modal (embedded PDF when available
-   + a button to the original Janoshik verification link).
+   + a button to the original third-party verification link).
    ================================================================ */
 (function () {
   var grid, searchEl, catEl, countEl, ALL = [];
@@ -23,9 +23,9 @@
       '<div class="coa-art">' + art(c) + '</div>' +
       '<div class="coa-info">' +
         '<h3 class="coa-name">' + esc(c.name) + (c.dosage ? ' <span class="coa-dose">' + esc(c.dosage) + '</span>' : '') + '</h3>' +
-        '<div class="coa-verified">Janoshik Verified' + CHECK + '</div>' +
+        '<div class="coa-verified">Third-Party Verified' + CHECK + '</div>' +
         '<div class="coa-rows">' +
-          row('Purity', c.purity) + row('Batch', c.batch) + row('Tested', c.tested) +
+          row('Purity', c.purity) + row('Tested', c.tested) +
         '</div>' +
         '<button class="btn btn-ghost btn-sm coa-view" data-slug="' + esc(c.slug) + '">View COA ' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>' +
@@ -38,7 +38,7 @@
     var q = state.q.trim().toLowerCase();
     var list = ALL.filter(function (c) {
       var okCat = state.cat === 'All' || c.category === state.cat;
-      var okQ = !q || (c.name + ' ' + (c.batch || '')).toLowerCase().indexOf(q) > -1;
+      var okQ = !q || c.name.toLowerCase().indexOf(q) > -1;
       return okCat && okQ;
     });
     countEl.textContent = list.length + (list.length === 1 ? ' certificate' : ' certificates');
@@ -68,7 +68,7 @@
         '<div class="coa-mgrid">' +
           '<div class="coa-mside">' +
             '<div class="coa-mart" id="coaMArt"></div>' +
-            '<div class="coa-verified" style="justify-content:center;margin-top:14px;">Janoshik Verified' + CHECK + '</div>' +
+            '<div class="coa-verified" style="justify-content:center;margin-top:14px;">Third-Party Verified' + CHECK + '</div>' +
             '<div class="coa-mmeta" id="coaMMeta"></div>' +
           '</div>' +
           '<div class="coa-mmain">' +
@@ -94,9 +94,9 @@
     document.getElementById('coaMTitle').textContent = c.name + (c.dosage ? ' · ' + c.dosage : '');
     document.getElementById('coaMLab').innerHTML =
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6M10 3v6l-4.2 7.5A2 2 0 0 0 7.6 20h8.8a2 2 0 0 0 1.8-3.5L14 9V3"/></svg>' +
-      'Tested by <b>' + esc(c.lab || 'Janoshik Analytical') + '</b>';
+      'Independently tested by a <b>certified third-party laboratory</b>';
     document.getElementById('coaMMeta').innerHTML =
-      row('Category', c.category) + row('Purity', c.purity) + row('Batch No.', c.batch) + row('Test Date', c.tested);
+      row('Category', c.category) + row('Purity', c.purity) + row('Test Date', c.tested);
 
     // certificate preview: embed PDF if provided, else a graceful placeholder
     var pv = document.getElementById('coaMPreview');
@@ -107,14 +107,16 @@
     } else {
       pv.innerHTML = '<div class="coa-mph">' +
         '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 16h4"/></svg>' +
-        '<p>The full laboratory report for this batch is available on request. Contact our team or open the Janoshik verification below.</p></div>';
+        '<p>The full laboratory report for this batch is available on request. Contact our team or open the third-party verification below.</p></div>';
     }
 
-    // actions: Janoshik verification link (new tab) + contact
-    var jan = c.janoshikURL || 'https://janoshik.com/';
+    // actions: third-party verification link (new tab) + contact
+    var verifyUrl = c.verifyURL || '';
     document.getElementById('coaMActions').innerHTML =
-      '<a class="btn btn-primary" href="' + esc(jan) + '" target="_blank" rel="noopener">Open Janoshik Verification ' +
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-left:2px;"><path d="M14 4h6v6M20 4l-9 9M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>' +
+      (verifyUrl
+        ? '<a class="btn btn-primary" href="' + esc(verifyUrl) + '" target="_blank" rel="noopener">Open Third-Party Verification ' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-left:2px;"><path d="M14 4h6v6M20 4l-9 9M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>'
+        : '') +
       '<a class="btn btn-ghost" href="mailto:care@optimalabs.co?subject=COA%20request%20—%20' + encodeURIComponent(c.name) + '">Request full report</a>';
 
     modal.hidden = false;
@@ -135,8 +137,8 @@
     var lv = p.labVerification || {};
     var dose = (p.dosageOptions && p.dosageOptions[0] && p.dosageOptions[0].mg && p.dosageOptions[0].mg !== '—') ? p.dosageOptions[0].mg : '';
     return { slug: p.slug || id, name: p.name, dosage: dose, category: p.category,
-      purity: lv.purity, batch: lv.batchNumber, tested: lv.testedDate, lab: lv.laboratory || 'Janoshik Analytical',
-      coaURL: '', janoshikURL: lv.coaUrl || '', featured: !!lv.featured };
+      purity: lv.purity, tested: lv.testedDate,
+      coaURL: '', verifyURL: lv.coaUrl || '', featured: !!lv.featured };
   }
 
   var catsDone = false, pendingCoa = null;

@@ -14,12 +14,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Orders. A signed-in customer can read/track their own orders (email
-    // match); admins can read all and update. Status-history subcollection is
-    // admin-only.
+    // Orders. Guest order tracking: any authenticated session (including a
+    // silent anonymous sign-in — no Google account required) may read orders,
+    // because the client looks them up by order number + email, which are the
+    // credentials a customer must know. Admins read all and update. The
+    // status-history subcollection stays admin-only.
     match /orders/{orderId} {
-      allow read:   if isAdmin() ||
-                    (request.auth != null && request.auth.token.email == resource.data.customer_email);
+      allow read:   if request.auth != null;
       allow create: if request.auth != null;
       allow update, delete: if isAdmin();
 

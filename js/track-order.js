@@ -20,7 +20,9 @@
     idEl.focus();
   });
 
-  // Prefill email once auth resolves (rules require the signed-in email to match).
+  // If the visitor happens to be signed in with a real email (e.g. Google),
+  // prefill it as a convenience. Signing in is optional — orders are tracked
+  // with just the order number + email typed below.
   if (window.fbAuth) window.fbAuth.onAuthStateChanged(function (u) {
     if (u && u.email && !emailEl.value) emailEl.value = u.email;
   });
@@ -119,12 +121,16 @@
     if (!window.fbDb || !window.fbAuth) { showError(); return; }
     loading(true);
     try {
-      // Our rules require the requester to be signed in as the record's email.
-      if (!window.fbAuth.currentUser) {
-        await window.fbAuth.signInWithPopup(window.fbGoogle);
-      }
       if (id.indexOf('CONS') === 0) {
-        // Consultation booking — email must match the booking email.
+        // Consultation bookings hold sensitive personal/medical details, so
+        // they still require a verified email (e.g. Google) that matches the
+        // booking email — the security rules enforce that match.
+        if (!window.fbAuth.currentUser || !window.fbAuth.currentUser.email) {
+          if (!window.fbGoogle) { showError(); return; }
+          await window.fbAuth.signInWithPopup(window.fbGoogle);
+          if (window.fbAuth.currentUser.email) emailEl.value = window.fbAuth.currentUser.email;
+          email = emailEl.value.trim().toLowerCase();
+        }
         var csnap = await window.fbDb.collection('consultations')
           .where('booking_ref', '==', id)
           .where('email', '==', email)
@@ -132,6 +138,12 @@
         if (csnap.empty) { showError(); }
         else { renderConsult(csnap.docs[0].data()); }
       } else {
+        // Orders are guest-trackable — no Google account needed. We sign in
+        // silently (anonymous) so the request is authenticated for the rules;
+        // the order number + email are the lookup credentials.
+        if (!window.fbAuth.currentUser) {
+          await window.fbAuth.signInAnonymously();
+        }
         var snap = await window.fbDb.collection('orders')
           .where('order_id', '==', id)
           .where('customer_email', '==', email)

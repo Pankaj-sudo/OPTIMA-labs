@@ -284,7 +284,12 @@ img,svg{ max-width:100%; }
 .detail-info .cat{ font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--champagne); }
 .detail-info h1{ font-size:clamp(32px,4vw,46px); margin-top:10px; }
 .detail-price{ font-family:var(--serif); font-size:32px; margin-top:16px; color:var(--espresso); }
-.detail-desc{ margin-top:18px; color:var(--ink-soft); max-width:52ch; }
+.detail-desc{ margin-top:18px; color:var(--ink-soft); max-width:56ch; }
+.detail-desc p{ margin:0 0 12px; line-height:1.65; }
+.detail-desc p:last-child{ margin-bottom:0; }
+.detail-desc strong{ color:var(--espresso); font-weight:700; }
+.detail-desc ul{ margin:2px 0 4px; padding-left:20px; list-style:disc; }
+.detail-desc li{ margin:0 0 5px; line-height:1.55; }
 .opt-label{ font-size:13px; font-weight:700; letter-spacing:.04em; color:var(--espresso); margin:26px 0 12px; }
 .dose-options{ display:flex; flex-wrap:wrap; gap:10px; }
 .dose-opt{
