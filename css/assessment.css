@@ -72,6 +72,24 @@
 .asv-field input{ width:100%; min-height:52px; padding:13px 15px; border-radius:12px; border:1px solid rgba(183,154,107,.42);
   background:#fff; font:inherit; font-size:16px; color:var(--espresso); transition:border-color .2s ease, box-shadow .2s ease; }
 .asv-field input:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(169,106,88,.15); }
+.asv-field textarea{ width:100%; min-height:88px; padding:12px 15px; border-radius:12px; border:1px solid rgba(183,154,107,.42);
+  background:#fff; font:inherit; font-size:16px; line-height:1.5; color:var(--espresso); resize:vertical;
+  transition:border-color .2s ease, box-shadow .2s ease; }
+.asv-field textarea:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(169,106,88,.15); }
+.asv-field .opt{ font-weight:500; color:var(--ink-soft); }
+
+/* medical-step information notice (premium callout) */
+.asv-notice{ display:flex; gap:12px; align-items:flex-start; margin:18px 0 4px; padding:16px 18px; border-radius:16px;
+  background:linear-gradient(135deg, rgba(241,226,219,.55), rgba(255,255,255,.5)); border:1px solid rgba(183,154,107,.38);
+  font-size:13.5px; color:var(--espresso); line-height:1.6; }
+.asv-notice svg{ flex:none; color:var(--clay); margin-top:2px; }
+
+/* optional lab-results upload + freshness message */
+.asv-lab{ margin-top:6px; }
+.asv-labmsg{ display:none; gap:10px; align-items:flex-start; margin-top:10px; padding:12px 14px; border-radius:12px;
+  background:rgba(194,86,77,.08); border:1px solid rgba(194,86,77,.32); font-size:13px; color:#b8503f; line-height:1.5; }
+.asv-labmsg.show{ display:flex; }
+.asv-labmsg svg{ flex:none; margin-top:2px; }
 
 /* safety checklist */
 .asv-safety{ display:grid; gap:10px; margin-top:22px; }

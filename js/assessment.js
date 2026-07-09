@@ -17,16 +17,17 @@
 (function () {
   var CFG = window.ASSESSMENT_CONFIG || {};
   var LS_KEY = 'optima_assessment_v1';
-  var STEPS = ['profile', 'goals', 'lifestyle', 'experience', 'safety']; // progress-tracked
+  var STEPS = ['profile', 'goals', 'lifestyle', 'experience', 'medical', 'safety']; // progress-tracked
   var MAX_PRODUCTS = 2;   // max Recommended Wellness Peptides shown on results
   var app, products = [], productsReady = false;
 
   var STATE = {
     step: 'welcome',
-    answers: { profile: {}, goals: [], lifestyle: {}, experience: {}, safety: [] },
+    answers: { profile: {}, goals: [], lifestyle: {}, experience: {}, medical: {}, safety: [] },
     assessmentSaved: false,
     booking: { method: 'Video Call' },
     proof: { file: null, url: null, path: null, type: null },
+    lab: { file: null, url: null, path: null, type: null },   // optional lab-results upload
     submitting: false
   };
 
@@ -39,7 +40,7 @@
     try {
       var raw = JSON.parse(localStorage.getItem(LS_KEY));
       if (raw && raw.answers) {
-        STATE.answers = Object.assign({ profile: {}, goals: [], lifestyle: {}, experience: {}, safety: [] }, raw.answers);
+        STATE.answers = Object.assign({ profile: {}, goals: [], lifestyle: {}, experience: {}, medical: {}, safety: [] }, raw.answers);
         // resume on a questionnaire step, never mid-results
         if (raw.step && STEPS.indexOf(raw.step) >= 0) STATE.step = raw.step;
       }
@@ -87,7 +88,7 @@
   function render() {
     var fn = ({
       welcome: stepWelcome, profile: stepProfile, goals: stepGoals, lifestyle: stepLifestyle,
-      experience: stepExperience, safety: stepSafety, safetyStop: stepSafetyStop, results: stepResults
+      experience: stepExperience, medical: stepMedical, safety: stepSafety, safetyStop: stepSafetyStop, results: stepResults
     })[STATE.step] || stepWelcome;
     fn();
     updateProgress();
@@ -204,17 +205,101 @@
 
   function stepExperience() {
     var e = STATE.answers.experience, o = CFG.options;
+    var mm = e.metroManila;                                   // 'Yes' | 'No' | undefined
+    // Pen delivery is Metro-Manila-only → when "No", offer vial options only.
+    var formatOpts = mm === 'No' ? ['Wellness Vial', 'No Preference'] : o.format;
+    if (e.format && formatOpts.indexOf(e.format) < 0) delete e.format;   // drop a now-unavailable pick
     app.innerHTML =
       '<div class="asv-step">' +
         '<span class="asv-eyebrow">Step 5 · Experience</span>' +
         '<h2>Preferences</h2>' +
         '<p class="lead">Your comfort level and how you prefer to work with wellness peptides.</p>' +
         group('Experience level', chips('profile.experience', o.experience, STATE.answers.profile.experience)) +
-        group('Preferred product format', chips('experience.format', o.format, e.format)) +
-        '<div class="asv-note">' + INFO + '<span>Format is a preference only and doesn\'t change which wellness peptides are surfaced — it helps us note what suits you.</span></div>' +
+        group('Are you currently located in Metro Manila?', chips('experience.metroManila', o.metroManila, mm)) +
+        group('Preferred product format', chips('experience.format', formatOpts, e.format)) +
+        (mm === 'No'
+          ? '<div class="asv-note">' + INFO + '<span>Pen delivery is currently available within Metro Manila only, so we\'re showing vial options for your location.</span></div>'
+          : '<div class="asv-note">' + INFO + '<span>Format is a preference only and doesn\'t change which wellness peptides are surfaced — it helps us note what suits you.</span></div>') +
         '<div class="asv-err" id="asvErr">Please make a selection to continue.</div>' +
         actions({ back: true, nextLabel: 'Continue' }) +
       '</div>';
+    wireCommon();
+    // Changing the Metro Manila answer re-filters the format options → re-render.
+    app.querySelectorAll('.asv-opt[data-group="experience.metroManila"]').forEach(function (b) {
+      b.addEventListener('click', function () { stepExperience(); });
+    });
+  }
+
+  function stepMedical() {
+    var m = STATE.answers.medical, o = CFG.options;
+    app.innerHTML =
+      '<div class="asv-step">' +
+        '<span class="asv-eyebrow">Step 6 · Medical &amp; history</span>' +
+        '<h2>Your medical background</h2>' +
+        '<div class="asv-notice">' + INFO + '<span>Please answer every question honestly and accurately. Your responses are used to ' +
+          'personalize your peptide recommendation and help provide the safest and most appropriate protocol for your needs.</span></div>' +
+        '<div class="asv-group">' + textArea('medical.pastHistory', 'Past medical history', m.pastHistory, 'Previous illnesses, surgeries or hospitalisations — or “none”…') + '</div>' +
+        '<div class="asv-group">' + textArea('medical.currentConditions', 'Current medical conditions or diagnoses', m.currentConditions, 'e.g. hypertension, PCOS — or “none”…') + '</div>' +
+        group('Family medical history (parents)', multiChips('medical.family', o.familyConditions, m.family)) +
+        '<div class="asv-group" style="margin-top:2px;">' + textArea('medical.familyNotes', 'Other family history', m.familyNotes, 'Anything else about your parents’ health…', true) + '</div>' +
+        '<div class="asv-group">' + textArea('medical.medications', 'Current maintenance medications', m.medications, 'Medications you take regularly — or “none”…') + '</div>' +
+        '<div class="asv-group">' + textArea('medical.supplements', 'Current supplements', m.supplements, 'Supplements you take — or “none”…') + '</div>' +
+        '<div class="asv-group asv-lab">' +
+          '<span class="asv-label">Recent lab results <span class="opt">(optional)</span></span>' +
+          '<div class="asv-field" style="margin-bottom:12px;"><label for="labDate">Date of your most recent labs</label>' +
+            '<input id="labDate" type="date" max="' + todayISO() + '" value="' + esc(m.labDate || '') + '"></div>' +
+          '<div class="co-drop" id="labDrop">' +
+            '<div class="ico">📎</div><div class="t1">Upload lab results</div><div class="t2">or click to browse</div>' +
+            '<div class="t3">JPG, PNG or PDF · Max 10MB · dated within the last 3 months</div>' +
+            '<input type="file" id="labFile" accept="image/*,application/pdf" hidden></div>' +
+          '<div class="co-progress" id="labProg"><span></span></div>' +
+          '<div class="co-preview" id="labPreview"><img id="labThumb" alt="Lab results preview">' +
+            '<div><div class="ok">✓ Lab results uploaded</div><span class="change" id="labChange">Change file</span></div></div>' +
+          '<div class="asv-labmsg" id="labMsg">' + INFO + '<span>These results appear to be more than 3 months old. For an accurate assessment, ' +
+            'please upload lab results from within the last 3 months.</span></div>' +
+        '</div>' +
+        '<div class="asv-err" id="asvErr">Please complete the required fields to continue.</div>' +
+        actions({ back: true, nextLabel: 'Continue' }) +
+      '</div>';
+
+    // multi-select family history
+    app.querySelectorAll('.asv-opt[data-multi]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var parts = b.dataset.multi.split('.'), obj = STATE.answers;
+        obj[parts[0]] = obj[parts[0]] || {}; obj[parts[0]][parts[1]] = obj[parts[0]][parts[1]] || [];
+        var arr = obj[parts[0]][parts[1]], v = b.dataset.val, i = arr.indexOf(v);
+        if (i >= 0) arr.splice(i, 1); else arr.push(v);
+        var on = arr.indexOf(v) >= 0;
+        b.classList.toggle('sel', on); b.setAttribute('aria-checked', String(on));
+        var err = $('asvErr'); if (err) err.classList.remove('show'); save();
+      });
+    });
+
+    // optional lab results: date (3-month rule) + file upload
+    var ld = $('labDate');
+    if (ld) ld.addEventListener('change', function () {
+      var msg = $('labMsg');
+      if (ld.value && !within3Months(ld.value)) {         // older than 3 months → reject
+        if (msg) msg.classList.add('show');
+        ld.value = ''; setAnswer('medical.labDate', ''); resetLab(); save();
+      } else { if (msg) msg.classList.remove('show'); setAnswer('medical.labDate', ld.value); save(); }
+    });
+    var drop = $('labDrop'), file = $('labFile');
+    if (drop) {
+      drop.addEventListener('click', function () { file.click(); });
+      file.addEventListener('change', function () { handleLabFile(file.files[0]); });
+      ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
+      ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+      drop.addEventListener('drop', function (e) { if (e.dataTransfer.files && e.dataTransfer.files[0]) handleLabFile(e.dataTransfer.files[0]); });
+    }
+    if ($('labChange')) $('labChange').addEventListener('click', resetLab);
+    // restore a preview if a file was uploaded earlier this session
+    if (STATE.lab && STATE.lab.path && $('labPreview')) {
+      $('labDrop').style.display = 'none';
+      var pv = $('labPreview'); pv.classList.add('on');
+      if (STATE.lab.type === 'pdf') { $('labThumb').style.display = 'none'; pv.querySelector('.ok').textContent = '✓ PDF uploaded'; }
+      else if (STATE.lab.url) $('labThumb').src = STATE.lab.url;
+    }
     wireCommon();
   }
 
@@ -222,7 +307,7 @@
     var checked = STATE.answers.safety || [];
     app.innerHTML =
       '<div class="asv-step">' +
-        '<span class="asv-eyebrow">Step 6 · Safety screening</span>' +
+        '<span class="asv-eyebrow">Step 7 · Safety screening</span>' +
         '<h2>A quick safety check</h2>' +
         '<p class="lead">Please check anything that applies to you. This keeps your suggestions responsible — ' +
           'if any apply, we\'ll point you to a specialist instead of surfacing products.</p>' +
@@ -234,28 +319,14 @@
               '<span class="box">' + CHK + '</span><span class="lbl">' + esc(s.label) + '</span></label>';
           }).join('') +
         '</div>' +
-        '<div class="asv-note">' + INFO + '<span>None of these apply? Continue to see your suggestions. This is educational information, not medical advice.</span></div>' +
+        '<div class="asv-note">' + INFO + '<span>If none of these apply, continue to see your suggestions. This is educational information, not medical advice.</span></div>' +
         actions({ back: true, nextLabel: 'See my results →' }) +
       '</div>';
-    function syncSafetyUI() {
-      app.querySelectorAll('.asv-check').forEach(function (l) {
-        var on = STATE.answers.safety.indexOf(l.dataset.safety) >= 0;
-        l.classList.toggle('on', on);
-        var b = l.querySelector('input'); if (b) b.checked = on;
-      });
-    }
     app.querySelectorAll('.asv-check').forEach(function (lab) {
       lab.addEventListener('change', function () {
-        var id = lab.dataset.safety, arr = STATE.answers.safety, on = lab.querySelector('input').checked;
-        if (id === 'none') {
-          // "None of the above" is exclusive: selecting it clears every real flag
-          STATE.answers.safety = on ? ['none'] : [];
-        } else {
-          var i = arr.indexOf(id);
-          if (on && i < 0) arr.push(id); if (!on && i >= 0) arr.splice(i, 1);
-          var n = arr.indexOf('none'); if (n >= 0) arr.splice(n, 1); // any real pick clears "None"
-        }
-        syncSafetyUI(); save();
+        var id = lab.dataset.safety, arr = STATE.answers.safety, on = lab.querySelector('input').checked, i = arr.indexOf(id);
+        if (on && i < 0) arr.push(id); if (!on && i >= 0) arr.splice(i, 1);
+        lab.classList.toggle('on', on); save();
       });
     });
     wireCommon();
@@ -313,7 +384,7 @@
               : '<div class="asv-step"><p class="lead">We couldn\'t match a specific category to your goals. Browse the full collection or talk to a specialist for tailored guidance.</p></div>') +
           '</div>' +
           (acc.length ? (
-            '<div class="asv-sec-title mt">Recommended Accessories</div>' +
+            '<div class="asv-sec-title mt">Recommended Add-ons</div>' +
             '<div class="asv-acc" id="asvAcc">' + acc.map(accessoryCard).join('') + '</div>'
           ) : '') +
           (res.bundle ? bundleCard(res.bundle) : '') +
@@ -463,6 +534,21 @@
       '<input id="f_' + path.replace('.', '_') + '" data-path="' + path + '" type="text"' +
       (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(val || '') + '" placeholder="' + esc(ph || '') + '"></div>';
   }
+  function textArea(path, label, val, ph, optional) {
+    var id = 'f_' + path.replace('.', '_');
+    return '<div class="asv-field"><label for="' + id + '">' + esc(label) +
+      (optional ? ' <span class="opt">(optional)</span>' : '') + '</label>' +
+      '<textarea id="' + id + '" data-path="' + path + '" rows="3" placeholder="' + esc(ph || '') + '">' + esc(val || '') + '</textarea></div>';
+  }
+  /* multi-select chips (reuses the .asv-opt look) → toggles into an array */
+  function multiChips(group, opts, selected) {
+    selected = selected || [];
+    return '<div class="asv-opts">' + opts.map(function (o) {
+      var sel = selected.indexOf(o) >= 0;
+      return '<button type="button" class="asv-opt' + (sel ? ' sel' : '') + '" role="checkbox" aria-checked="' + sel + '"' +
+        ' data-multi="' + esc(group) + '" data-val="' + esc(o) + '">' + esc(o) + '</button>';
+    }).join('') + '</div>';
+  }
 
   function setAnswer(path, val) {
     var parts = path.split('.'), obj = STATE.answers;
@@ -487,9 +573,13 @@
         save();
       });
     });
-    // text fields
-    app.querySelectorAll('input[data-path]').forEach(function (inp) {
-      inp.addEventListener('input', function () { setAnswer(inp.dataset.path, inp.value.trim()); save(); });
+    // text fields + textareas
+    app.querySelectorAll('input[data-path], textarea[data-path]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        setAnswer(inp.dataset.path, inp.value.trim());
+        var err = $('asvErr'); if (err) err.classList.remove('show');
+        save();
+      });
     });
     // nav
     if ($('asvBack')) $('asvBack').addEventListener('click', back);
@@ -647,6 +737,12 @@
         payment_proof_type: STATE.proof.type || null,
         source: 'self-assessment',
         goals: (STATE.answers.goals || []),
+        // Attach the patient's uploaded labs (if any) so the admin can view them
+        // alongside the booking. Optional — absent when no labs were shared.
+        lab_results: (STATE.lab && STATE.lab.path) ? {
+          date: (STATE.answers.medical && STATE.answers.medical.labDate) || null,
+          url: STATE.lab.url || null, path: STATE.lab.path || null, type: STATE.lab.type || null
+        } : null,
         uid: user ? user.uid : null,
         created_at: firebase.firestore.FieldValue.serverTimestamp(),
         updated_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -684,7 +780,11 @@
     if (s === 'profile') bad = !(a.profile.ageRange && a.profile.sex && a.profile.height && a.profile.weight && a.profile.country && a.profile.experience);
     else if (s === 'goals') bad = !(a.goals && a.goals.length);
     else if (s === 'lifestyle') bad = !(a.lifestyle.exercise && a.lifestyle.sleepQuality && a.lifestyle.stress && a.lifestyle.water && a.lifestyle.nutrition && a.lifestyle.smoking && a.lifestyle.alcohol);
-    else if (s === 'experience') bad = !(a.profile.experience && a.experience.format);
+    else if (s === 'experience') bad = !(a.profile.experience && a.experience.metroManila && a.experience.format);
+    else if (s === 'medical') {
+      var m = a.medical || {};
+      bad = !(m.pastHistory && m.currentConditions && (m.family && m.family.length) && m.medications && m.supplements);
+    }
     return !bad;
   }
 
@@ -708,7 +808,8 @@
   function goTo(step) { STATE.step = step; save(); render(); }
   function resetAll() {
     try { localStorage.removeItem(LS_KEY); } catch (e) {}
-    STATE.answers = { profile: {}, goals: [], lifestyle: {}, experience: {}, safety: [] };
+    STATE.answers = { profile: {}, goals: [], lifestyle: {}, experience: {}, medical: {}, safety: [] };
+    STATE.lab = { file: null, url: null, path: null, type: null };
     STATE.step = 'welcome'; STATE.assessmentSaved = false; render();
   }
 
@@ -731,11 +832,18 @@
     if (STATE.assessmentSaved || !window.fbDb) return;
     STATE.assessmentSaved = true;
     ensureAuth().then(function (user) {
+      var mm = STATE.answers.experience && STATE.answers.experience.metroManila;
       return window.fbDb.collection('assessments').add({
         answers: STATE.answers,
         recommended_product_ids: res ? (res.products || []).slice(0, MAX_PRODUCTS).map(function (p) { return p.id; }) : [],
         recommended_categories: res ? Object.keys(res.categoryScores || {}) : [],
         safety_flagged: safetyFlags().length > 0,
+        in_metro_manila: mm === 'Yes' ? true : (mm === 'No' ? false : null),
+        pen_delivery_available: mm === 'Yes',
+        lab_results: (STATE.lab && STATE.lab.path) ? {
+          date: (STATE.answers.medical && STATE.answers.medical.labDate) || null,
+          url: STATE.lab.url || null, path: STATE.lab.path || null, type: STATE.lab.type || null
+        } : null,
         uid: user ? user.uid : null,
         source: 'self-assessment',
         created_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -746,6 +854,60 @@
   /* ---------- misc ---------- */
   function safetyFlags() { return (STATE.answers.safety || []).filter(function (x) { return x !== 'none'; }); }
   function val(id) { var e = $(id); return e ? e.value.trim() : ''; }
+
+  /* ---- optional lab-results upload (valid only if dated within 3 months) ---- */
+  function within3Months(dateStr) {
+    if (!dateStr) return false;
+    var p = String(dateStr).split('-'); if (p.length !== 3) return false;
+    var d = new Date(+p[0], +p[1] - 1, +p[2]); if (isNaN(d.getTime())) return false;
+    var cutoff = new Date(); cutoff.setHours(0, 0, 0, 0); cutoff.setMonth(cutoff.getMonth() - 3);
+    var today = new Date(); today.setHours(23, 59, 59, 999);
+    return d >= cutoff && d <= today;
+  }
+  function resetLab() {
+    STATE.lab = { file: null, url: null, path: null, type: null };
+    if ($('labDrop')) $('labDrop').style.display = '';
+    if ($('labProg')) { $('labProg').classList.remove('on'); $('labProg').firstChild.style.width = '0'; }
+    if ($('labPreview')) $('labPreview').classList.remove('on');
+    if ($('labThumb')) $('labThumb').style.display = '';
+  }
+  function handleLabFile(f) {
+    if (!f) return;
+    // Only accept a file once a valid, in-range date is present (freshness rule).
+    if (!within3Months(STATE.answers.medical && STATE.answers.medical.labDate)) {
+      var msg = $('labMsg'); if (msg) msg.classList.add('show');
+      toast('Please enter the date of your labs (within the last 3 months) first.');
+      return;
+    }
+    var okType = /^image\//.test(f.type) || f.type === 'application/pdf';
+    if (!okType) { toast('Please upload a JPG, PNG, or PDF.'); return; }
+    if (f.size > 10 * 1024 * 1024) { toast('That file is over 10MB. Please choose a smaller one.'); return; }
+    if (!window.fbStorage) { toast('Uploads need the store backend enabled.'); return; }
+
+    STATE.lab.file = f; STATE.lab.type = f.type === 'application/pdf' ? 'pdf' : 'image';
+    $('labDrop').style.display = 'none';
+    var prog = $('labProg'); prog.classList.add('on'); var bar = prog.firstChild; bar.style.width = '0';
+    ensureAuth().then(function () {
+      var safe = f.name.replace(/[^\w.\-]+/g, '_');
+      var ref = window.fbStorage.ref('lab_results/' + genRef() + '_' + safe);
+      STATE.lab.path = ref.fullPath;
+      var task = ref.put(f, { contentType: f.type });
+      task.on('state_changed',
+        function (s) { bar.style.width = (s.bytesTransferred / s.totalBytes * 100).toFixed(0) + '%'; },
+        function (err) { console.error(err); toast('Upload failed: ' + (err.code || 'try again') + '.'); resetLab(); },
+        function () {
+          prog.classList.remove('on');
+          var pv = $('labPreview'); pv.classList.add('on');
+          try {
+            if (STATE.lab.type === 'image') $('labThumb').src = URL.createObjectURL(f);
+            else { $('labThumb').style.display = 'none'; pv.querySelector('.ok').textContent = '✓ PDF uploaded'; }
+          } catch (e) {}
+          task.snapshot.ref.getDownloadURL()
+            .then(function (url) { STATE.lab.url = url; if (STATE.lab.type === 'image') $('labThumb').src = url; })
+            .catch(function () { STATE.lab.url = null; });
+        });
+    }).catch(function (e) { authError(e); resetLab(); });
+  }
 
   /* ---- consultation date/time constraints (Mon–Fri, 5:30–9:00 PM) ---- */
   function pad2(n) { return (n < 10 ? '0' : '') + n; }

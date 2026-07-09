@@ -245,6 +245,28 @@ header.scrolled:not(.site-header) .m-nav-toggle{ color:var(--espresso); }
   .oc-mi{ flex:1 1 46%; }
 }
 
+/* ---- Product grid: true 2×2 layout on phones (≤600px) ----
+   The ≤719 block above tunes cards for a near-full-width single column;
+   this override shrinks every card element proportionally so two sit
+   comfortably side by side, without changing the design language. */
+@media (max-width:600px){
+  .grid{ gap:12px; margin:16px 0 56px; }
+  .card{ border-radius:18px; }
+  .card-art{ aspect-ratio:1/1; }
+  .card-badges{ top:8px; left:8px; gap:5px; }
+  .badge{ padding:3px 7px; font-size:9px; }
+  .card-body{ padding:13px 13px 15px; }
+  .card-cat{ font-size:9.5px; letter-spacing:.07em; }
+  .card-name{ font-size:15px; margin-top:4px; line-height:1.25; }
+  .card-desc{ font-size:11.5px; margin-top:5px; -webkit-line-clamp:2; }
+  .card-dose-row{ margin-top:8px; gap:4px; }
+  .dose-tag{ font-size:9px; padding:3px 7px; }
+  .card-foot{ margin-top:10px; padding-top:10px; }
+  .price{ font-size:16px; }
+  .price .from{ font-size:9.5px; }
+  .card-cta{ margin-top:10px; min-height:38px; padding:9px 10px; font-size:12px; }
+}
+
 /* ---- Finer phones (≤430px): calmest single-column rhythm ---- */
 @media (max-width:430px){
   .wrap{ width:min(1160px, calc(100% - 34px)); }

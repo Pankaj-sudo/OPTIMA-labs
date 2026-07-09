@@ -16,6 +16,14 @@
   ];
   var selectedPkg = PACKAGES[0];
 
+  /* Delivery rule: injection-pen kits ship within Metro Manila only. When the
+     shopper says they're not in Metro Manila, only vial options are offered. */
+  var PEN_IDS = ['pro-kit', 'essential-kit'];
+  var pkgMM = true;   // "Are you in Metro Manila?" → Yes (default) shows pen kits too
+  function availablePkgs() {
+    return pkgMM ? PACKAGES.slice() : PACKAGES.filter(function (p) { return PEN_IDS.indexOf(p.id) < 0; });
+  }
+
   /* Refined line-art icons (Rose & Porcelain), one per package. currentColor
      so they invert to white inside the accent-filled tile when selected. */
   var S = '<svg class="pkg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
@@ -46,13 +54,13 @@
       ? 'Base ' + fmtPHP(basePrice()) + '  ·  ' + selectedPkg.badge + ' + ' + fmtPHP(selectedPkg.addon) : '';
   }
 
-  // --- PackageOptionCard ---
-  function packageCardHTML(p, i) {
-    var sel = i === 0;
+  // --- PackageOptionCard (keyed by package id so options can be filtered) ---
+  function packageCardHTML(p) {
+    var sel = selectedPkg && p.id === selectedPkg.id;
     var price = p.addon > 0
       ? '<span class="pkg-price">+ ' + fmtPHP(p.addon) + '</span>'
       : '<span class="pkg-price free">Included</span>';
-    return '<div class="pkg-card' + (sel ? ' sel' : '') + '" role="radio" data-i="' + i + '"' +
+    return '<div class="pkg-card' + (sel ? ' sel' : '') + '" role="radio" data-id="' + p.id + '"' +
         ' tabindex="' + (sel ? '0' : '-1') + '" aria-checked="' + (sel ? 'true' : 'false') + '"' +
         ' aria-label="' + p.name + ', ' + (p.addon > 0 ? 'add ' + fmtPHP(p.addon) : 'included') + '">' +
       '<span class="pkg-radio" aria-hidden="true"></span>' +
@@ -64,25 +72,45 @@
   }
 
   // --- ProductPackageSelector (radio-group behaviour) ---
-  function selectPackage(i) {
-    selectedPkg = PACKAGES[i];
+  function selectPackage(id) {
+    var p = PACKAGES.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+    selectedPkg = p;
     document.querySelectorAll('#pkgGrid .pkg-card').forEach(function (c) {
-      var on = +c.dataset.i === i;
+      var on = c.dataset.id === id;
       c.classList.toggle('sel', on);
       c.setAttribute('aria-checked', on ? 'true' : 'false');
       c.tabIndex = on ? 0 : -1;
     });
     updatePrice();
   }
+  function renderPkgGrid() {
+    var grid = document.getElementById('pkgGrid'); if (!grid) return;
+    grid.innerHTML = availablePkgs().map(packageCardHTML).join('');
+    wirePackages();
+  }
   function wirePackages() {
     var cards = [].slice.call(document.querySelectorAll('#pkgGrid .pkg-card'));
-    cards.forEach(function (c) {
-      var i = +c.dataset.i;
-      c.addEventListener('click', function () { selectPackage(i); });
+    cards.forEach(function (c, idx) {
+      var id = c.dataset.id;
+      c.addEventListener('click', function () { selectPackage(id); });
       c.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPackage(i); }
-        else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); var n = (i + 1) % PACKAGES.length; selectPackage(n); cards[n].focus(); }
-        else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); var n = (i - 1 + PACKAGES.length) % PACKAGES.length; selectPackage(n); cards[n].focus(); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPackage(id); }
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); var n = (idx + 1) % cards.length; selectPackage(cards[n].dataset.id); cards[n].focus(); }
+        else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); var n = (idx - 1 + cards.length) % cards.length; selectPackage(cards[n].dataset.id); cards[n].focus(); }
+      });
+    });
+  }
+  // Metro-Manila toggle → re-filter the pen/vial options
+  function wireMM() {
+    var opts = [].slice.call(document.querySelectorAll('#pkgMM .pkg-mm-opt'));
+    opts.forEach(function (b) {
+      b.addEventListener('click', function () {
+        pkgMM = b.dataset.mm === 'yes';
+        opts.forEach(function (x) { var on = x === b; x.classList.toggle('sel', on); x.setAttribute('aria-checked', on ? 'true' : 'false'); });
+        if (!pkgMM && PEN_IDS.indexOf(selectedPkg.id) >= 0) selectedPkg = PACKAGES[0];  // reset to a vial option
+        renderPkgGrid();
+        var note = document.getElementById('pkgMMNote'); if (note) note.hidden = pkgMM;
+        updatePrice();
       });
     });
   }
@@ -93,6 +121,7 @@
       ? product.dosageOptions : [{ mg: '—', price: product.price }];
     selected = opts[0];
     selectedPkg = PACKAGES[0];
+    pkgMM = true;   // fresh render → default to "in Metro Manila" (markup shows Yes selected)
 
     root.innerHTML =
       '<nav class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span>' +
@@ -128,8 +157,18 @@
           '<section class="ritual-section" aria-labelledby="ritualTitle">' +
             '<div class="ritual-head"><h2 id="ritualTitle">Complete Your Ritual</h2>' +
               '<p>Choose how you would like your peptide prepared before adding it to your ritual.</p></div>' +
+            '<div class="pkg-mm" id="pkgMM" role="radiogroup" aria-label="Are you currently located in Metro Manila?">' +
+              '<span class="pkg-mm-label">Are you currently located in Metro Manila?</span>' +
+              '<div class="pkg-mm-opts">' +
+                '<button type="button" class="pkg-mm-opt sel" data-mm="yes" role="radio" aria-checked="true">Yes</button>' +
+                '<button type="button" class="pkg-mm-opt" data-mm="no" role="radio" aria-checked="false">No</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="pkg-mm-note" id="pkgMMNote" hidden>' +
+              '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.2v.2" stroke-linecap="round"/></svg>' +
+              '<span>Injection pen kits currently deliver within Metro Manila only, so we\'re showing vial options for your location.</span></div>' +
             '<div class="pkg-grid" id="pkgGrid" role="radiogroup" aria-label="Package options">' +
-              PACKAGES.map(packageCardHTML).join('') +
+              availablePkgs().map(packageCardHTML).join('') +
             '</div>' +
           '</section>' +
           '<div class="detail-actions ritual-actions">' +
@@ -170,6 +209,7 @@
       });
     });
     wirePackages();
+    wireMM();
     updatePrice();
     document.getElementById('qMinus').addEventListener('click', function () { qty = Math.max(1, qty - 1); document.getElementById('qVal').textContent = qty; });
     document.getElementById('qPlus').addEventListener('click', function () { qty++; document.getElementById('qVal').textContent = qty; });

@@ -17,7 +17,7 @@
   var FEE_EXPRESS   = 300;
   var PAYMENT_METHOD = 'GCash';                        // shown on the confirmation + order message
   var VIBER_NUMBER   = '+639761831910';               // support Viber (change here only)
-  var WHATSAPP_NUMBER = '+639761831910';              // support WhatsApp (change here only)
+  var WHATSAPP_NUMBER = '+639603952447';              // support WhatsApp (change here only)
   /* ------------------------------------------------------------------- */
 
   var VB_DIGITS = VIBER_NUMBER.replace(/[^0-9]/g, '');

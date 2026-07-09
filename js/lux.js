@@ -87,18 +87,24 @@
     });
   }
 
-  /* ---------- 3 · Gentle desktop momentum scroll -----------------------
-     Softens the wheel on precise pointers only. Touch keeps its native
-     momentum; reduced-motion turns this off. It animates the REAL scroll
-     position (no transform wrapper), so fixed/sticky headers, the cart
-     drawer and overlays keep working — and it bails whenever the body is
-     scroll-locked or the pointer is over an inner scroll area. */
+  /* ---------- 3 · Snappy mouse-wheel smoothing -------------------------
+     Smooths ONLY the classic mouse wheel (coarse, discrete steps) with a
+     short, responsive ease — never floaty. A precision trackpad already
+     carries the OS's own momentum, so those events are left 100% native
+     (smoothing them would double up and feel delayed/rubber-bandy).
+     Animates the REAL scroll position (no transform wrapper) so fixed/
+     sticky headers, the cart drawer and overlays keep working; bails when
+     the body is scroll-locked or the pointer is over an inner scroll area. */
   function setupSmoothScroll() {
     if (reduce.matches) return;
+    // Desktop-only: requires a precise pointer (mouse / trackpad). Phones and
+    // touch-only tablets report pointer:coarse and keep native momentum. We only
+    // ever smooth WHEEL input, so touch swipes on hybrid/touchscreen laptops are
+    // untouched — hence no maxTouchPoints/ontouchstart guard (those wrongly
+    // disable smoothing on Windows laptops that merely *support* touch).
     if (!window.matchMedia('(pointer:fine)').matches) return;
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) return;
 
-    var LERP = 0.14, current = sy(), target = current, running = false, self = false;
+    var LERP = 0.25, current = sy(), target = current, running = false, self = false;
     function sy() { return window.scrollY || html.scrollTop || 0; }
     function maxY() {
       var se = document.scrollingElement || html;
@@ -123,17 +129,26 @@
     }
     function loop() {
       current += (target - current) * LERP;
-      if (Math.abs(target - current) < 0.5) { current = target; running = false; }
+      if (Math.abs(target - current) < 0.4) { current = target; running = false; }
       self = true; window.scrollTo(0, Math.round(current)); self = false;
       if (running) requestAnimationFrame(loop);
     }
+    // Classic mouse wheel (coarse, discrete) → worth smoothing. Precision
+    // trackpad (fine deltas, or any horizontal delta — already OS-momentum'd)
+    // → leave native, or it feels double-smoothed and floaty.
+    function isMouseWheel(e) {
+      if (e.deltaMode !== 0) return true;        // line/page mode = mouse wheel
+      if (e.deltaX !== 0) return false;          // 2-D delta = trackpad
+      return Math.abs(e.deltaY) >= 100;          // large discrete step = mouse wheel
+    }
     window.addEventListener('wheel', function (e) {
-      if (e.ctrlKey || e.metaKey) return;                 // pinch-zoom → native
-      if (locked()) { current = target = sy(); return; }  // drawer/overlay open → native
-      if (innerScrolls(e.target, e.deltaY)) return;        // scrollable inner region → native
-      var unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
+      if (e.ctrlKey || e.metaKey) return;                                            // pinch-zoom → native
+      if (maxY() <= 0) return;                                                       // not scrollable → native
+      if (locked() || innerScrolls(e.target, e.deltaY)) { running = false; return; } // overlay / inner scroll → native
+      if (!isMouseWheel(e)) { running = false; return; }                             // trackpad → native OS momentum
+      var unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? window.innerHeight : 1;
       e.preventDefault();
-      if (!running) current = sy();
+      if (!running) current = sy();                 // start from the live position → connected
       target = Math.max(0, Math.min(maxY(), target + e.deltaY * unit));
       if (!running) { running = true; requestAnimationFrame(loop); }
     }, { passive: false });

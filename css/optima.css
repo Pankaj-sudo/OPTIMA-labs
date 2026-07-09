@@ -197,7 +197,7 @@ img,svg{ max-width:100%; }
   display:grid; grid-template-columns:repeat(3, 1fr); gap:26px; margin:26px 0 96px;
 }
 @media (max-width:900px){ .grid{ grid-template-columns:repeat(2,1fr); } }
-@media (max-width:600px){ .grid{ grid-template-columns:1fr; } }
+@media (max-width:600px){ .grid{ grid-template-columns:repeat(2,1fr); } }
 
 .card{
   background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-soft);
@@ -897,6 +897,21 @@ html.reveal-ready .reveal.in{ opacity:1; transform:none; }
 .ritual-section{ margin-top:26px; padding-top:24px; border-top:1px solid rgba(183,154,107,.28); }
 .ritual-head h2{ font-family:var(--serif); font-size:22px; color:var(--espresso); }
 .ritual-head p{ margin-top:6px; font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+/* Metro-Manila delivery question (gates pen vs vial package options) */
+.pkg-mm{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin-top:16px; }
+.pkg-mm-label{ font-size:13.5px; font-weight:700; color:var(--espresso); }
+.pkg-mm-opts{ display:flex; gap:8px; }
+.pkg-mm-opt{ appearance:none; cursor:pointer; font:inherit; font-size:14px; font-weight:600; padding:8px 22px; min-height:42px;
+  border-radius:999px; border:1px solid rgba(183,154,107,.45); background:var(--surface); color:var(--espresso); -webkit-tap-highlight-color:transparent;
+  transition:background .25s ease, color .22s ease, border-color .25s ease, transform .18s ease, box-shadow .25s ease; }
+.pkg-mm-opt:hover{ border-color:var(--clay); }
+.pkg-mm-opt.sel{ background:var(--clay); color:#fff; border-color:var(--clay); box-shadow:0 10px 22px -14px rgba(169,106,88,.6); }
+.pkg-mm-opt:active{ transform:scale(.97); }
+.pkg-mm-opt:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+.pkg-mm-note{ display:flex; gap:9px; align-items:flex-start; margin-top:12px; padding:11px 14px; border-radius:12px;
+  background:rgba(183,154,107,.1); border:1px solid rgba(183,154,107,.34); font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
+.pkg-mm-note[hidden]{ display:none; }
+.pkg-mm-note svg{ flex:none; color:var(--champagne); margin-top:1px; }
 .pkg-grid{ display:grid; gap:12px; margin-top:18px; }
 .pkg-card{ display:flex; align-items:center; gap:16px; padding:16px 18px; min-height:72px; border-radius:18px;
   background:linear-gradient(180deg,#ffffff,#FBF6F1); border:1px solid rgba(183,154,107,.3);

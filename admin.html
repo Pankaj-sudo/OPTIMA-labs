@@ -562,6 +562,9 @@
           <div class="sec-t">Goals (from assessment)</div>
           <div class="kv muted" id="cmGoals"></div>
           <div class="divider"></div>
+          <div class="sec-t">Patient Lab Results</div>
+          <div id="cmLab" class="muted">No lab results uploaded</div>
+          <div class="divider"></div>
           <div class="sec-t">Consultation Fee</div>
           <div class="total-row"><span>Fee</span><span id="cmFee"></span></div>
         </div>
@@ -972,6 +975,7 @@ window.OL = (function () {
     $('cmMethod').textContent='Contact method: '+(c.contact_method||'—');
     $('cmNotes').textContent=c.notes||'No notes';
     $('cmGoals').textContent=(c.goals&&c.goals.length)?c.goals.join(', '):'—';
+    $('cmLab').innerHTML=labHTML(c.lab_results);
     $('cmFee').textContent=money(c.consultation_fee||0);
     $('cmProof').innerHTML=consultProof(c);
     $('cmStatusCur').innerHTML=cBadge(c.payment_status||'pending_verification');
@@ -986,6 +990,16 @@ window.OL = (function () {
     }
     if(path) return '<span class="muted">Receipt uploaded ('+(type||'file')+') — public URL not available. Storage path: '+path+'</span>';
     return '<span class="muted">No receipt uploaded</span>';
+  }
+  // Patient lab results attached to a consultation (uploaded during the assessment)
+  function labHTML(lab){
+    if(!lab || (!lab.url && !lab.path)) return '<span class="muted">No lab results uploaded</span>';
+    var head = lab.date ? '<div class="kv muted" style="margin-bottom:8px;">Dated: '+lab.date+'</div>' : '';
+    if(lab.url){
+      if(lab.type==='pdf') return head+'<iframe src="'+lab.url+'" style="width:100%;height:240px;border:0;border-radius:8px;background:#fff;" title="Patient lab results (PDF)"></iframe><a href="'+lab.url+'" target="_blank" rel="noopener">View Labs (PDF) ↗</a>';
+      return head+'<img class="proof-img" src="'+lab.url+'"><a href="'+lab.url+'" target="_blank" rel="noopener">View Full Size ↗</a>';
+    }
+    return head+'<span class="muted">Uploaded ('+(lab.type||'file')+') — public URL not available. Storage path: '+lab.path+'</span>';
   }
   function closeConsult(){ $('consultModal').classList.remove('open'); }
   async function updateConsultStatus(){

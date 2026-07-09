@@ -20,7 +20,7 @@
   window.__waFabLoaded = true;
 
   var CONFIG = {
-    number: '+639761831910',                       // ← change here if it ever moves
+    number: '+639603952447',                       // ← change here if it ever moves
     greeting:
       'Hello OPTIMA Labs 👋\n\n' +
       "I'm interested in learning more about your peptide products. " +
@@ -34,7 +34,7 @@
     }
   };
 
-  var digits = CONFIG.number.replace(/[^0-9]/g, '');                    // 639761831910
+  var digits = CONFIG.number.replace(/[^0-9]/g, '');                    // 639603952447
   var WA_URL = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(CONFIG.greeting);
   var SEEN_KEY = 'optima_wa_welcome_seen';
 

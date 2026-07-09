@@ -84,8 +84,7 @@
       { id: 'organ',       label: 'Serious heart, liver, or kidney condition' },
       { id: 'diabetes',    label: 'Diabetes (type 1 or type 2)' },
       { id: 'medication',  label: 'Currently taking prescription medication' },
-      { id: 'allergies',   label: 'Known allergies to peptides or injectable products' },
-      { id: 'none',        label: 'None of the above' }
+      { id: 'allergies',   label: 'Known allergies to peptides or injectable products' }
     ],
 
     /* ---- Fixed answer options for the profile / lifestyle / experience steps ---- */
@@ -99,7 +98,10 @@
       stress:      ['Low', 'Moderate', 'High'],
       water:       ['< 1 L', '1–2 L', '2–3 L', '3 L+'],
       nutrition:   ['Needs work', 'Balanced', 'Very clean'],
-      yesNo:       ['No', 'Yes']
+      yesNo:       ['No', 'Yes'],
+      metroManila: ['Yes', 'No'],
+      familyConditions: ['Diabetes', 'High blood pressure', 'Heart disease', 'Stroke',
+                         'Cancer', 'High cholesterol', 'Thyroid disorder', 'None / Not sure']
     }
   };
 })();
