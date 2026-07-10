@@ -144,7 +144,14 @@
   var catsDone = false, pendingCoa = null;
   function staticList() { return (window.COA_DATA || []).slice(); }
 
+  // Certificates hidden from the public Lab Verification listing, matched by
+  // normalized name or slug. Display-only — the database/admin are untouched.
+  var COA_EXCLUDE = { 'cjc1295dac': 1, 'cjc1295withdac': 1 };
+  function normCoa(s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+  function isExcludedCoa(c) { return !!(COA_EXCLUDE[normCoa(c.name)] || COA_EXCLUDE[normCoa(c.slug)]); }
+
   function setData(list) {
+    list = list.filter(function (c) { return !isExcludedCoa(c); });
     ALL = list.slice().sort(function (a, b) {
       var f = (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
       return f || a.name.localeCompare(b.name);

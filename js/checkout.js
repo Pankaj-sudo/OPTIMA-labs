@@ -386,17 +386,22 @@
     return { subtotal: subtotal, fee: fee, total: total, items: items };
   }
 
-  /* Smoothly show/hide a delivery card (fade + collapse out of flow). */
+  /* Smoothly show/hide a delivery card (fade + collapse out of flow). A pending
+     hide timer is always cleared on show, so a stale hide can't re-hide a card
+     the shopper just switched back to. */
   function fadeCard(card, show) {
     if (show) {
+      if (card._hideTimer) { clearTimeout(card._hideTimer); card._hideTimer = null; }
       if (card.style.display === 'none' || card.classList.contains('is-hidden')) {
         card.style.display = '';
-        card.classList.add('is-hidden');
         requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.remove('is-hidden'); }); });
       }
     } else if (!card.classList.contains('is-hidden')) {
       card.classList.add('is-hidden');
-      setTimeout(function () { if (card.classList.contains('is-hidden')) card.style.display = 'none'; }, 360);
+      card._hideTimer = setTimeout(function () {
+        card._hideTimer = null;
+        if (card.classList.contains('is-hidden')) card.style.display = 'none';
+      }, 360);
     }
   }
 
