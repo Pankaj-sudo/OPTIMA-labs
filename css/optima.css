@@ -284,6 +284,10 @@ img,svg{ max-width:100%; }
 .detail-info .cat{ font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--champagne); }
 .detail-info h1{ font-size:clamp(32px,4vw,46px); margin-top:10px; }
 .detail-price{ font-family:var(--serif); font-size:32px; margin-top:16px; color:var(--espresso); }
+.pro-coupon{ display:flex; align-items:center; gap:9px; margin-top:14px; padding:10px 14px; border-radius:12px;
+  background:rgba(90,162,119,.09); border:1px solid rgba(90,162,119,.28); font-size:13.5px; color:var(--espresso); }
+.pro-coupon .pc-ico{ font-size:16px; flex:none; }
+.pro-coupon .pc-code{ letter-spacing:.04em; color:var(--clay-deep); }
 .detail-desc{ margin-top:18px; color:var(--ink-soft); max-width:56ch; }
 .detail-desc p{ margin:0 0 12px; line-height:1.65; }
 .detail-desc p:last-child{ margin-bottom:0; }
@@ -588,7 +592,68 @@ img,svg{ max-width:100%; }
 .co-row .free{ color:var(--clay-deep); font-weight:700; }
 .co-total{ display:flex; justify-content:space-between; align-items:baseline; margin-top:10px; }
 .co-total .lbl{ font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
-.co-total .amt{ font-family:var(--serif); font-size:22px; color:var(--clay-deep); }
+.co-total .amt{ font-family:var(--serif); font-size:22px; color:var(--clay-deep); transition:color .2s ease; }
+
+/* ---- checkout coupon ---- */
+.co-coupon-line{ animation:coCouponIn .32s cubic-bezier(.22,.61,.36,1) both; }
+.co-coupon-line span:first-child{ color:var(--clay-deep); font-weight:600; }
+.co-disc-amt{ color:#5AA277; font-weight:700; }
+@keyframes coCouponIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+
+.co-coupon{ position:relative; margin-top:16px; }
+/* `hidden` guards — author display rules below would otherwise override [hidden] */
+.co-row[hidden], .co-coupon-in[hidden], .co-coupon-applied[hidden], .co-coupon-err[hidden]{ display:none !important; }
+.co-coupon-in{ display:flex; gap:8px; border-radius:12px; transition:transform .1s ease; }
+.co-coupon-in input{
+  flex:1; min-width:0; padding:12px 14px; border-radius:12px; border:1px solid #E8E0D5;
+  background:#fff; font-family:var(--sans); font-size:14px; color:var(--espresso); letter-spacing:.03em; text-transform:uppercase;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.co-coupon-in input::placeholder{ text-transform:none; letter-spacing:0; color:#b3a498; }
+.co-coupon-in input:focus{ outline:none; border-color:var(--clay); box-shadow:0 0 0 3px rgba(192,141,128,.15); }
+.co-coupon-in.invalid input{ border-color:#EF4444; box-shadow:0 0 0 3px rgba(239,68,68,.12); }
+.co-coupon-apply{
+  flex:none; padding:0 20px; border:0; border-radius:12px; cursor:pointer;
+  background:var(--espresso); color:#fff; font-family:var(--sans); font-weight:700; font-size:13.5px;
+  transition:background .2s ease, transform .12s ease;
+}
+.co-coupon-apply:hover{ background:#3a2f2a; }
+.co-coupon-apply:active{ transform:scale(.97); }
+.co-coupon-in.shake{ animation:coShake .45s cubic-bezier(.36,.07,.19,.97); }
+@keyframes coShake{ 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-5px);} 40%,60%{transform:translateX(5px);} }
+
+.co-coupon-applied{
+  display:flex; align-items:center; gap:11px; padding:12px 14px; border-radius:12px;
+  background:rgba(90,162,119,.10); border:1px solid rgba(90,162,119,.35);
+  animation:coCouponApplyIn .4s cubic-bezier(.22,.61,.36,1) both;
+}
+@keyframes coCouponApplyIn{ from{ opacity:0; transform:translateY(6px) scale(.98); } to{ opacity:1; transform:none; } }
+.cc-check{ flex:none; width:24px; height:24px; border-radius:50%; background:#5AA277; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 0 rgba(90,162,119,.5); animation:ccGlow .9s ease-out both; }
+.cc-check svg{ width:14px; height:14px; stroke-dasharray:24; stroke-dashoffset:24; animation:ccDraw .4s .12s ease forwards; }
+@keyframes ccDraw{ to{ stroke-dashoffset:0; } }
+@keyframes ccGlow{ 0%{ box-shadow:0 0 0 0 rgba(90,162,119,.45); } 100%{ box-shadow:0 0 0 12px rgba(90,162,119,0); } }
+.cc-text{ flex:1; font-size:13.5px; color:var(--espresso); }
+.cc-text b{ font-weight:700; letter-spacing:.03em; }
+.cc-sub{ color:#5AA277; font-weight:600; }
+.co-coupon-remove{ flex:none; width:26px; height:26px; border:0; border-radius:50%; background:transparent; color:var(--ink-soft); font-size:19px; line-height:1; cursor:pointer; transition:background .2s ease, color .2s ease; }
+.co-coupon-remove:hover{ background:rgba(0,0,0,.06); color:var(--espresso); }
+.co-coupon-err{ margin-top:8px; font-size:12.5px; color:#EF4444; opacity:0; transform:translateY(-3px); }
+.co-coupon-err.show{ animation:coErrIn .25s ease forwards; }
+@keyframes coErrIn{ to{ opacity:1; transform:none; } }
+
+.co-confetti{ position:absolute; left:0; right:0; top:44px; height:0; pointer-events:none; z-index:3; text-align:center; }
+.co-confetti span{
+  position:absolute; left:50%; top:0; width:8px; height:8px; border-radius:2px;
+  opacity:0; animation:confettiFly 1s cubic-bezier(.2,.6,.35,1) forwards;
+}
+@keyframes confettiFly{
+  0%{ opacity:1; transform:translate(-50%,0) rotate(0); }
+  100%{ opacity:0; transform:translate(calc(-50% + var(--dx)), var(--dy)) rotate(var(--rot)); }
+}
+@media (prefers-reduced-motion:reduce){
+  .co-coupon-line,.co-coupon-applied,.cc-check,.cc-check svg,.co-coupon-in.shake{ animation:none; }
+  .cc-check svg{ stroke-dashoffset:0; }
+}
 .co-pay-title{ font-family:var(--serif); font-size:20px; color:var(--espresso); }
 .co-qr{
   width:240px; height:240px; max-width:100%; margin:16px auto 0; border-radius:12px;

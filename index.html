@@ -46,6 +46,18 @@
   /* ---------- Nav ---------- */
   /* Transparent over the hero video at the top; blur + hairline border.
      Scrolling past ~48px transitions it to a warm ivory bar. */
+  /* Promotional coupon banner (in-flow, after the hero) */
+  .promo-banner{ background:linear-gradient(90deg, var(--clay-deep), var(--clay)); color:#fff; overflow:hidden; animation:promoIn .5s cubic-bezier(.22,.61,.36,1) both; }
+  .promo-inner{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; padding:13px 22px; font-size:14.5px; text-align:center; }
+  .promo-emoji{ font-size:18px; }
+  .promo-eyebrow{ text-transform:uppercase; letter-spacing:.12em; font-size:11px; font-weight:800; opacity:.92; }
+  .promo-code{ background:rgba(255,255,255,.22); padding:3px 10px; border-radius:7px; letter-spacing:.06em; font-weight:800; white-space:nowrap; }
+  .promo-cta{ background:#fff; color:var(--clay-deep); padding:8px 18px; border-radius:999px; font-weight:700; font-size:13px; text-decoration:none; transition:transform .15s ease, box-shadow .2s ease; }
+  .promo-cta:hover{ transform:translateY(-1px); box-shadow:0 8px 18px -8px rgba(0,0,0,.4); }
+  @keyframes promoIn{ from{ opacity:0; transform:translateY(-8px); max-height:0; } to{ opacity:1; transform:none; max-height:120px; } }
+  @media (max-width:560px){ .promo-inner{ font-size:13px; gap:9px; padding:12px 16px; } }
+  @media (prefers-reduced-motion:reduce){ .promo-banner{ animation:none; } }
+
   header{
     position:fixed; top:0; left:0; right:0; z-index:50;
     /* Transparent glass over the hero video — a hint of warm smoke, not a white bar */
@@ -715,6 +727,15 @@
   </div>
 </div>
 
+<!-- ============ PROMO BANNER (shows only when an active coupon exists) ============ -->
+<div class="promo-banner" id="couponBanner" hidden>
+  <div class="wrap promo-inner">
+    <span class="promo-emoji" aria-hidden="true">🎉</span>
+    <span class="promo-text"><b class="promo-eyebrow">Limited Time</b> — Use code <b class="promo-code" id="promoCode">CODE</b> <span id="promoText"></span></span>
+    <a class="promo-cta" href="products.html">Shop Now</a>
+  </div>
+</div>
+
 <!-- ============ TRUST STRIP ============ -->
 <div class="strip">
   <div class="wrap strip-inner">
@@ -756,7 +777,7 @@
     <div class="sec-head" style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:20px;">
       <div>
         <hr class="rule">
-        <h2>Our Top 6 Products</h2>
+        <h2>Our Best Sellers</h2>
         <p>Discover our six most sought-after pharmaceutical-grade peptides and essentials. Each product
            is selected for exceptional quality, third-party verification, and a seamless wellness experience.</p>
       </div>
@@ -893,6 +914,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="js/firebase-init.js"></script>
+<script src="js/coupon.js"></script>
 <script src="js/shop-data.js"></script>
 <script src="js/auth-nav.js"></script>
 <script src="js/mobile-nav.js" defer></script>
@@ -1014,6 +1036,21 @@
       '</div>' +
       '<a class="btn btn-primary proof-btn" href="verification.html?coa=' + encodeURIComponent(c.slug) + '">View Third-Party Verification</a>' +
     '</article>';
+})();
+</script>
+
+<!-- Promo banner: driven live by the global coupon (auto shows/hides) -->
+<script>
+(function () {
+  function render(c) {
+    var b = document.getElementById('couponBanner'); if (!b) return;
+    if (!c) { b.hidden = true; return; }
+    var disc = window.OptimaCoupon.formatDiscount(c);
+    document.getElementById('promoCode').textContent = c.code;
+    document.getElementById('promoText').textContent = c.description ? ('— ' + c.description) : ('and get ' + disc + ' OFF sitewide');
+    b.hidden = false;
+  }
+  if (window.OptimaCoupon) window.OptimaCoupon.onChange(render);
 })();
 </script>
 

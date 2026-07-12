@@ -77,6 +77,7 @@
       'Courier:', courier, '',
       'Delivery Address:', addr, '',
       (order.courier_reference ? 'Courier Booking Ref:\n' + order.courier_reference + '\n' : '') +
+      (order.coupon_code && order.coupon_discount > 0 ? 'Coupon: ' + order.coupon_code + ' (− ' + amt(order.coupon_discount) + ')\n' : '') +
       'Total:', amt(sum.total), '',
       'Thank you.'
     ];
@@ -190,9 +191,23 @@
               '<div class="co-items" id="coItems"></div>' +
               '<hr class="co-hr">' +
               '<div class="co-row"><span>Subtotal</span><span id="coSubtotal"></span></div>' +
+              '<div class="co-row co-coupon-line" id="coCouponRow" hidden><span id="coCouponName">Coupon</span><span id="coCouponDisc" class="co-disc-amt"></span></div>' +
               '<div class="co-row"><span>Delivery</span><span id="coFee"></span></div>' +
               '<hr class="co-hr">' +
               '<div class="co-total"><span class="lbl">Total</span><span class="amt" id="coTotal"></span></div>' +
+              /* Coupon input (below the summary) */
+              '<div class="co-coupon" id="coCouponBox">' +
+                '<div class="co-coupon-in" id="coCouponInput">' +
+                  '<input type="text" id="coCouponCode" placeholder="Coupon code" autocomplete="off" spellcheck="false" aria-label="Coupon code">' +
+                  '<button type="button" class="co-coupon-apply" id="coCouponApply">Apply</button>' +
+                '</div>' +
+                '<div class="co-coupon-applied" id="coCouponApplied" hidden>' +
+                  '<span class="cc-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>' +
+                  '<span class="cc-text"><b id="coCouponAppliedCode"></b><span class="cc-sub" id="coCouponAppliedSub"></span></span>' +
+                  '<button type="button" class="co-coupon-remove" id="coCouponRemove" aria-label="Remove coupon">&times;</button>' +
+                '</div>' +
+                '<div class="co-coupon-err" id="coCouponErr" role="alert" hidden></div>' +
+              '</div>' +
             '</div>' +
             '<div>' +
               '<div class="co-pay-title">Pay via GCash</div>' +
@@ -362,12 +377,53 @@
     overlay.querySelector('.co-body').scrollTop = 0;
   }
 
+  /* Animate a money element from its current value to a new one (~0.5s). */
+  function animateMoney(el, to, instant) {
+    if (!el) return;
+    var from = Number(el.dataset.val || 0);
+    el.dataset.val = to;
+    if (instant || from === to || typeof requestAnimationFrame === 'undefined') { el.textContent = money(to); return; }
+    var start = null, dur = 480;
+    function step(ts) {
+      if (start === null) start = ts;
+      var p = Math.min(1, (ts - start) / dur);
+      var e = 1 - Math.pow(1 - p, 3);                 // ease-out cubic
+      el.textContent = money(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(step); else el.textContent = money(to);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Small, elegant confetti burst (reduced-motion aware). */
+  function confettiBurst(host) {
+    if (!host) return;
+    try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+    var colors = ['#C08D80', '#B79A6B', '#5AA277', '#A96A58', '#DDB4A7'];
+    var wrap = document.createElement('div');
+    wrap.className = 'co-confetti';
+    for (var i = 0; i < 14; i++) {
+      var p = document.createElement('span');
+      var dist = 42 + Math.random() * 58;
+      p.style.setProperty('--dx', ((Math.random() < 0.5 ? -1 : 1) * (10 + Math.random() * dist)).toFixed(0) + 'px');
+      p.style.setProperty('--dy', (-(30 + Math.random() * dist)).toFixed(0) + 'px');
+      p.style.setProperty('--rot', (Math.random() * 540 - 270).toFixed(0) + 'deg');
+      p.style.background = colors[i % colors.length];
+      p.style.animationDelay = (Math.random() * 70).toFixed(0) + 'ms';
+      wrap.appendChild(p);
+    }
+    host.appendChild(wrap);
+    setTimeout(function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 1150);
+  }
+
   /* ---------- summary ---------- */
-  function renderSummary() {
+  function renderSummary(opts) {
+    opts = opts || {};
     var items = window.cartAPI.all();
     var subtotal = window.cartAPI.total();
     var fee = feeFor(deliveryType, deliveryRegion);
-    var total = subtotal + fee;
+    var applied = window.OptimaCoupon ? window.OptimaCoupon.getAppliedDiscount(subtotal) : null;
+    var discount = applied ? applied.discount : 0;
+    var total = Math.max(0, subtotal - discount) + fee;
     var rows = items.map(function (i) {
       return '<div class="co-item"><span class="co-iname"><span class="co-iqty">' + i.qty + '× </span>' +
         i.name + ' · ' + i.dosage +
@@ -377,13 +433,36 @@
 
     document.getElementById('coItems').innerHTML = rows;
     document.getElementById('coSubtotal').textContent = money(subtotal);
+    var cRow = document.getElementById('coCouponRow');
+    if (cRow) {
+      if (discount > 0 && applied) {
+        cRow.hidden = false;
+        document.getElementById('coCouponName').textContent = 'Coupon · ' + applied.coupon.code;
+        document.getElementById('coCouponDisc').textContent = '− ' + money(discount);
+      } else { cRow.hidden = true; }
+    }
     document.getElementById('coFee').innerHTML = isCourier(deliveryType)
       ? '<span class="free">Paid to ' + courierMeta(deliveryType).payee + '</span>'
       : (!deliveryType ? '<span class="co-fee-pending">Select delivery area</span>'
          : (fee === 0 ? '<span class="free">FREE 🎉</span>' : money(fee)));
-    document.getElementById('coTotal').textContent = money(total);
+    animateMoney(document.getElementById('coTotal'), total, opts.instant);
     document.getElementById('coPayAmt').textContent = money(total);
-    return { subtotal: subtotal, fee: fee, total: total, items: items };
+    syncCouponUI(applied);
+    return { subtotal: subtotal, fee: fee, discount: discount, total: total, items: items,
+             coupon: (applied && discount > 0) ? applied.coupon : null };
+  }
+
+  /* Reflect the applied-coupon state (chip vs input) in the checkout UI. */
+  function syncCouponUI(applied) {
+    var inp = document.getElementById('coCouponInput'),
+        chip = document.getElementById('coCouponApplied');
+    if (!inp || !chip) return;
+    if (applied && applied.discount > 0) {
+      inp.hidden = true; chip.hidden = false;
+      document.getElementById('coCouponAppliedCode').textContent = applied.coupon.code;
+      document.getElementById('coCouponAppliedSub').textContent =
+        ' · ' + window.OptimaCoupon.formatDiscount(applied.coupon) + ' off';
+    } else { inp.hidden = false; chip.hidden = true; }
   }
 
   /* Smoothly show/hide a delivery card (fade + collapse out of flow). A pending
@@ -520,6 +599,9 @@
       delivery_fee: sum.fee,
       items: sum.items,
       subtotal: sum.subtotal,
+      coupon_code: sum.coupon ? sum.coupon.code : null,
+      coupon_type: sum.coupon ? sum.coupon.type : null,
+      coupon_discount: sum.discount || 0,
       total: sum.total,
       payment_proof_url: proofUrl,
       payment_proof_path: proofPath,
@@ -570,6 +652,15 @@
     window.fbDb.collection('orders').add(order).then(function (ref) {
       orderDocId = ref.id;
       if (busy) busy.classList.remove('on');
+      // Count the redemption (rules allow a +1 to currentUses only) and clear
+      // the applied coupon so it isn't carried into the next order. Best-effort.
+      if (order.coupon_code && order.coupon_discount > 0) {
+        try {
+          window.fbDb.collection('settings').doc('globalCoupon')
+            .update({ currentUses: firebase.firestore.FieldValue.increment(1) }).catch(function () {});
+        } catch (e) {}
+      }
+      if (window.OptimaCoupon) window.OptimaCoupon.removeCoupon();
       showConfirmation(order, sum);
       window.cartAPI.clear();
     }).catch(function (err) {
@@ -609,6 +700,7 @@
       kv('Customer Name', order.customer_name) +
       kv('Delivery Method', (order.delivery_method || deliveryLabel(order.delivery_type))) +
       (isCourier(order.delivery_type) ? kv('Courier', courier) : '') +
+      (order.coupon_code && order.coupon_discount > 0 ? kv('Coupon', order.coupon_code + ' (− ' + money(order.coupon_discount) + ')') : '') +
       kv('Delivery Address', addr) +
       kv('Payment Status', 'Pending Verification') +
       (order.courier_reference ? kv('Courier Booking Ref', order.courier_reference) : '');
@@ -758,6 +850,47 @@
     document.getElementById('coChange').addEventListener('click', resetUpload);
 
     document.getElementById('coConfirm').addEventListener('click', confirmOrder);
+
+    /* ---- coupon apply / remove ---- */
+    var cCode = document.getElementById('coCouponCode'),
+        cApply = document.getElementById('coCouponApply'),
+        cErr = document.getElementById('coCouponErr');
+    function clearCouponErr() {
+      if (cErr) { cErr.hidden = true; cErr.textContent = ''; }
+      var box = document.getElementById('coCouponInput');
+      if (box) box.classList.remove('shake', 'invalid');
+    }
+    function doApplyCoupon() {
+      if (!window.OptimaCoupon) return;
+      var code = (cCode.value || '').trim();
+      if (!code) { couponError('Enter a coupon code.'); return; }
+      var res = window.OptimaCoupon.applyCoupon(code, window.cartAPI.total());
+      if (res.ok) { couponSuccess(); renderSummary(); }
+      else { couponError(window.OptimaCoupon.reasonText(res.reason, res.min)); }
+    }
+    function couponError(msg) {
+      var box = document.getElementById('coCouponInput');
+      if (box) { box.classList.add('invalid', 'shake'); setTimeout(function () { box.classList.remove('shake'); }, 500); }
+      if (cErr) { cErr.textContent = msg; cErr.hidden = false; cErr.classList.remove('show'); void cErr.offsetWidth; cErr.classList.add('show'); }
+      clearTimeout(couponError._t);
+      couponError._t = setTimeout(clearCouponErr, 4000);
+    }
+    function couponSuccess() {
+      clearCouponErr();
+      confettiBurst(document.getElementById('coCouponBox'));
+    }
+    if (cApply) cApply.addEventListener('click', doApplyCoupon);
+    if (cCode) {
+      cCode.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doApplyCoupon(); } });
+      cCode.addEventListener('input', clearCouponErr);
+    }
+    var cRemove = document.getElementById('coCouponRemove');
+    if (cRemove) cRemove.addEventListener('click', function () {
+      window.OptimaCoupon.removeCoupon();
+      if (cCode) cCode.value = '';
+      clearCouponErr();
+      renderSummary();
+    });
 
     document.getElementById('coCopy').addEventListener('click', function () {
       var btn = this, id = document.getElementById('coOrderId').textContent;

@@ -142,6 +142,7 @@
             (product.stockStatus === 'out_of_stock' ? 'Out of stock'
               : product.stockStatus === 'low_stock' ? 'Low stock — order soon' : 'In stock') +
           '</div>' +
+          '<div class="pro-coupon" id="proCoupon" hidden></div>' +
           '<div class="detail-desc">' + (product.description || '') + '</div>' +
           '<div class="opt-label" id="doseLabel">Select strength</div>' +
           '<div class="dose-options" id="doseOptions" role="group" aria-labelledby="doseLabel">' +
@@ -233,7 +234,21 @@
     }
 
     document.title = product.name + ' — OPTIMA Labs';
+    updateProCoupon();
   }
+
+  /* Small "coupon available" badge, driven by the live global coupon. */
+  function updateProCoupon() {
+    var el = document.getElementById('proCoupon');
+    if (!el || !window.OptimaCoupon) return;
+    var c = window.OptimaCoupon.getActiveCoupon();
+    if (!c) { el.hidden = true; return; }
+    el.innerHTML = '<span class="pc-ico" aria-hidden="true">🎟️</span>' +
+      '<span>Coupon available — use <b class="pc-code">' + c.code + '</b> at checkout for <b>' +
+      window.OptimaCoupon.formatDiscount(c) + ' off</b></span>';
+    el.hidden = false;
+  }
+  if (window.OptimaCoupon) window.OptimaCoupon.onChange(function () { updateProCoupon(); });
 
   async function loadRelated() {
     var wrap = document.getElementById('relatedGrid');

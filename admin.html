@@ -214,6 +214,27 @@
   .cm-mfield select{ background:var(--surface); border:1px solid var(--border); border-radius:9px; color:var(--ink); padding:10px 12px; font-size:13.5px; }
   @media (max-width:760px){ .cm-grid, .cm-cols, .cm-manage{ grid-template-columns:1fr; } }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+  /* Coupons page */
+  .cpn-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:18px; }
+  .cpn-switch{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; flex:none; user-select:none; }
+  .cpn-switch input{ position:absolute; opacity:0; width:0; height:0; }
+  .cpn-track{ width:46px; height:26px; border-radius:999px; background:var(--border); position:relative; transition:background .25s ease; }
+  .cpn-thumb{ position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.35); transition:transform .25s cubic-bezier(.4,0,.2,1); }
+  .cpn-switch input:checked + .cpn-track{ background:#5AA277; }
+  .cpn-switch input:checked + .cpn-track .cpn-thumb{ transform:translateX(20px); }
+  .cpn-switch input:focus-visible + .cpn-track{ outline:2px solid var(--gold,#C99A6B); outline-offset:2px; }
+  .cpn-state{ font-size:13px; font-weight:700; color:var(--muted); min-width:56px; }
+  .cpn-state.on{ color:#5AA277; }
+  .cpn-types{ display:flex; flex-wrap:wrap; gap:12px; }
+  .cpn-radio{ display:inline-flex; align-items:center; gap:9px; padding:11px 16px; border:1px solid var(--border); border-radius:10px; cursor:pointer; font-size:13.5px; transition:border-color .2s ease, background .2s ease; }
+  .cpn-radio:hover{ border-color:var(--gold,#C99A6B); }
+  .cpn-radio input{ accent-color:var(--gold,#C99A6B); }
+  .cpn-radio:has(input:checked){ border-color:var(--gold,#C99A6B); background:rgba(201,154,107,.08); }
+  .cpn-affix{ display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; background:var(--bg); overflow:hidden; }
+  .cpn-affix input{ border:0!important; background:transparent!important; flex:1; min-width:0; }
+  .cpn-affix .pre,.cpn-affix .suf{ padding:0 12px; color:var(--muted); font-weight:700; }
+  .cpn-preview-card #cpnPreview .cpn-pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; background:rgba(90,162,119,.12); color:#5AA277; font-weight:700; font-size:13px; }
+  .cpn-preview-card #cpnPreview .cpn-off{ color:var(--muted); }
   .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 14px; }
   /* dosage rows */
   .dose-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; margin-bottom:8px; }
@@ -272,6 +293,7 @@
       <button class="sb-item" data-page="arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 2.09 4.26L19 8l-3.5 3.4.83 4.85L12 14l-4.33 2.25.83-4.85L5 8l4.91-.74z"/></svg> New Arrivals</button>
       <button class="sb-item" data-page="labverif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 3v5l-4.4 7.5A2 2 0 0 0 7.3 19h9.4a2 2 0 0 0 1.7-3.5L14 8V3"/><path d="M8.5 14h7"/></svg> Lab Verification</button>
       <button class="sb-item" data-page="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 14l3-4 3 3 5-6"/></svg> Analytics</button>
+      <button class="sb-item" data-page="coupons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.6 13.4 12 22l-9-9V4h9l8.6 8.6a1.4 1.4 0 0 1 0 2z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> Coupons</button>
       <button class="sb-item" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V1a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H23a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</button>
     </nav>
     <div class="sb-bottom">
@@ -492,6 +514,55 @@
         <p class="muted" style="font-size:12px;margin-top:10px;">Admin access is granted by the Firebase custom claim <code>{admin:true}</code>, not by this list. The user must sign in once, then sign out/in after the claim is set.</p>
       </div>
     </section>
+
+    <!-- COUPONS -->
+    <section class="page" id="page-coupons">
+      <div class="card" style="max-width:700px;">
+        <div class="cpn-head">
+          <div>
+            <h3 style="margin:0;">Global Coupon</h3>
+            <p class="muted" style="font-size:13px;margin:6px 0 0;">One site-wide coupon applied to all products at checkout. Turn it off to instantly remove it from the storefront — no other change needed.</p>
+          </div>
+          <label class="cpn-switch" title="Active / Inactive">
+            <input type="checkbox" id="cpnActive" onchange="OL.cpnRefresh()">
+            <span class="cpn-track"><span class="cpn-thumb"></span></span>
+            <span class="cpn-state" id="cpnState">Inactive</span>
+          </label>
+        </div>
+
+        <div class="grid2" style="margin-top:20px;">
+          <div class="field"><label>Coupon Code</label><input id="cpnCode" placeholder="WELCOME10" style="text-transform:uppercase;letter-spacing:.05em;" oninput="OL.cpnRefresh()"></div>
+          <div class="field"><label>Description <span class="muted" style="font-weight:400;">— shown at checkout</span></label><input id="cpnDesc" placeholder="10% OFF All Peptides"></div>
+        </div>
+
+        <div class="sec-t">Discount Type</div>
+        <div class="cpn-types">
+          <label class="cpn-radio"><input type="radio" name="cpnType" value="percentage" checked onchange="OL.cpnType()"><span>Percentage (%)</span></label>
+          <label class="cpn-radio"><input type="radio" name="cpnType" value="fixed" onchange="OL.cpnType()"><span>Fixed Peso Amount (₱)</span></label>
+        </div>
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field" id="cpnPercentField"><label>Percentage Discount</label><div class="cpn-affix"><input id="cpnPercent" type="number" min="0" max="100" placeholder="10" oninput="OL.cpnRefresh()"><span class="suf">%</span></div></div>
+          <div class="field" id="cpnAmountField" hidden><label>Fixed Peso Discount</label><div class="cpn-affix"><span class="pre">₱</span><input id="cpnAmount" type="number" min="0" placeholder="500" oninput="OL.cpnRefresh()"></div></div>
+        </div>
+
+        <div class="sec-t">Conditions <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted);">(all optional)</span></div>
+        <div class="grid2">
+          <div class="field"><label>Minimum Purchase (₱)</label><input id="cpnMin" type="number" min="0" placeholder="5000"></div>
+          <div class="field"><label>Expiration Date</label><input id="cpnExpires" type="date"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Maximum Uses</label><input id="cpnMax" type="number" min="0" placeholder="100"></div>
+          <div class="field"><label>Current Uses <span class="muted" style="font-weight:400;">— auto</span></label><input id="cpnUses" type="number" disabled></div>
+        </div>
+
+        <button class="btn-gold" id="cpnSaveBtn" onclick="OL.saveCoupon()" style="margin-top:16px;">Save Coupon</button>
+      </div>
+
+      <div class="card cpn-preview-card" style="max-width:700px;margin-top:22px;">
+        <div class="sec-t" style="margin-top:0;">Checkout preview</div>
+        <div id="cpnPreview">—</div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -701,6 +772,8 @@
 <script src="js/assessment-config.js"></script>
 <!-- Catalog importer: defines window.importOptimaCatalog() (dry-run by default). Run from the console; writes nothing until called with {apply:true}. -->
 <script src="js/import-products.js"></script>
+<!-- Short-description updater: defines window.updateOptimaShortDescriptions() (dry-run by default). Updates ONLY the one-line card text. -->
+<script src="js/import-shortdesc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 window.OL = (function () {
@@ -747,11 +820,12 @@ window.OL = (function () {
     document.querySelectorAll('.sb-item').forEach(function(b){ b.classList.toggle('active', b.dataset.page===p); });
     document.querySelectorAll('.page').forEach(function(s){ s.classList.remove('active'); });
     $('page-'+p).classList.add('active');
-    $('pageTitle').textContent={dashboard:'Dashboard',orders:'Orders',consultations:'Consultations',products:'Products',arrivals:'New Arrivals',labverif:'Lab Verification',analytics:'Analytics',settings:'Settings'}[p];
+    $('pageTitle').textContent={dashboard:'Dashboard',orders:'Orders',consultations:'Consultations',products:'Products',arrivals:'New Arrivals',labverif:'Lab Verification',analytics:'Analytics',coupons:'Coupons',settings:'Settings'}[p];
     $('sidebar').classList.remove('open');
     if(p==='analytics') renderAnalytics();
     if(p==='arrivals') renderArrivals();
     if(p==='labverif') renderLabVerif();
+    if(p==='coupons') loadCoupon();
   }
   document.getElementById('sbNav').addEventListener('click',function(e){ var b=e.target.closest('.sb-item'); if(b) go(b.dataset.page); });
 
@@ -1473,6 +1547,65 @@ window.OL = (function () {
     try{ await window.fbDb.collection('config').doc('store').set({ gcash_number:$('cfgGcashNum').value.trim(), gcash_name:$('cfgGcashName').value.trim(), free_ship_threshold:parseFloat($('cfgThreshold').value)||2500, notify_email:$('cfgNotify').value.trim(), support_email:$('cfgSupport').value.trim() },{merge:true}); toast('Configuration saved'); }
     catch(e){ toast('Save failed: '+e.code); }
   }
+  /* ---------- coupons (settings/globalCoupon) ---------- */
+  var couponLoaded=false;
+  async function loadCoupon(){
+    try{
+      var doc=await window.fbDb.collection('settings').doc('globalCoupon').get();
+      var c=doc.exists?doc.data():{};
+      $('cpnCode').value=c.code||''; $('cpnDesc').value=c.description||'';
+      $('cpnActive').checked=!!c.active;
+      var type=c.type==='fixed'?'fixed':'percentage';
+      document.querySelectorAll('input[name="cpnType"]').forEach(function(r){ r.checked=(r.value===type); });
+      $('cpnPercent').value=(c.percent!=null&&c.type!=='fixed')?c.percent:(c.percent||'');
+      $('cpnAmount').value=c.amount||'';
+      $('cpnMin').value=c.minimumPurchase||''; $('cpnExpires').value=c.expiresAt||'';
+      $('cpnMax').value=c.maxUses||''; $('cpnUses').value=c.currentUses||0;
+    }catch(e){ /* first-time / offline: leave blank */ }
+    couponLoaded=true; cpnType(); cpnRefresh();
+  }
+  function cpnType(){
+    var t=(document.querySelector('input[name="cpnType"]:checked')||{}).value||'percentage';
+    $('cpnPercentField').hidden=(t!=='percentage');
+    $('cpnAmountField').hidden=(t!=='fixed');
+    cpnRefresh();
+  }
+  function cpnRefresh(){
+    var on=$('cpnActive').checked; $('cpnState').textContent=on?'Active':'Inactive'; $('cpnState').classList.toggle('on',on);
+    var code=($('cpnCode').value||'').trim().toUpperCase();
+    var t=(document.querySelector('input[name="cpnType"]:checked')||{}).value||'percentage';
+    var val=t==='percentage'?(($('cpnPercent').value||'')+'%'):('₱'+(parseFloat($('cpnAmount').value)||0).toLocaleString('en-PH'));
+    var pv=$('cpnPreview');
+    if(!on||!code){ pv.innerHTML='<span class="cpn-off">Coupon is <b>inactive</b> — customers won\'t see or be able to use it at checkout.</span>'; return; }
+    pv.innerHTML='<span class="cpn-pill">✓ '+esc(code)+' · '+esc(val)+' OFF</span>';
+  }
+  async function saveCoupon(){
+    var btn=$('cpnSaveBtn'); var orig=btn.textContent; btn.disabled=true; btn.textContent='Saving…';
+    var t=(document.querySelector('input[name="cpnType"]:checked')||{}).value||'percentage';
+    var data={
+      code:($('cpnCode').value||'').trim().toUpperCase(),
+      active:$('cpnActive').checked,
+      type:t,
+      percent:t==='percentage'?(parseFloat($('cpnPercent').value)||0):0,
+      amount:t==='fixed'?(parseFloat($('cpnAmount').value)||0):0,
+      minimumPurchase:parseFloat($('cpnMin').value)||0,
+      expiresAt:($('cpnExpires').value||'').trim(),
+      maxUses:parseInt($('cpnMax').value,10)||0,
+      description:($('cpnDesc').value||'').trim(),
+      updatedAt:svTs(), updatedBy:(window.fbAuth.currentUser&&window.fbAuth.currentUser.email)||'admin'
+    };
+    if(!data.code){ toast('Enter a coupon code'); btn.disabled=false; btn.textContent=orig; return; }
+    try{
+      // Preserve currentUses; initialise to 0 on first save.
+      var snap=await window.fbDb.collection('settings').doc('globalCoupon').get();
+      if(!snap.exists || typeof (snap.data()||{}).currentUses!=='number') data.currentUses=0;
+      await window.fbDb.collection('settings').doc('globalCoupon').set(data,{merge:true});
+      $('cpnUses').value=(snap.exists&&snap.data().currentUses)||0;
+      toast('Coupon Updated Successfully');
+    }catch(e){ toast('Save failed: '+(e.code||e.message)); }
+    btn.disabled=false; btn.textContent=orig;
+  }
+
   async function changePassword(){
     var cur=$('pwCur').value,nw=$('pwNew').value,cf=$('pwCon').value;
     if(nw!==cf){ toast('Passwords do not match'); return; }
@@ -1496,7 +1629,8 @@ window.OL = (function () {
     pGo:pGo, pClearFilters:pClearFilters, pSel:pSel, pSelectAll:pSelectAll, pBulk:pBulk, pStockAdj:pStockAdj, setStatus:setStatus, duplicateProduct:duplicateProduct,
     pmAddDose:pmAddDose, pmDelDose:pmDelDose, pmDoseSet:pmDoseSet, pmImgMove:pmImgMove, pmImgFeat:pmImgFeat, pmImgDel:pmImgDel, pmSyncStock:pmSyncStock,
     lvEdit:lvEdit, lvClose:lvClose, lvSave:lvSave, lvClear:lvClear, lvPreview:lvPreview,
-    openMarkNew:openMarkNew, closeMarkNew:closeMarkNew, markNew:markNew, saveConfig:saveConfig, changePassword:changePassword };
+    openMarkNew:openMarkNew, closeMarkNew:closeMarkNew, markNew:markNew, saveConfig:saveConfig, changePassword:changePassword,
+    saveCoupon:saveCoupon, cpnType:cpnType, cpnRefresh:cpnRefresh };
 })();
 </script>
 </body>

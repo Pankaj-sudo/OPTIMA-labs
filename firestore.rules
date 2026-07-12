@@ -37,6 +37,20 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Global store settings — currently the single site-wide coupon
+    // (settings/globalCoupon). Public read so the storefront can show/validate
+    // it; admins manage it. A signed-in order placement may bump ONLY the
+    // usage counter by exactly +1 (so coupon redemptions can be counted
+    // without a Cloud Function) — it can change nothing else.
+    match /settings/{doc} {
+      allow read:  if true;
+      allow write: if isAdmin();
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentUses'])
+                    && request.resource.data.currentUses is int
+                    && request.resource.data.currentUses == resource.data.currentUses + 1;
+    }
+
     // Self-assessment responses. Any signed-in session (incl. anonymous) may
     // record their own questionnaire; only admins can read/manage them.
     match /assessments/{id} {
