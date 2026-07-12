@@ -46,17 +46,71 @@
   /* ---------- Nav ---------- */
   /* Transparent over the hero video at the top; blur + hairline border.
      Scrolling past ~48px transitions it to a warm ivory bar. */
-  /* Promotional coupon banner (in-flow, after the hero) */
-  .promo-banner{ background:linear-gradient(90deg, var(--clay-deep), var(--clay)); color:#fff; overflow:hidden; animation:promoIn .5s cubic-bezier(.22,.61,.36,1) both; }
-  .promo-inner{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; padding:13px 22px; font-size:14.5px; text-align:center; }
-  .promo-emoji{ font-size:18px; }
-  .promo-eyebrow{ text-transform:uppercase; letter-spacing:.12em; font-size:11px; font-weight:800; opacity:.92; }
-  .promo-code{ background:rgba(255,255,255,.22); padding:3px 10px; border-radius:7px; letter-spacing:.06em; font-weight:800; white-space:nowrap; }
-  .promo-cta{ background:#fff; color:var(--clay-deep); padding:8px 18px; border-radius:999px; font-weight:700; font-size:13px; text-decoration:none; transition:transform .15s ease, box-shadow .2s ease; }
-  .promo-cta:hover{ transform:translateY(-1px); box-shadow:0 8px 18px -8px rgba(0,0,0,.4); }
-  @keyframes promoIn{ from{ opacity:0; transform:translateY(-8px); max-height:0; } to{ opacity:1; transform:none; max-height:120px; } }
-  @media (max-width:560px){ .promo-inner{ font-size:13px; gap:9px; padding:12px 16px; } }
-  @media (prefers-reduced-motion:reduce){ .promo-banner{ animation:none; } }
+  /* ── Coupon integrated into the frosted trust card (glass + hidden glow) ── */
+  @property --cl-a{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+  .strip-shell{ position:relative; z-index:3; width:min(1160px, calc(100% - 40px)); margin:-64px auto 0; }
+  .strip-shell .strip{ position:relative; z-index:2; width:100%; margin:0;
+    transition:transform .45s cubic-bezier(.22,.61,.36,1), background .45s ease, border-color .45s ease; }
+  /* Soft light source that lives BEHIND the frosted glass (diffused by it) */
+  .coupon-glow{
+    position:absolute; z-index:1; pointer-events:none;
+    left:6%; right:6%; top:-8px; height:88px;
+    background:radial-gradient(58% 130% at 50% 50%, #B7FFD7 0%, rgba(183,255,215,0) 70%);
+    filter:blur(80px); opacity:0; transform:scale(.9);
+  }
+  .strip-shell.has-coupon .coupon-glow{ animation:clGlowIn 1s ease both, clGlowBreathe 9s ease-in-out 1s infinite; }
+  @keyframes clGlowIn{ from{ opacity:0; transform:scale(.9);} to{ opacity:.42; transform:scale(1);} }
+  @keyframes clGlowBreathe{ 0%,100%{ opacity:.34; transform:scale(.99);} 50%{ opacity:.52; transform:scale(1.05);} }
+  /* Vision-Pro-style whisper of an animated border, only while a coupon is live */
+  .strip-shell.has-coupon::after{
+    content:''; position:absolute; inset:0; border-radius:24px; padding:1px; pointer-events:none; opacity:.55;
+    background:conic-gradient(from var(--cl-a), transparent 0%, rgba(183,255,215,.5) 10%, transparent 22%, transparent 100%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:clBorder 9s linear infinite;
+  }
+  @keyframes clBorder{ to{ --cl-a:360deg; } }
+
+  .coupon-layer{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:24px; }
+  .coupon-layer[hidden], .coupon-divider[hidden]{ display:none !important; }
+  .cl-check{ display:inline-flex; align-items:center; justify-content:center; flex:none; width:30px; height:30px; border-radius:50%; color:#79C9A0; background:rgba(150,225,185,.16); }
+  .cl-check svg{ width:16px; height:16px; stroke-dasharray:26; stroke-dashoffset:26; }
+  .strip-shell.has-coupon .cl-check svg{ animation:clDraw .5s .55s ease forwards; }
+  @keyframes clDraw{ to{ stroke-dashoffset:0; } }
+  .cl-applied{ font-size:16px; color:var(--espresso); font-weight:500; }
+  .cl-code{ font-size:21px; font-weight:600; letter-spacing:.03em; color:#5CB58A; text-shadow:0 1px 10px rgba(120,205,160,.35); }
+  .cl-sep{ width:1px; height:20px; background:rgba(63,55,50,.18); }
+  .cl-sub{ font-size:15px; color:var(--ink-soft); }
+  .cl-btn{ margin-left:auto; background:rgba(255,255,255,.92); color:var(--espresso); padding:10px 22px; border-radius:999px;
+    font-size:13.5px; font-weight:700; text-decoration:none; box-shadow:0 4px 16px -8px rgba(60,45,40,.25);
+    transition:background .35s ease, transform .35s ease, box-shadow .35s ease; }
+  .cl-btn:hover{ background:#F6DDCB; transform:translateY(-1px); box-shadow:0 10px 22px -10px rgba(217,150,123,.55); }
+  .coupon-divider{ height:1px; margin-bottom:24px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent); }
+  /* staggered reveal: glow → glass → text → button */
+  .strip-shell.has-coupon .coupon-layer > *{ opacity:0; transform:translateY(8px); animation:clUp .6s cubic-bezier(.22,.61,.36,1) forwards; }
+  .strip-shell.has-coupon .cl-check{ animation-delay:.30s; }
+  .strip-shell.has-coupon .cl-applied{ animation-delay:.38s; }
+  .strip-shell.has-coupon .cl-sep{ animation-delay:.42s; }
+  .strip-shell.has-coupon .cl-sub{ animation-delay:.46s; }
+  .strip-shell.has-coupon .cl-btn{ animation-delay:.62s; }
+  @keyframes clUp{ to{ opacity:1; transform:none; } }
+  /* hover: glass clearer, border brighter, glow +15%, lift */
+  .strip-shell.has-coupon:hover .strip{ transform:translateY(-4px); background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.30); }
+  .strip-shell.has-coupon:hover::after{ opacity:.85; }
+  .strip-shell.has-coupon:hover .coupon-glow{ filter:blur(72px) brightness(1.2); }
+  @media (max-width:640px){
+    .coupon-layer{ justify-content:center; text-align:center; gap:10px; padding-bottom:18px; }
+    .cl-sep{ display:none; }
+    .cl-btn{ margin-left:0; }
+    .coupon-divider{ margin-bottom:18px; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .strip-shell.has-coupon .coupon-glow{ animation:none; opacity:.4; }
+    .strip-shell.has-coupon::after{ animation:none; }
+    .strip-shell.has-coupon .coupon-layer > *,
+    .strip-shell.has-coupon .cl-check svg{ animation:none; opacity:1; transform:none; stroke-dashoffset:0; }
+    .strip-shell .strip{ transition:none; }
+  }
 
   header{
     position:fixed; top:0; left:0; right:0; z-index:50;
@@ -727,29 +781,35 @@
   </div>
 </div>
 
-<!-- ============ PROMO BANNER (shows only when an active coupon exists) ============ -->
-<div class="promo-banner" id="couponBanner" hidden>
-  <div class="wrap promo-inner">
-    <span class="promo-emoji" aria-hidden="true">🎉</span>
-    <span class="promo-text"><b class="promo-eyebrow">Limited Time</b> — Use code <b class="promo-code" id="promoCode">CODE</b> <span id="promoText"></span></span>
-    <a class="promo-cta" href="products.html">Shop Now</a>
-  </div>
-</div>
-
-<!-- ============ TRUST STRIP ============ -->
-<div class="strip">
-  <div class="wrap strip-inner">
-    <div>
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V5l7-3z" stroke="#B79A6B" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.8 11l2.2 2.2 4.2-4.4" stroke="#A96A58" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span><strong>&gt;99% purity,</strong> verified on every batch</span>
-    </div>
-    <div>
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="4" y="2.5" width="14" height="17" rx="2" stroke="#B79A6B" stroke-width="1.4"/><path d="M8 7h6M8 10.5h6M8 14h3.5" stroke="#A96A58" stroke-width="1.4" stroke-linecap="round"/></svg>
-      <span><strong>Independent COAs</strong> published for each lot</span>
-    </div>
-    <div>
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2v18M4.5 6.5L17.5 15.5M17.5 6.5L4.5 15.5" stroke="#B79A6B" stroke-width="1.4" stroke-linecap="round"/><circle cx="11" cy="11" r="3.2" stroke="#A96A58" stroke-width="1.4"/></svg>
-      <span><strong>Cold-chain sealed</strong> from lab to your door</span>
+<!-- ============ TRUST + COUPON GLASS CARD ============ -->
+<div class="strip-shell" id="trustStrip">
+  <div class="coupon-glow" aria-hidden="true"></div>
+  <div class="strip">
+    <div class="wrap">
+      <!-- Coupon layer (top) — appears only when a coupon is active -->
+      <div class="coupon-layer" id="couponLayer" hidden>
+        <span class="cl-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <span class="cl-applied">Coupon applied: <b class="cl-code" id="promoCode">WELCOMEOPTIMA</b></span>
+        <span class="cl-sep" aria-hidden="true"></span>
+        <span class="cl-sub" id="promoText">You saved ₱100 on your order.</span>
+        <a class="cl-btn" href="products.html">Shop Now</a>
+      </div>
+      <div class="coupon-divider" id="couponDivider" hidden></div>
+      <!-- Trust badges (bottom) -->
+      <div class="strip-inner">
+        <div>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V5l7-3z" stroke="#B79A6B" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.8 11l2.2 2.2 4.2-4.4" stroke="#A96A58" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><strong>&gt;99% purity,</strong> verified on every batch</span>
+        </div>
+        <div>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="4" y="2.5" width="14" height="17" rx="2" stroke="#B79A6B" stroke-width="1.4"/><path d="M8 7h6M8 10.5h6M8 14h3.5" stroke="#A96A58" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span><strong>Independent COAs</strong> published for each lot</span>
+        </div>
+        <div>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2v18M4.5 6.5L17.5 15.5M17.5 6.5L4.5 15.5" stroke="#B79A6B" stroke-width="1.4" stroke-linecap="round"/><circle cx="11" cy="11" r="3.2" stroke="#A96A58" stroke-width="1.4"/></svg>
+          <span><strong>Cold-chain sealed</strong> from lab to your door</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1039,16 +1099,25 @@
 })();
 </script>
 
-<!-- Promo banner: driven live by the global coupon (auto shows/hides) -->
+<!-- Coupon layer inside the trust glass card: driven live by the global coupon -->
 <script>
 (function () {
+  function savings(c) {
+    if (c.type === 'percentage') return 'You save ' + (Number(c.percent) || 0) + '% on your order.';
+    return 'You saved ₱' + Number(c.amount || 0).toLocaleString('en-PH') + ' on your order.';
+  }
   function render(c) {
-    var b = document.getElementById('couponBanner'); if (!b) return;
-    if (!c) { b.hidden = true; return; }
-    var disc = window.OptimaCoupon.formatDiscount(c);
+    var shell = document.getElementById('trustStrip'),
+        layer = document.getElementById('couponLayer'),
+        div = document.getElementById('couponDivider');
+    if (!shell) return;
+    if (!c) { shell.classList.remove('has-coupon'); if (layer) layer.hidden = true; if (div) div.hidden = true; return; }
     document.getElementById('promoCode').textContent = c.code;
-    document.getElementById('promoText').textContent = c.description ? ('— ' + c.description) : ('and get ' + disc + ' OFF sitewide');
-    b.hidden = false;
+    document.getElementById('promoText').textContent = savings(c);
+    if (layer) layer.hidden = false;
+    if (div) div.hidden = false;
+    // restart the reveal animations if the class was already present
+    shell.classList.remove('has-coupon'); void shell.offsetWidth; shell.classList.add('has-coupon');
   }
   if (window.OptimaCoupon) window.OptimaCoupon.onChange(render);
 })();
