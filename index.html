@@ -59,27 +59,45 @@
     filter:blur(80px); opacity:0; transform:scale(.9);
   }
   .strip-shell.has-coupon .coupon-glow{ animation:clGlowIn 1s ease both, clGlowBreathe 9s ease-in-out 1s infinite; }
-  @keyframes clGlowIn{ from{ opacity:0; transform:scale(.9);} to{ opacity:.42; transform:scale(1);} }
-  @keyframes clGlowBreathe{ 0%,100%{ opacity:.34; transform:scale(.99);} 50%{ opacity:.52; transform:scale(1.05);} }
-  /* Vision-Pro-style whisper of an animated border, only while a coupon is live */
+  @keyframes clGlowIn{ from{ opacity:0; transform:scale(.9);} to{ opacity:.5; transform:scale(1);} }
+  @keyframes clGlowBreathe{ 0%,100%{ opacity:.4; transform:scale(.99);} 50%{ opacity:.62; transform:scale(1.06);} }
+  /* Bright, luminous frosted border + soft white halo — "light trapped in glass" */
+  .strip-shell.has-coupon .strip{
+    border-color:rgba(255,255,255,.55);
+    box-shadow:
+      0 24px 70px rgba(0,0,0,.12),
+      inset 0 0 0 1px rgba(255,255,255,.4),
+      inset 0 1px 0 rgba(255,255,255,.55),
+      0 0 26px rgba(255,255,255,.28),
+      0 18px 55px -10px rgba(183,255,215,.30);
+  }
+  /* Bright glow riding along the bottom edge (strongest, like the reference) */
+  .strip-shell.has-coupon::before{
+    content:''; position:absolute; left:4%; right:4%; bottom:-7px; height:42px; pointer-events:none; z-index:0;
+    background:radial-gradient(50% 140% at 50% 0%, rgba(255,255,255,.78), rgba(183,255,215,.34) 40%, transparent 70%);
+    filter:blur(11px); animation:clGlowBreathe 9s ease-in-out 1s infinite;
+  }
+  /* Vision-Pro-style rotating shimmer traveling around the border */
   .strip-shell.has-coupon::after{
-    content:''; position:absolute; inset:0; border-radius:24px; padding:1px; pointer-events:none; opacity:.55;
-    background:conic-gradient(from var(--cl-a), transparent 0%, rgba(183,255,215,.5) 10%, transparent 22%, transparent 100%);
+    content:''; position:absolute; inset:0; border-radius:24px; padding:1.5px; pointer-events:none; opacity:.7;
+    background:conic-gradient(from var(--cl-a), transparent 0%, rgba(255,255,255,.85) 8%, rgba(183,255,215,.6) 13%, transparent 26%, transparent 100%);
     -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite:xor; mask-composite:exclude;
-    animation:clBorder 9s linear infinite;
+    animation:clBorder 8s linear infinite;
   }
   @keyframes clBorder{ to{ --cl-a:360deg; } }
 
-  .coupon-layer{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:24px; }
+  .coupon-layer{ position:relative; z-index:2; display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:24px; }
   .coupon-layer[hidden], .coupon-divider[hidden]{ display:none !important; }
-  .cl-check{ display:inline-flex; align-items:center; justify-content:center; flex:none; width:30px; height:30px; border-radius:50%; color:#79C9A0; background:rgba(150,225,185,.16); }
-  .cl-check svg{ width:16px; height:16px; stroke-dasharray:26; stroke-dashoffset:26; }
-  .strip-shell.has-coupon .cl-check svg{ animation:clDraw .5s .55s ease forwards; }
+  .cl-check{ display:inline-flex; align-items:center; justify-content:center; flex:none; color:#5CBF93;
+    filter:drop-shadow(0 1px 6px rgba(120,205,160,.35)); }
+  .cl-seal{ width:31px; height:31px; }
+  .cl-seal-tick{ stroke-dasharray:14; stroke-dashoffset:14; }
+  .strip-shell.has-coupon .cl-seal-tick{ animation:clDraw .5s .6s ease forwards; }
   @keyframes clDraw{ to{ stroke-dashoffset:0; } }
-  .cl-applied{ font-size:16px; color:var(--espresso); font-weight:500; }
-  .cl-code{ font-size:21px; font-weight:600; letter-spacing:.03em; color:#5CB58A; text-shadow:0 1px 10px rgba(120,205,160,.35); }
-  .cl-sep{ width:1px; height:20px; background:rgba(63,55,50,.18); }
+  .cl-applied{ font-size:16px; color:#7FB89B; font-weight:600; }
+  .cl-code{ font-size:21px; font-weight:600; letter-spacing:.03em; color:#3FAF7C; text-shadow:0 1px 12px rgba(90,200,150,.4); }
+  .cl-sep{ width:1px; height:20px; background:rgba(63,55,50,.16); }
   .cl-sub{ font-size:15px; color:var(--ink-soft); }
   .cl-btn{ margin-left:auto; background:rgba(255,255,255,.92); color:var(--espresso); padding:10px 22px; border-radius:999px;
     font-size:13.5px; font-weight:700; text-decoration:none; box-shadow:0 4px 16px -8px rgba(60,45,40,.25);
@@ -105,10 +123,11 @@
     .coupon-divider{ margin-bottom:18px; }
   }
   @media (prefers-reduced-motion:reduce){
-    .strip-shell.has-coupon .coupon-glow{ animation:none; opacity:.4; }
+    .strip-shell.has-coupon .coupon-glow{ animation:none; opacity:.45; }
+    .strip-shell.has-coupon::before,
     .strip-shell.has-coupon::after{ animation:none; }
-    .strip-shell.has-coupon .coupon-layer > *,
-    .strip-shell.has-coupon .cl-check svg{ animation:none; opacity:1; transform:none; stroke-dashoffset:0; }
+    .strip-shell.has-coupon .coupon-layer > *{ animation:none; opacity:1; transform:none; }
+    .strip-shell.has-coupon .cl-seal-tick{ animation:none; stroke-dashoffset:0; }
     .strip-shell .strip{ transition:none; }
   }
 
@@ -788,7 +807,7 @@
     <div class="wrap">
       <!-- Coupon layer (top) — appears only when a coupon is active -->
       <div class="coupon-layer" id="couponLayer" hidden>
-        <span class="cl-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <span class="cl-check" aria-hidden="true"><svg class="cl-seal" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path class="cl-seal-ring" stroke-width="1.05" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01-.622-.636z"/><path class="cl-seal-tick" stroke-width="1.35" d="M5.4 8.1l1.7 1.7 3.5-3.7"/></svg></span>
         <span class="cl-applied">Coupon applied: <b class="cl-code" id="promoCode">WELCOMEOPTIMA</b></span>
         <span class="cl-sep" aria-hidden="true"></span>
         <span class="cl-sub" id="promoText">You saved ₱100 on your order.</span>
